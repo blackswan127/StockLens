@@ -85,10 +85,23 @@ export async function generateWord(content: ReportContent): Promise<Buffer> {
     spacing: { before: 200, after: 200 }
   }));
 
-  // --- EXECUTIVE SUMMARY ---
-  sections.push(new Paragraph({ text: 'Executive Summary', heading: HeadingLevel.HEADING_2 }));
-  sections.push(new Paragraph({ children: [new TextRun({ text: `Rating: ${content.finstarRating}`, bold: true })] }));
-  sections.push(new Paragraph({ text: content.executiveSummary, spacing: { before: 100, after: 200 } }));
+  // --- INSTITUTIONAL INVESTMENT THESIS ---
+  sections.push(new Paragraph({ text: 'Institutional Investment Thesis', heading: HeadingLevel.HEADING_2 }));
+  sections.push(new Paragraph({ children: [new TextRun({ text: `Consensus Stance: ${content.finstarRating}`, bold: true })] }));
+  
+  const paragraphs = content.executiveSummary.split('\n\n').filter(p => p.trim());
+  paragraphs.forEach(p => {
+    const trimmed = p.trim();
+    const sectionMatch = trimmed.match(/^(\d+\.\s+[A-Z\s&/]+)(?:\n|:|\s{2,})(.*)$/s) || trimmed.match(/^([A-Z\s&/]{4,}):?\s*(.*)$/s);
+    if (sectionMatch) {
+      sections.push(new Paragraph({ text: sectionMatch[1].trim(), heading: HeadingLevel.HEADING_3, spacing: { before: 150, after: 50 } }));
+      if (sectionMatch[2]) {
+        sections.push(new Paragraph({ text: sectionMatch[2].trim(), spacing: { after: 120 } }));
+      }
+    } else {
+      sections.push(new Paragraph({ text: trimmed, spacing: { after: 120 } }));
+    }
+  });
 
   sections.push(new Paragraph({ text: 'Bull / Bear Synthesis', heading: HeadingLevel.HEADING_3 }));
   const cleanBullets = content.bullBearSummary

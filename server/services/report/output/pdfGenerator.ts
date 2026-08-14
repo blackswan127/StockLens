@@ -95,11 +95,31 @@ export async function generatePdf(content: ReportContent): Promise<Buffer> {
       doc.fillColor('#64748b').fontSize(10).font('Helvetica').text(`    52W: ${content.fiftyTwoWeekRange}    Market Cap: ${content.marketCap}    Beta: ${content.beta}`);
       
       // --- EXECUTIVE SUMMARY & FINSTAR ---
-      renderSectionTitle(doc, 'Executive Summary');
+      renderSectionTitle(doc, 'Institutional Investment Thesis');
       const ratingColor = content.finstarRating === 'BULLISH' ? '#16a34a' : (content.finstarRating === 'BEARISH' ? '#dc2626' : '#64748b');
-      doc.fillColor(ratingColor).font('Helvetica-Bold').text(`Rating: ${content.finstarRating}`);
-      doc.moveDown(0.5);
-      doc.fillColor('#334155').font('Helvetica').text(content.executiveSummary, { lineGap: 4, align: 'justify', width: 450 });
+      doc.fillColor(ratingColor).font('Helvetica-Bold').fontSize(11).text(`Consensus Stance: ${content.finstarRating}`);
+      doc.moveDown(0.6);
+
+      // Parse and format the 4-section thesis paragraphs
+      const paragraphs = content.executiveSummary.split('\n\n').filter(p => p.trim());
+      paragraphs.forEach(p => {
+        const trimmed = p.trim();
+        if (doc.y > doc.page.height - 100) doc.addPage();
+        
+        // Detect section titles like "1. STRATEGIC MOAT & PRICING POWER"
+        const sectionMatch = trimmed.match(/^(\d+\.\s+[A-Z\s&/]+)(?:\n|:|\s{2,})(.*)$/s) || trimmed.match(/^([A-Z\s&/]{4,}):?\s*(.*)$/s);
+        if (sectionMatch) {
+          doc.fillColor('#0f172a').font('Helvetica-Bold').fontSize(10).text(sectionMatch[1].trim());
+          doc.moveDown(0.2);
+          if (sectionMatch[2]) {
+            doc.fillColor('#334155').font('Helvetica').fontSize(9).text(sectionMatch[2].trim(), { lineGap: 3, align: 'justify', width: 490 });
+            doc.moveDown(0.5);
+          }
+        } else {
+          doc.fillColor('#334155').font('Helvetica').fontSize(9).text(trimmed, { lineGap: 3, align: 'justify', width: 490 });
+          doc.moveDown(0.5);
+        }
+      });
 
       renderSectionTitle(doc, 'Bull / Bear Synthesis');
       // Replace bullet glyphs and format as clean dash list
