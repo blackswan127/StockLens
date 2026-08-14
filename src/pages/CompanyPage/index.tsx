@@ -194,7 +194,7 @@ export const CompanyPage: React.FC = () => {
           </button>
           <button 
             onClick={() => navigate('/')} 
-            className="flex items-center gap-1.5 px-5 py-2.5 border border-[#E5E8EF] bg-white font-sans text-xs font-bold text-slate-650 hover:bg-slate-50 rounded-xl transition shadow-3xs cursor-pointer"
+            className="flex items-center gap-1.5 px-5 py-2.5 border border-slate-700 bg-[#141A26] font-mono text-xs font-bold text-slate-200 hover:bg-slate-800 rounded-xl transition shadow-sm cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Go Back</span>

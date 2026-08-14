@@ -1,39 +1,27 @@
 import React from 'react';
-import { Building, ExternalLink, FileText, Search } from 'lucide-react';
+import { Search, Building, FileText, ExternalLink } from 'lucide-react';
 import { formatDate } from '../../utils/formatters.js';
-import { ProxyStatementPanel } from './components/ProxyStatementPanel.jsx';
-import { PayVersusPerformancePanel } from './components/PayVersusPerformancePanel.tsx';
-
-interface Peer {
-  symbol: string;
-  name: string;
-  price: number;
-  mcap: number;
-  pe: number;
-  pb: number;
-  roe: string;
-  exchange: string;
-}
+import { ProxyStatementPanel } from './components/ProxyStatementPanel.js';
+import { PayVersusPerformancePanel } from './components/PayVersusPerformancePanel.js';
 
 interface SECTabProps {
   upperSymbol: string;
-  peers: Peer[];
-  activeSecSubTab: 'standardized' | 'insiders' | 'holdings' | 'tenk' | 'proxy';
-  setActiveSecSubTab: React.Dispatch<React.SetStateAction<'standardized' | 'insiders' | 'holdings' | 'tenk' | 'proxy'>>;
+  peers: any[];
   secComparePeer: string;
-  setSecComparePeer: React.Dispatch<React.SetStateAction<string>>;
+  setSecComparePeer: (val: string) => void;
+  activeSecSubTab: 'standardized' | 'insiders' | 'holdings' | 'tenk' | 'proxy';
+  setActiveSecSubTab: (tab: 'standardized' | 'insiders' | 'holdings' | 'tenk' | 'proxy') => void;
   activeSecStatement: 'income' | 'balance' | 'cash';
-  setActiveSecStatement: React.Dispatch<React.SetStateAction<'income' | 'balance' | 'cash'>>;
-  holdingsSearchInput: string;
-  setHoldingsSearchInput: React.Dispatch<React.SetStateAction<string>>;
+  setActiveSecStatement: (stmt: 'income' | 'balance' | 'cash') => void;
   holdingsQuery: string;
-  setHoldingsQuery: React.Dispatch<React.SetStateAction<string>>;
+  setHoldingsQuery: (q: string) => void;
+  holdingsSearchInput: string;
+  setHoldingsSearchInput: (val: string) => void;
   activeTenKTab: 'business' | 'risk' | 'mda';
-  setActiveTenKTab: React.Dispatch<React.SetStateAction<'business' | 'risk' | 'mda'>>;
+  setActiveTenKTab: (tab: 'business' | 'risk' | 'mda') => void;
   showRiskDiff: boolean;
-  setShowRiskDiff: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowRiskDiff: (show: boolean) => void;
 
-  // SEC EDGAR Data & States
   edgarFinancials: any;
   isEdgarFinancialsPending: boolean;
   isEdgarFinancialsError: boolean;
@@ -67,16 +55,16 @@ interface SECTabProps {
 export const SECTab: React.FC<SECTabProps> = ({
   upperSymbol,
   peers,
-  activeSecSubTab,
-  setActiveSecSubTab,
   secComparePeer,
   setSecComparePeer,
+  activeSecSubTab,
+  setActiveSecSubTab,
   activeSecStatement,
   setActiveSecStatement,
-  holdingsSearchInput,
-  setHoldingsSearchInput,
   holdingsQuery,
   setHoldingsQuery,
+  holdingsSearchInput,
+  setHoldingsSearchInput,
   activeTenKTab,
   setActiveTenKTab,
   showRiskDiff,
@@ -153,31 +141,24 @@ export const SECTab: React.FC<SECTabProps> = ({
       } finally {
         setIsHoldingsSearching(false);
       }
-    }, 400);
+    }, 350);
     return () => clearTimeout(timer);
   }, [holdingsSearchInput]);
 
   const isParagraphHeader = (p: string): boolean => {
     const trimmed = p.trim();
     if (trimmed.length === 0 || trimmed.length > 90) return false;
-    
-    // Ignore pure numbers (page numbers) and navigation labels
     if (/^\d+$/.test(trimmed)) return false;
     const lower = trimmed.toLowerCase();
-    if (lower === 'table of contents') return false;
-
-    // Don't format as header if it ends with punctuation like periods
     const lastChar = trimmed[trimmed.length - 1];
     if (lastChar === '.' || lastChar === '?' || lastChar === '!') return false;
-    // Common header indicators: starts with Item, Note, Table, Part, or contains standard sections
     if (lower.startsWith('item ') || lower.startsWith('note ') || lower.startsWith('part ') || lower.startsWith('section ') || lower.startsWith('risks related ')) {
       return true;
     }
-    // If it's in Title Case or Upper Case and short, treat as header
     const isAllUpper = trimmed === trimmed.toUpperCase() && /[A-Z]/.test(trimmed);
     const words = trimmed.split(/\s+/);
     const isTitleCase = words.every(w => {
-      if (w.length <= 3) return true; // ignore short words like of/and/the
+      if (w.length <= 3) return true;
       const firstChar = w[0];
       return firstChar === firstChar.toUpperCase() && /[A-Z]/.test(firstChar);
     });
@@ -187,9 +168,7 @@ export const SECTab: React.FC<SECTabProps> = ({
   const isNoiseParagraph = (p: string): boolean => {
     const trimmed = p.trim();
     if (trimmed.length === 0) return true;
-    // Ignore pure numbers (page numbers)
     if (/^\d+$/.test(trimmed)) return true;
-    // Ignore "Table of Contents" and variant endings
     const lower = trimmed.toLowerCase();
     if (lower === 'table of contents' || lower === 'table of contents.') return true;
     return false;
@@ -197,14 +176,14 @@ export const SECTab: React.FC<SECTabProps> = ({
 
   const highlightText = (text: string, search: string) => {
     if (!search || !search.trim()) return text;
-    const cleanSearch = search.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); // escape regex special chars
+    const cleanSearch = search.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const regex = new RegExp(`(${cleanSearch})`, 'gi');
     const parts = text.split(regex);
     return (
       <>
         {parts.map((part, i) => 
           regex.test(part) ? (
-            <mark key={i} className="bg-yellow-100 text-yellow-900 rounded-sm font-semibold px-0.5">{part}</mark>
+            <mark key={i} className="bg-emerald-500/30 text-emerald-300 rounded px-1 py-0.5 font-semibold">{part}</mark>
           ) : (
             part
           )
@@ -218,11 +197,11 @@ export const SECTab: React.FC<SECTabProps> = ({
       <div className="bg-[#0D111A] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-800/80 pb-4">
           <div>
-            <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
               <span>🏛️ SEC EDGAR Filings & XBRL Intelligence</span>
               <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded font-mono uppercase tracking-wider font-bold">Live Stream</span>
             </h3>
-            <p className="text-[11px] font-mono text-slate-500 mt-1">
+            <p className="text-[11px] font-mono text-slate-400 mt-1">
               Direct primary filings: XBRL standardized financial data, Form 4 insider rosters, 13F institutional portfolios, and Section diffs.
             </p>
           </div>
@@ -238,13 +217,11 @@ export const SECTab: React.FC<SECTabProps> = ({
             ].map((subTab) => (
               <button
                 key={subTab.id}
-                onClick={() => {
-                  setActiveSecSubTab(subTab.id as any);
-                }}
+                onClick={() => setActiveSecSubTab(subTab.id as any)}
                 className={`flex-1 lg:flex-none px-3.5 py-1.5 font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
                   activeSecSubTab === subTab.id 
                     ? 'bg-[#141A26] text-emerald-400 border border-slate-700 shadow-sm' 
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                 }`}
               >
                 {subTab.label}
@@ -253,10 +230,10 @@ export const SECTab: React.FC<SECTabProps> = ({
           </div>
         </div>
 
-        {/* Sub-tab: Standardized Statements */}
+        {/* Sub-tab 1: Standardized Statements */}
         {activeSecSubTab === 'standardized' && (
-          <div className="space-y-5 animate-fade-in">
-            <div className="bg-[#080B11] rounded-xl p-4 border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="space-y-4 animate-fade-in">
+            <div className="bg-[#080B11] rounded-xl p-3.5 border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
               <div className="flex flex-wrap gap-1.5 font-mono text-xs">
                 {[
                   { id: 'income', label: 'Income Statement' },
@@ -296,7 +273,7 @@ export const SECTab: React.FC<SECTabProps> = ({
                 {secComparePeer && (
                   <button
                     onClick={() => setSecComparePeer('')}
-                    className="px-2.5 py-1.5 text-[10px] text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-lg font-bold uppercase transition"
+                    className="px-2.5 py-1.5 text-[10px] text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-lg font-bold uppercase transition cursor-pointer"
                   >
                     Clear
                   </button>
@@ -305,12 +282,14 @@ export const SECTab: React.FC<SECTabProps> = ({
             </div>
 
             {isEdgarFinancialsPending ? (
-              <div className="py-10 text-center space-y-2">
-                <div className="text-slate-400 animate-pulse text-sm font-medium">Fetching SEC EDGAR XBRL data…</div>
-                <div className="text-slate-300 text-xs">This can take 30–60 seconds on first load</div>
+              <div className="py-12 text-center space-y-2">
+                <div className="text-emerald-400 animate-pulse text-sm font-mono font-medium">Fetching SEC EDGAR XBRL data…</div>
+                <div className="text-slate-500 text-xs font-mono">Parsing SEC company facts JSON taxonomy</div>
               </div>
             ) : isEdgarFinancialsError ? (
-              <div className="py-8 text-center text-red-400 text-sm">⚠️ Could not load SEC financials for {upperSymbol}. The company may not be SEC-registered or EDGAR data is unavailable right now.</div>
+              <div className="py-8 text-center text-rose-400 text-sm font-mono bg-rose-500/10 border border-rose-500/20 rounded-xl p-4">
+                ⚠️ Could not load SEC financials for {upperSymbol}. The company may not be SEC-registered or EDGAR data is unavailable right now.
+              </div>
             ) : edgarFinancials ? (
               (() => {
                 const statementKey = activeSecStatement === 'income'
@@ -322,7 +301,6 @@ export const SECTab: React.FC<SECTabProps> = ({
                 const activeRows = edgarFinancials[statementKey] || [];
                 const peerRows = edgarCompareFinancials ? edgarCompareFinancials[statementKey] || [] : [];
 
-                // Dynamically get the list of years sorted descending from activeRows and peerRows
                 const years = Array.from(
                   new Set([
                     ...activeRows.flatMap((row: any) => Object.keys(row.values || {})),
@@ -331,15 +309,15 @@ export const SECTab: React.FC<SECTabProps> = ({
                 ).sort((a, b) => b.localeCompare(a));
 
                 return (
-                  <div className="overflow-x-auto border border-[#E5E8EF] rounded-xl">
-                    <table className="min-w-full divide-y divide-[#E5E8EF] text-[13.5px] font-sans">
+                  <div className="overflow-x-auto border border-slate-800 rounded-xl bg-[#0B0F19]">
+                    <table className="min-w-full divide-y divide-slate-800 text-[13px] font-sans">
                       <thead>
-                        <tr className="bg-[rgba(5,150,105,0.06)] text-[#059669] border-b border-[#E5E8EF] text-left text-[11px] font-bold uppercase tracking-wider">
+                        <tr className="bg-[#0D111A] text-emerald-400 border-b border-slate-800 text-left text-[11px] font-bold uppercase tracking-wider font-mono">
                           <th className="py-3 px-4 font-bold whitespace-nowrap">Standardized Item (USD in Millions)</th>
                           {secComparePeer ? (
                             years.flatMap(year => [
-                              <th key={`${upperSymbol}-${year}`} className="py-3 px-4 text-right font-bold whitespace-nowrap bg-[#E6F0FF]/30">{upperSymbol} ({year})</th>,
-                              <th key={`${secComparePeer}-${year}`} className="py-3 px-4 text-right font-bold whitespace-nowrap bg-[#EEF2FF]/40">{secComparePeer} ({year})</th>
+                              <th key={`${upperSymbol}-${year}`} className="py-3 px-4 text-right font-bold whitespace-nowrap text-slate-200">{upperSymbol} ({year})</th>,
+                              <th key={`${secComparePeer}-${year}`} className="py-3 px-4 text-right font-bold whitespace-nowrap text-blue-400">{secComparePeer} ({year})</th>
                             ])
                           ) : (
                             years.map(year => (
@@ -348,7 +326,7 @@ export const SECTab: React.FC<SECTabProps> = ({
                           )}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
+                      <tbody className="divide-y divide-slate-800/60 text-slate-300">
                         {activeRows.map((row: any, rIdx: number) => {
                           const peerRow = peerRows.find((pr: any) => pr.label === row.label);
                           const isBoldRow = ['Total Revenue', 'Gross Profit', 'Operating Income', 'Net Income', 'Total Assets', 'Total Liabilities', 'Total Stockholders Equity', 'Operating Cash Flow', 'Free Cash Flow'].includes(row.label);
@@ -369,21 +347,21 @@ export const SECTab: React.FC<SECTabProps> = ({
                               key={rIdx}
                               className={`${
                                 isBoldRow 
-                                  ? 'font-bold text-slate-900 bg-[rgba(5,150,105,0.06)]/20' 
+                                  ? 'font-bold text-slate-100 bg-emerald-500/5' 
                                   : rIdx % 2 === 1 
-                                    ? 'bg-slate-50/10' 
-                                    : 'bg-white'
-                              } hover:bg-slate-50/40 transition`}
+                                    ? 'bg-[#111827]/40' 
+                                    : 'bg-[#0D111A]'
+                              } hover:bg-slate-800/30 transition`}
                             >
-                              <td className="py-3 px-4 font-sans font-medium text-slate-800 whitespace-nowrap">{row.label}</td>
+                              <td className="py-3 px-4 font-medium text-slate-200 whitespace-nowrap">{row.label}</td>
                               {secComparePeer ? (
                                 years.flatMap(year => [
-                                  <td key={`${upperSymbol}-${year}`} className="py-3 px-4 text-right font-semibold bg-[#E6F0FF]/15 text-slate-900 whitespace-nowrap">{formatVal(row.values[year])}</td>,
-                                  <td key={`${secComparePeer}-${year}`} className="py-3 px-4 text-right text-slate-650 bg-[#EEF2FF]/20 whitespace-nowrap">{formatVal(peerRow?.values[year])}</td>
+                                  <td key={`${upperSymbol}-${year}`} className="py-3 px-4 text-right font-mono font-bold text-slate-100 whitespace-nowrap">{formatVal(row.values[year])}</td>,
+                                  <td key={`${secComparePeer}-${year}`} className="py-3 px-4 text-right font-mono text-blue-300 whitespace-nowrap">{formatVal(peerRow?.values[year])}</td>
                                 ])
                               ) : (
                                 years.map((year, idx) => (
-                                  <td key={year} className={`py-3 px-4 text-right whitespace-nowrap ${idx === 0 ? 'font-semibold text-slate-900' : 'text-slate-600'}`}>
+                                  <td key={year} className={`py-3 px-4 text-right font-mono whitespace-nowrap ${idx === 0 ? 'font-bold text-slate-100' : 'text-slate-300'}`}>
                                     {formatVal(row.values[year])}
                                   </td>
                                 ))
@@ -397,33 +375,35 @@ export const SECTab: React.FC<SECTabProps> = ({
                 );
               })()
             ) : (
-              <div className="py-4 text-center text-slate-400">Failed to load statements.</div>
+              <div className="py-6 text-center text-slate-500 font-mono text-xs">No standardized statement data returned.</div>
             )}
           </div>
         )}
 
-        {/* Sub-tab: Insider Activities (Form 4) */}
+        {/* Sub-tab 2: Insider Activities */}
         {activeSecSubTab === 'insiders' && (
-          <div className="space-y-4 animate-in fade-in duration-200">
+          <div className="space-y-4 animate-fade-in">
             <div className="flex justify-between items-center">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
                 Recent Form 4 Insider Filings ({upperSymbol})
               </h4>
-              <span className="text-[10px] text-slate-400 font-mono">Last 12 Months</span>
+              <span className="text-[10px] text-slate-500 font-mono">Last 12 Months</span>
             </div>
 
             {isEdgarInsidersPending ? (
-              <div className="py-10 text-center space-y-2">
-                <div className="text-slate-400 animate-pulse text-sm font-medium">Fetching Form 4 insider filings…</div>
-                <div className="text-slate-300 text-xs">SEC EDGAR data may take 30–60 seconds</div>
+              <div className="py-12 text-center space-y-2">
+                <div className="text-emerald-400 animate-pulse text-sm font-mono font-medium">Fetching Form 4 insider transactions…</div>
+                <div className="text-slate-500 text-xs font-mono">Parsing XML Form 4 rosters from SEC EDGAR</div>
               </div>
             ) : isEdgarInsidersError ? (
-              <div className="py-8 text-center text-red-400 text-sm">⚠️ Could not load insider activities for {upperSymbol}. The company may not be SEC-registered.</div>
+              <div className="py-8 text-center text-rose-400 text-sm font-mono bg-rose-500/10 border border-rose-500/20 rounded-xl p-4">
+                ⚠️ Could not load insider activities for {upperSymbol}.
+              </div>
             ) : edgarInsiders && edgarInsiders.transactions ? (
-              <div className="overflow-x-auto border border-[#E5E8EF] rounded-xl">
-                <table className="min-w-full divide-y divide-[#E5E8EF] text-[13.5px] font-sans">
+              <div className="overflow-x-auto border border-slate-800 rounded-xl bg-[#0B0F19]">
+                <table className="min-w-full divide-y divide-slate-800 text-[13px] font-sans">
                   <thead>
-                    <tr className="bg-[rgba(5,150,105,0.06)] text-[#059669] border-b border-[#E5E8EF] text-left text-[11px] font-bold uppercase tracking-wider">
+                    <tr className="bg-[#0D111A] text-emerald-400 border-b border-slate-800 text-left text-[11px] font-bold uppercase tracking-wider font-mono">
                       <th className="py-3 px-4 font-bold whitespace-nowrap">Insider Name</th>
                       <th className="py-3 px-4 font-bold whitespace-nowrap">Relationship / Role</th>
                       <th className="py-3 px-4 font-bold whitespace-nowrap">Filing Date</th>
@@ -434,32 +414,34 @@ export const SECTab: React.FC<SECTabProps> = ({
                       <th className="py-3 px-4 text-center font-bold whitespace-nowrap">Source</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
+                  <tbody className="divide-y divide-slate-800/60 text-slate-300">
                     {edgarInsiders.transactions.map((tx: any, tIdx: number) => {
-                      let badgeClass = '';
-                      if (tx.action === 'Buy') badgeClass = 'bg-emerald-50 text-[#16A34A] border border-[#16A34A]/15';
-                      else if (tx.action === 'Sell') badgeClass = 'bg-rose-50 text-[#DC2626] border border-[#DC2626]/15';
-                      else badgeClass = 'bg-emerald-50 text-emerald-600 border border-blue-150';
+                      let badgeClass = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+                      if (tx.action === 'Sell') {
+                        badgeClass = 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                      } else if (tx.action !== 'Buy') {
+                        badgeClass = 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+                      }
 
                       return (
-                        <tr key={tIdx} className="hover:bg-slate-50/50 transition">
-                          <td className="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">{tx.name}</td>
-                          <td className="py-3 px-4 text-slate-600 whitespace-nowrap">{tx.relationship}</td>
-                          <td className="py-3 px-4 font-mono font-medium text-slate-500 whitespace-nowrap">{formatDate(tx.date)}</td>
+                        <tr key={tIdx} className="hover:bg-slate-800/30 transition">
+                          <td className="py-3 px-4 font-semibold text-slate-100 whitespace-nowrap">{tx.name}</td>
+                          <td className="py-3 px-4 text-slate-400 whitespace-nowrap">{tx.relationship}</td>
+                          <td className="py-3 px-4 font-mono text-slate-400 whitespace-nowrap">{formatDate(tx.date)}</td>
                           <td className="py-3 px-4 text-center whitespace-nowrap">
-                            <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${badgeClass}`}>
+                            <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase tracking-wider ${badgeClass}`}>
                               {tx.action} ({tx.code})
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-right font-mono font-bold text-slate-800 whitespace-nowrap">{tx.shares.toLocaleString()}</td>
-                          <td className="py-3 px-4 text-right font-mono text-slate-600 whitespace-nowrap">${tx.price.toFixed(2)}</td>
-                          <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap">${tx.value.toLocaleString()}</td>
+                          <td className="py-3 px-4 text-right font-mono font-bold text-slate-200 whitespace-nowrap">{tx.shares.toLocaleString()}</td>
+                          <td className="py-3 px-4 text-right font-mono text-slate-300 whitespace-nowrap">${tx.price.toFixed(2)}</td>
+                          <td className="py-3 px-4 text-right font-mono font-bold text-emerald-400 whitespace-nowrap">${tx.value.toLocaleString()}</td>
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             <a
                               href={tx.secLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex p-1.5 rounded-lg border border-[#E5E8EF] text-slate-400 hover:text-[#059669] hover:bg-[#059669]/5 transition"
+                              className="inline-flex p-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition"
                               title="View SEC Source Form 4"
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
@@ -472,15 +454,15 @@ export const SECTab: React.FC<SECTabProps> = ({
                 </table>
               </div>
             ) : (
-              <div className="py-4 text-center text-slate-400">No insider transactions found.</div>
+              <div className="py-6 text-center text-slate-500 font-mono text-xs">No insider transactions found.</div>
             )}
           </div>
         )}
 
-        {/* Sub-tab: Institutional Holdings (13F) */}
+        {/* Sub-tab 3: Institutional Holdings (13F) */}
         {activeSecSubTab === 'holdings' && (
-          <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="bg-slate-50 rounded-xl p-4 border border-[#E5E8EF] space-y-3">
+          <div className="space-y-4 animate-fade-in">
+            <div className="bg-[#080B11] rounded-xl p-4 border border-slate-800 space-y-3">
               {/* Search bar */}
               <form
                 onSubmit={(e) => {
@@ -492,28 +474,28 @@ export const SECTab: React.FC<SECTabProps> = ({
                 className="flex flex-col sm:flex-row gap-2.5"
               >
                 <div className="relative flex-1" ref={holdingsDropdownRef}>
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                   <input
                     type="text"
-                    placeholder="Search manager name, 10-digit SEC CIK, or ticker..."
+                    placeholder="Search fund manager name, 10-digit SEC CIK, or ticker..."
                     value={holdingsSearchInput}
                     onChange={(e) => {
                       setHoldingsSearchInput(e.target.value);
                       setShowHoldingsDropdown(true);
                     }}
                     onFocus={() => holdingsSearchInput.trim() && setShowHoldingsDropdown(true)}
-                    className="w-full pl-9 pr-4 py-2 bg-white border border-[#E5E8EF] rounded-xl text-xs font-semibold text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#059669] focus:border-[#059669]"
+                    className="w-full pl-9 pr-4 py-2 bg-[#0D111A] border border-slate-800 rounded-xl text-xs font-semibold text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                   />
                   {isHoldingsSearching && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <div className="h-3 w-3 border-2 border-[#059669] border-t-transparent rounded-full animate-spin" />
+                      <div className="h-3.5 w-3.5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
                     </div>
                   )}
                   {/* Dropdown */}
                   {showHoldingsDropdown && holdingsSearchInput.trim() && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#E5E8EF] rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-[#0D111A] border border-slate-800 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto">
                       {isHoldingsSearching && holdingsSearchResults.length === 0 ? (
-                        <div className="p-4 text-center text-xs text-slate-400">Searching SEC EDGAR database...</div>
+                        <div className="p-4 text-center text-xs text-slate-500 font-mono">Searching SEC EDGAR directory...</div>
                       ) : holdingsSearchResults.length > 0 ? (
                         <div className="py-1">
                           {holdingsSearchResults.map((result, idx) => (
@@ -525,22 +507,22 @@ export const SECTab: React.FC<SECTabProps> = ({
                                 setHoldingsQuery(result.cik);
                                 setShowHoldingsDropdown(false);
                               }}
-                              className="w-full px-4 py-2 text-left hover:bg-slate-50 transition-colors flex flex-col cursor-pointer border-b border-slate-50 last:border-none"
+                              className="w-full px-4 py-2.5 text-left hover:bg-[#141A26] transition-colors flex flex-col cursor-pointer border-b border-slate-800/60 last:border-none"
                             >
-                              <span className="text-xs font-bold text-slate-800">{result.name}</span>
+                              <span className="text-xs font-bold text-slate-200">{result.name}</span>
                               <span className="text-[10px] font-mono text-slate-500">CIK: {result.cik}</span>
                             </button>
                           ))}
                         </div>
                       ) : (
-                        <div className="p-4 text-center text-xs text-slate-400">No matching institutions found</div>
+                        <div className="p-4 text-center text-xs text-slate-500 font-mono">No matching institutions found</div>
                       )}
                     </div>
                   )}
                 </div>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#059669] text-white font-sans text-xs font-bold rounded-xl hover:bg-[#059669]/90 transition shadow-3xs cursor-pointer"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold rounded-xl transition shadow-sm cursor-pointer"
                 >
                   Pull 13F Portfolio
                 </button>
@@ -548,7 +530,7 @@ export const SECTab: React.FC<SECTabProps> = ({
 
               {/* Quick access buttons */}
               <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                <span className="font-bold text-slate-500 uppercase tracking-wide text-[10px]">Quick Access:</span>
+                <span className="font-bold text-slate-400 uppercase tracking-wide text-[10px] font-mono">Quick Access:</span>
                 {[
                   { label: 'Berkshire Hathaway', cik: '0001067983' },
                   { label: 'Bill Gates Fund', cik: '0001166559' },
@@ -561,10 +543,10 @@ export const SECTab: React.FC<SECTabProps> = ({
                       setHoldingsSearchInput(fund.cik);
                       setHoldingsQuery(fund.cik);
                     }}
-                    className={`px-3 py-1 bg-white border rounded-lg hover:border-[#059669] hover:text-[#059669] transition font-medium text-[11px] cursor-pointer ${
+                    className={`px-3 py-1 border rounded-lg transition font-medium text-[11px] font-mono cursor-pointer ${
                       holdingsQuery === fund.cik
-                        ? 'border-[#059669] text-[#059669] bg-emerald-50/10 font-bold'
-                        : 'border-[#E5E8EF] text-slate-600'
+                        ? 'border-emerald-500/60 text-emerald-400 bg-emerald-500/15 font-bold'
+                        : 'border-slate-800 bg-[#0D111A] text-slate-400 hover:text-slate-200 hover:border-slate-700'
                     }`}
                   >
                     {fund.label}
@@ -574,30 +556,32 @@ export const SECTab: React.FC<SECTabProps> = ({
             </div>
 
             {isEdgarHoldingsPending ? (
-              <div className="py-10 text-center space-y-2">
-                <div className="text-slate-400 animate-pulse text-sm font-medium">Fetching 13F institutional holdings…</div>
-                <div className="text-slate-300 text-xs">SEC EDGAR data may take 30–60 seconds</div>
+              <div className="py-12 text-center space-y-2">
+                <div className="text-emerald-400 animate-pulse text-sm font-mono font-medium">Fetching 13F institutional holdings…</div>
+                <div className="text-slate-500 text-xs font-mono">Parsing SEC Form 13F-HR table format</div>
               </div>
             ) : isEdgarHoldingsError ? (
-              <div className="py-8 text-center text-red-400 text-sm">⚠️ Could not load 13F holdings data. This fund may not have filed 13F reports with the SEC.</div>
+              <div className="py-8 text-center text-rose-400 text-sm font-mono bg-rose-500/10 border border-rose-500/20 rounded-xl p-4">
+                ⚠️ Could not load 13F holdings data for this institution.
+              </div>
             ) : edgarHoldings ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1">
-                    <Building className="h-4 w-4 text-[#059669]" />
+                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wide flex items-center gap-1.5 font-mono">
+                    <Building className="h-4 w-4 text-emerald-400" />
                     <span>{edgarHoldings.managerName}</span>
                   </h4>
                   <div className="flex gap-2 text-[10px] font-mono text-slate-400 uppercase">
-                    <span>Reporting Period: <strong>{edgarHoldings.portfolioDate}</strong></span>
+                    <span>Reporting Period: <strong className="text-slate-200">{edgarHoldings.portfolioDate}</strong></span>
                     <span>·</span>
-                    <span>Source: <strong>SEC Form 13F-HR</strong></span>
+                    <span>Source: <strong className="text-slate-200">SEC Form 13F-HR</strong></span>
                   </div>
                 </div>
 
-                <div className="overflow-x-auto border border-[#E5E8EF] rounded-xl bg-white">
-                  <table className="min-w-full divide-y divide-[#E5E8EF] text-[13.5px] font-sans">
+                <div className="overflow-x-auto border border-slate-800 rounded-xl bg-[#0B0F19]">
+                  <table className="min-w-full divide-y divide-slate-800 text-[13px] font-sans">
                     <thead>
-                      <tr className="bg-[rgba(5,150,105,0.06)] text-[#059669] border-b border-[#E5E8EF] text-left text-[11px] font-bold uppercase tracking-wider">
+                      <tr className="bg-[#0D111A] text-emerald-400 border-b border-slate-800 text-left text-[11px] font-bold uppercase tracking-wider font-mono">
                         <th className="py-3 px-4 font-bold whitespace-nowrap">Ticker</th>
                         <th className="py-3 px-4 font-bold whitespace-nowrap">Issuer Company Name</th>
                         <th className="py-3 px-4 text-right font-bold whitespace-nowrap">Value (USD in Thousands)</th>
@@ -606,38 +590,38 @@ export const SECTab: React.FC<SECTabProps> = ({
                         <th className="py-3 px-4 text-right font-bold whitespace-nowrap">QoQ Change</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                    <tbody className="divide-y divide-slate-800/60 text-slate-300">
                       {edgarHoldings.holdings && edgarHoldings.holdings.length > 0 ? (
                         edgarHoldings.holdings.map((hold: any, hIdx: number) => {
                           const isCall = hold.option === 'Call';
                           const isPut = hold.option === 'Put';
                           
-                          let changeColor = 'text-slate-500';
+                          let changeColor = 'text-slate-400';
                           if (hold.qoqChange.startsWith('+') || hold.qoqChange === 'New') {
-                            changeColor = 'text-[#16A34A] font-bold';
+                            changeColor = 'text-emerald-400 font-bold';
                           } else if (hold.qoqChange.startsWith('-')) {
-                            changeColor = 'text-[#DC2626] font-bold';
+                            changeColor = 'text-rose-400 font-bold';
                           }
 
                           return (
-                            <tr key={hIdx} className="hover:bg-slate-50/50 transition">
-                              <td className="py-3 px-4 font-mono font-bold text-[#059669] whitespace-nowrap">{hold.ticker}</td>
-                              <td className="py-3 px-4 font-semibold text-slate-800 whitespace-nowrap">{hold.name}</td>
-                              <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap">${hold.value.toLocaleString()}</td>
-                              <td className="py-3 px-4 text-right font-mono text-slate-655 whitespace-nowrap">{hold.shares.toLocaleString()}</td>
-                              <td className="py-3 px-4 text-center whitespace-nowrap">
+                            <tr key={hIdx} className="hover:bg-slate-800/30 transition">
+                              <td className="py-3 px-4 font-mono font-bold text-emerald-400 whitespace-nowrap">{hold.ticker}</td>
+                              <td className="py-3 px-4 font-semibold text-slate-100 whitespace-nowrap">{hold.name}</td>
+                              <td className="py-3 px-4 text-right font-mono font-bold text-slate-100 whitespace-nowrap">${hold.value.toLocaleString()}</td>
+                              <td className="py-3 px-4 text-right font-mono text-slate-300 whitespace-nowrap">{hold.shares.toLocaleString()}</td>
+                              <td className="py-3 px-4 text-center whitespace-nowrap font-mono">
                                 {isCall ? (
-                                  <span className="px-2 py-0.5 rounded bg-teal-50 text-teal-650 border border-teal-150 text-[10px] font-bold uppercase tracking-wide">Call</span>
+                                  <span className="px-2 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20 text-[10px] font-bold uppercase">Call</span>
                                 ) : isPut ? (
-                                  <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-650 border border-amber-150 text-[10px] font-bold uppercase tracking-wide">Put</span>
+                                  <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold uppercase">Put</span>
                                 ) : (
-                                  <span className="text-slate-350">—</span>
+                                  <span className="text-slate-600">—</span>
                                 )}
                               </td>
                               <td className="py-3 px-4 text-right font-mono whitespace-nowrap">
                                 <span className={changeColor}>
                                   {hold.qoqChange === 'New' ? (
-                                    <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-[#059669] border border-blue-150 text-[9px] font-bold uppercase tracking-wide">NEW</span>
+                                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold uppercase">NEW</span>
                                   ) : hold.qoqChange}
                                 </span>
                               </td>
@@ -646,7 +630,7 @@ export const SECTab: React.FC<SECTabProps> = ({
                         })
                       ) : (
                         <tr>
-                          <td colSpan={6} className="py-8 text-center text-slate-400">No portfolio assets returned.</td>
+                          <td colSpan={6} className="py-8 text-center text-slate-500 font-mono text-xs">No portfolio assets returned.</td>
                         </tr>
                       )}
                     </tbody>
@@ -654,16 +638,16 @@ export const SECTab: React.FC<SECTabProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="py-4 text-center text-slate-400">Failed to load holdings report.</div>
+              <div className="py-6 text-center text-slate-500 font-mono text-xs">No holdings report loaded.</div>
             )}
           </div>
         )}
 
-        {/* Sub-tab: 10-K Filings Analysis */}
+        {/* Sub-tab 4: 10-K Filings Analysis */}
         {activeSecSubTab === 'tenk' && (
-          <div className="space-y-5 animate-in fade-in duration-200">
-            <div className="bg-slate-50 rounded-xl p-4 border border-[#E5E8EF] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="flex bg-white p-0.5 rounded-lg border border-[#E5E8EF] max-w-sm gap-0.5">
+          <div className="space-y-4 animate-fade-in">
+            <div className="bg-[#080B11] rounded-xl p-3.5 border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="flex bg-[#0D111A] p-0.5 rounded-lg border border-slate-800 max-w-sm gap-0.5">
                 {[
                   { id: 'business', label: 'Item 1. Business' },
                   { id: 'risk', label: 'Item 1A. Risk Factors' },
@@ -672,10 +656,10 @@ export const SECTab: React.FC<SECTabProps> = ({
                   <button
                     key={sectionTab.id}
                     onClick={() => setActiveTenKTab(sectionTab.id as any)}
-                    className={`px-3 py-1.5 font-sans text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 font-mono text-xs font-semibold rounded-md transition-all cursor-pointer ${
                       activeTenKTab === sectionTab.id 
-                        ? 'bg-[#059669] text-white shadow-sm font-bold' 
-                        : 'text-slate-500 hover:text-slate-900'
+                        ? 'bg-emerald-600 text-white shadow-sm font-bold' 
+                        : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     {sectionTab.label}
@@ -684,13 +668,13 @@ export const SECTab: React.FC<SECTabProps> = ({
               </div>
 
               {activeTenKTab === 'risk' && (
-                <div className="flex items-center gap-2 select-none">
-                  <span className="text-xs font-bold text-slate-650 uppercase tracking-wide">YoY Risk Factors Diff:</span>
+                <div className="flex items-center gap-2 select-none font-mono">
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">YoY Risk Diff:</span>
                   <button
                     type="button"
                     onClick={() => setShowRiskDiff(!showRiskDiff)}
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      showRiskDiff ? 'bg-[#059669]' : 'bg-slate-200'
+                      showRiskDiff ? 'bg-emerald-600' : 'bg-slate-700'
                     }`}
                   >
                     <span
@@ -704,29 +688,29 @@ export const SECTab: React.FC<SECTabProps> = ({
             </div>
 
             {/* Search Toolbar & Theme Highlights */}
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-slate-100 pb-4 mb-2">
+            <div className="flex flex-col md:flex-row gap-3 items-center justify-between border-b border-slate-800 pb-3">
               <div className="relative w-full md:max-w-md">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
                 <input
                   type="text"
-                  placeholder="Search keywords (e.g. AI, FSD, tariff, risk, revenue)..."
+                  placeholder="Search keywords (e.g. AI, cloud, margin, risk, revenue)..."
                   value={secSearchInput}
                   onChange={(e) => setSecSearchInput(e.target.value)}
-                  className="w-full bg-white border border-[#E5E8EF] rounded-xl py-2 pl-9 pr-4 text-xs font-semibold text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#059669]"
+                  className="w-full bg-[#080B11] border border-slate-800 rounded-xl py-2 pl-9 pr-4 text-xs font-semibold text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                 />
               </div>
               
               <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                <span className="text-[10px] font-mono text-slate-405 uppercase tracking-wider shrink-0">Quick Themes:</span>
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider shrink-0">Quick Themes:</span>
                 <div className="flex flex-wrap gap-1">
-                  {['AI', 'FSD', 'Robotaxi', 'Tariff', 'Risk', 'Revenue'].map((pill) => (
+                  {['AI', 'Cloud', 'Tariff', 'Margin', 'Risk', 'Revenue'].map((pill) => (
                     <button
                       key={pill}
                       onClick={() => setSecSearchInput(secSearchInput === pill ? '' : pill)}
-                      className={`px-2.5 py-1 text-[10.5px] font-bold rounded-lg border transition cursor-pointer ${
+                      className={`px-2.5 py-1 text-[10.5px] font-bold font-mono rounded-lg border transition cursor-pointer ${
                         secSearchInput === pill
-                          ? 'bg-[#059669]/10 border-[#059669]/30 text-[#059669]'
-                          : 'bg-white border-[#E5E8EF] text-slate-500 hover:text-slate-700'
+                          ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+                          : 'bg-[#0D111A] border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
                       }`}
                     >
                       {pill}
@@ -736,28 +720,28 @@ export const SECTab: React.FC<SECTabProps> = ({
               </div>
             </div>
 
-            {/* Text Content Rendering Area - Unified Paper Canvas */}
-            <div className="bg-white border border-[#E5E8EF] rounded-xl p-6 shadow-sm space-y-4">
+            {/* Unified 10-K Section Canvas (Obsidian Dark Theme) */}
+            <div className="bg-[#0B0F19] border border-slate-800 rounded-xl p-6 shadow-inner space-y-4">
               {activeTenKTab === 'business' ? (
                 isSection1Pending ? (
-                  <div className="py-8 text-center text-slate-400 animate-pulse font-mono text-xs">Loading Business description...</div>
+                  <div className="py-12 text-center text-emerald-400 animate-pulse font-mono text-xs">Loading Item 1. Business description…</div>
                 ) : edgarSection1 && edgarSection1.paragraphs ? (
-                  <div className="space-y-4 animate-in fade-in duration-250">
-                    <h4 className="font-sans font-bold text-sm text-slate-900 border-b border-slate-100 pb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
-                      <FileText className="h-4 w-4 text-[#059669]" />
+                  <div className="space-y-4 animate-fade-in">
+                    <h4 className="font-bold text-sm text-slate-100 border-b border-slate-800 pb-2.5 flex items-center gap-2 uppercase tracking-wider font-mono">
+                      <FileText className="h-4 w-4 text-emerald-400" />
                       <span>{edgarSection1.title}</span>
                     </h4>
-                    <div className="space-y-4 font-sans text-[13.5px] leading-relaxed text-slate-700">
+                    <div className="space-y-4 font-sans text-[13.5px] leading-relaxed text-slate-300">
                       {edgarSection1.paragraphs.filter((p: string) => !isNoiseParagraph(p)).map((p: string, pIdx: number) => {
                         if (isParagraphHeader(p)) {
                           return (
-                            <h5 key={pIdx} className="font-sans font-bold text-slate-900 text-sm mt-6 mb-2 border-t border-slate-100 pt-4 first:border-0 first:mt-0 first:pt-0">
+                            <h5 key={pIdx} className="font-bold text-slate-100 text-sm mt-6 mb-2 border-t border-slate-800/80 pt-4 first:border-0 first:mt-0 first:pt-0 font-mono">
                               {p}
                             </h5>
                           );
                         }
                         return (
-                          <p key={pIdx} className="leading-relaxed text-slate-700 text-left">
+                          <p key={pIdx} className="leading-relaxed text-slate-300 text-left">
                             {highlightText(p, secSearchInput)}
                           </p>
                         );
@@ -765,17 +749,17 @@ export const SECTab: React.FC<SECTabProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="py-4 text-center text-slate-400 font-mono text-xs">Failed to load Business description.</div>
+                  <div className="py-8 text-center text-slate-500 font-mono text-xs">Item 1. Business disclosure not available.</div>
                 )
               ) : activeTenKTab === 'risk' ? (
                 showRiskDiff ? (
                   isRiskDiffPending ? (
-                    <div className="py-8 text-center text-slate-400 animate-pulse font-mono text-xs">Computing YoY difference analysis...</div>
+                    <div className="py-12 text-center text-emerald-400 animate-pulse font-mono text-xs">Computing YoY risk factor diff matrix…</div>
                   ) : edgarRiskDiff && edgarRiskDiff.paragraphs ? (
-                    <div className="space-y-4 animate-in fade-in duration-250">
+                    <div className="space-y-4 animate-fade-in">
                       {/* Diff Filtering Switcher */}
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3 mb-2">
-                        <div className="flex bg-slate-50 p-0.5 rounded-lg border border-[#E5E8EF] max-w-sm gap-0.5 w-full sm:w-auto">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-3 mb-2">
+                        <div className="flex bg-[#0D111A] p-0.5 rounded-lg border border-slate-800 max-w-sm gap-0.5 w-full sm:w-auto font-mono">
                           {[
                             { id: 'all', label: 'All Risks' },
                             { id: 'changes', label: 'Changes Only' },
@@ -785,10 +769,10 @@ export const SECTab: React.FC<SECTabProps> = ({
                             <button
                               key={item.id}
                               onClick={() => setDiffFilter(item.id as any)}
-                              className={`flex-1 sm:flex-none px-3 py-1 font-sans text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                              className={`flex-1 sm:flex-none px-3 py-1 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
                                 diffFilter === item.id 
-                                  ? 'bg-slate-800 text-white shadow-xs' 
-                                  : 'text-slate-500 hover:text-slate-800'
+                                  ? 'bg-[#141A26] text-emerald-400 border border-slate-700 shadow-xs' 
+                                  : 'text-slate-400 hover:text-slate-200'
                               }`}
                             >
                               {item.label}
@@ -796,30 +780,28 @@ export const SECTab: React.FC<SECTabProps> = ({
                           ))}
                         </div>
                         
-                        <div className="flex gap-4 text-[10px] font-mono uppercase text-slate-500 font-semibold tracking-wider">
-                          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-emerald-50 border border-emerald-150 inline-block" /> Added</span>
-                          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-rose-50 border border-rose-150 inline-block" /> Removed</span>
-                          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-white border border-[#E5E8EF] inline-block" /> Unchanged</span>
+                        <div className="flex gap-4 text-[10px] font-mono uppercase text-slate-400 font-semibold tracking-wider">
+                          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded bg-emerald-500/20 border border-emerald-500/40 inline-block" /> Added</span>
+                          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded bg-rose-500/20 border border-rose-500/40 inline-block" /> Removed</span>
+                          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded bg-slate-800 border border-slate-700 inline-block" /> Unchanged</span>
                         </div>
                       </div>
                       
-                      <div className="space-y-4 font-sans text-[13.5px] leading-relaxed text-slate-700">
+                      <div className="space-y-3 font-sans text-[13.5px] leading-relaxed text-slate-300">
                         {edgarRiskDiff.paragraphs
                           .filter((p: any) => !isNoiseParagraph(p.text))
                           .filter((p: any) => {
                             if (diffFilter === 'changes') return p.status === 'added' || p.status === 'removed';
                             if (diffFilter === 'added') return p.status === 'added';
                             if (diffFilter === 'removed') return p.status === 'removed';
-                            return true; // all
+                            return true;
                           })
                           .map((p: any, pIdx: number) => {
-                            let styleClass = 'p-3 rounded-xl border border-[#E5E8EF] bg-white';
+                            let styleClass = 'p-3.5 rounded-xl border border-slate-800 bg-[#0D111A] text-slate-300';
                             if (p.status === 'added') {
-                              styleClass = 'p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/20 text-emerald-955 font-medium shadow-[0_1px_2px_rgba(5,150,105,0.03)]';
+                              styleClass = 'p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 font-medium';
                             } else if (p.status === 'removed') {
-                              styleClass = 'p-3.5 rounded-xl border border-rose-200 bg-rose-50/20 text-rose-955 line-through decoration-rose-300 font-medium shadow-[0_1px_2px_rgba(220,38,38,0.03)]';
-                            } else {
-                              styleClass = 'p-3 text-slate-655 border border-slate-100 bg-slate-50/10';
+                              styleClass = 'p-3.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 line-through font-medium';
                             }
                             
                             return (
@@ -827,7 +809,7 @@ export const SECTab: React.FC<SECTabProps> = ({
                                 {p.status === 'added' || p.status === 'removed' ? (
                                   highlightText(p.text, secSearchInput)
                                 ) : isParagraphHeader(p.text) ? (
-                                  <h5 className="font-sans font-bold text-slate-900 text-sm">{p.text}</h5>
+                                  <h5 className="font-bold text-slate-100 text-sm font-mono">{p.text}</h5>
                                 ) : (
                                   highlightText(p.text, secSearchInput)
                                 )}
@@ -837,28 +819,28 @@ export const SECTab: React.FC<SECTabProps> = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="py-4 text-center text-slate-400 font-mono text-xs">Failed to load risk factor difference report.</div>
+                    <div className="py-8 text-center text-slate-500 font-mono text-xs">Risk factor diff not available.</div>
                   )
                 ) : (
                   isSection1APending ? (
-                    <div className="py-8 text-center text-slate-400 animate-pulse font-mono text-xs">Loading Risk Factors section...</div>
+                    <div className="py-12 text-center text-emerald-400 animate-pulse font-mono text-xs">Loading Item 1A. Risk Factors…</div>
                   ) : edgarSection1A && edgarSection1A.paragraphs ? (
-                    <div className="space-y-4 animate-in fade-in duration-250">
-                      <h4 className="font-sans font-bold text-sm text-slate-900 border-b border-slate-100 pb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
-                        <FileText className="h-4 w-4 text-[#059669]" />
+                    <div className="space-y-4 animate-fade-in">
+                      <h4 className="font-bold text-sm text-slate-100 border-b border-slate-800 pb-2.5 flex items-center gap-2 uppercase tracking-wider font-mono">
+                        <FileText className="h-4 w-4 text-emerald-400" />
                         <span>{edgarSection1A.title}</span>
                       </h4>
-                      <div className="space-y-4 font-sans text-[13.5px] leading-relaxed text-slate-700">
+                      <div className="space-y-4 font-sans text-[13.5px] leading-relaxed text-slate-300">
                         {edgarSection1A.paragraphs.filter((p: string) => !isNoiseParagraph(p)).map((p: string, pIdx: number) => {
                           if (isParagraphHeader(p)) {
                             return (
-                              <h5 key={pIdx} className="font-sans font-bold text-slate-900 text-sm mt-6 mb-2 border-t border-slate-100 pt-4 first:border-0 first:mt-0 first:pt-0">
+                              <h5 key={pIdx} className="font-bold text-slate-100 text-sm mt-6 mb-2 border-t border-slate-800/80 pt-4 first:border-0 first:mt-0 first:pt-0 font-mono">
                                 {p}
                               </h5>
                             );
                           }
                           return (
-                            <p key={pIdx} className="leading-relaxed text-slate-755 text-left">
+                            <p key={pIdx} className="leading-relaxed text-slate-300 text-left">
                               {highlightText(p, secSearchInput)}
                             </p>
                           );
@@ -866,29 +848,29 @@ export const SECTab: React.FC<SECTabProps> = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="py-4 text-center text-slate-400 font-mono text-xs">Failed to load Risk Factors.</div>
+                    <div className="py-8 text-center text-slate-500 font-mono text-xs">Item 1A. Risk Factors not available.</div>
                   )
                 )
               ) : (
                 isSection7Pending ? (
-                  <div className="py-8 text-center text-slate-400 animate-pulse font-mono text-xs">Loading MD&A section...</div>
+                  <div className="py-12 text-center text-emerald-400 animate-pulse font-mono text-xs">Loading Item 7. MD&A Analysis…</div>
                 ) : edgarSection7 && edgarSection7.paragraphs ? (
-                  <div className="space-y-4 animate-in fade-in duration-250">
-                    <h4 className="font-sans font-bold text-sm text-slate-900 border-b border-slate-100 pb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
-                      <FileText className="h-4 w-4 text-[#059669]" />
+                  <div className="space-y-4 animate-fade-in">
+                    <h4 className="font-bold text-sm text-slate-100 border-b border-slate-800 pb-2.5 flex items-center gap-2 uppercase tracking-wider font-mono">
+                      <FileText className="h-4 w-4 text-emerald-400" />
                       <span>{edgarSection7.title}</span>
                     </h4>
-                    <div className="space-y-4 font-sans text-[13.5px] leading-relaxed text-slate-700">
+                    <div className="space-y-4 font-sans text-[13.5px] leading-relaxed text-slate-300">
                       {edgarSection7.paragraphs.filter((p: string) => !isNoiseParagraph(p)).map((p: string, pIdx: number) => {
                         if (isParagraphHeader(p)) {
                           return (
-                            <h5 key={pIdx} className="font-sans font-bold text-slate-900 text-sm mt-6 mb-2 border-t border-slate-100 pt-4 first:border-0 first:mt-0 first:pt-0">
+                            <h5 key={pIdx} className="font-bold text-slate-100 text-sm mt-6 mb-2 border-t border-slate-800/80 pt-4 first:border-0 first:mt-0 first:pt-0 font-mono">
                               {p}
                             </h5>
                           );
                         }
                         return (
-                          <p key={pIdx} className="leading-relaxed text-slate-700 text-left">
+                          <p key={pIdx} className="leading-relaxed text-slate-300 text-left">
                             {highlightText(p, secSearchInput)}
                           </p>
                         );
@@ -896,18 +878,18 @@ export const SECTab: React.FC<SECTabProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="py-4 text-center text-slate-400 font-mono text-xs">Failed to load MD&A analysis.</div>
+                  <div className="py-8 text-center text-slate-500 font-mono text-xs">Item 7. MD&A Analysis not available.</div>
                 )
               )}
             </div>
           </div>
         )}
 
-        {/* Sub-tab: Proxy Statement Panel */}
+        {/* Sub-tab 5: Proxy Statement */}
         {activeSecSubTab === 'proxy' && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-fade-in">
             <div>
-              <h4 className="font-sans font-bold text-sm text-gray-900 mb-2">
+              <h4 className="font-mono font-bold text-xs text-slate-200 mb-2 uppercase tracking-wider">
                 Pay versus Performance (structured XBRL)
               </h4>
               <PayVersusPerformancePanel
@@ -918,8 +900,8 @@ export const SECTab: React.FC<SECTabProps> = ({
               />
             </div>
 
-            <div className="border-t border-gray-150 pt-6">
-              <h4 className="font-sans font-bold text-sm text-gray-900 mb-2">
+            <div className="border-t border-slate-800 pt-6">
+              <h4 className="font-mono font-bold text-xs text-slate-200 mb-2 uppercase tracking-wider">
                 Full Proxy Statement (parsed from filing HTML)
               </h4>
               <ProxyStatementPanel

@@ -1,5 +1,5 @@
 import React from 'react';
-import { HelpCircle, ExternalLink, AlertCircle } from 'lucide-react';
+import { ExternalLink, AlertCircle } from 'lucide-react';
 
 interface EdgarPvPFactValue {
   fy: number | null;
@@ -42,17 +42,17 @@ export const PayVersusPerformancePanel: React.FC<PayVersusPerformancePanelProps>
 }) => {
   if (isPending) {
     return (
-      <div className="space-y-4 animate-pulse">
-        <div className="h-10 bg-slate-100 rounded-xl border border-slate-200/60 w-full"></div>
-        <div className="h-40 bg-slate-100 rounded-xl border border-slate-200/60 w-full"></div>
+      <div className="space-y-3 animate-pulse">
+        <div className="h-10 bg-slate-800/50 rounded-xl border border-slate-800 w-full" />
+        <div className="h-36 bg-slate-800/40 rounded-xl border border-slate-800 w-full" />
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="p-4 rounded-xl border border-rose-150 bg-rose-50/20 text-rose-900 text-xs flex items-center gap-2 font-mono">
-        <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+      <div className="p-4 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-400 text-xs flex items-center gap-2 font-mono">
+        <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
         <span>Could not load structured Pay versus Performance data for {upperSymbol}.</span>
       </div>
     );
@@ -60,21 +60,21 @@ export const PayVersusPerformancePanel: React.FC<PayVersusPerformancePanelProps>
 
   if (!data.available) {
     return (
-      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2 text-slate-550 font-medium">
-        <div className="flex items-center gap-2 text-slate-700">
-          <AlertCircle className="h-4 w-4 text-slate-405 shrink-0" />
+      <div className="p-4 bg-[#111827]/70 border border-slate-800 rounded-xl text-xs space-y-2 text-slate-400 font-medium">
+        <div className="flex items-center gap-2 text-slate-200">
+          <AlertCircle className="h-4 w-4 text-slate-400 shrink-0" />
           <span className="font-bold">No structured PvP disclosure available</span>
         </div>
-        <p className="text-[11px] leading-relaxed max-w-xl">
+        <p className="text-[11px] leading-relaxed max-w-xl text-slate-400">
           {data.reason || `No 'ecd' taxonomy facts found. This company might be exempt (e.g. Foreign Private Issuer or Emerging Growth Company).`}
         </p>
         {data.sourceUrl && (
-          <div className="pt-2">
+          <div className="pt-1">
             <a
               href={data.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[#059669] hover:underline text-[10.5px] font-bold"
+              className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 text-[10.5px] font-mono font-bold"
             >
               <span>Verify Raw SEC Company Facts JSON</span>
               <ExternalLink className="h-3 w-3" />
@@ -112,7 +112,6 @@ export const PayVersusPerformancePanel: React.FC<PayVersusPerformancePanelProps>
   const getValueForYear = (concept: EdgarPvPConcept, year: number) => {
     const matches = concept.values.filter((v) => v.fy === year);
     if (matches.length === 0) return null;
-    // Prefer DEF 14A, fallback to others
     const def14aMatch = matches.find((v) => v.form === 'DEF 14A');
     const match = def14aMatch || matches[0];
     return match.val;
@@ -125,29 +124,28 @@ export const PayVersusPerformancePanel: React.FC<PayVersusPerformancePanelProps>
 
   if (activeConcepts.length === 0) {
     return (
-      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 text-center font-mono">
+      <div className="p-4 bg-[#111827]/70 border border-slate-800 rounded-xl text-xs text-slate-400 text-center font-mono">
         Filer has ecd taxonomy data, but no entries could be aligned to a fiscal year.
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-200">
-      <div className="overflow-x-auto border border-[#E5E8EF] rounded-xl bg-white">
-        <table className="min-w-full divide-y divide-[#E5E8EF] text-[13px] font-sans">
+    <div className="space-y-4 animate-fade-in">
+      <div className="overflow-x-auto border border-slate-800 rounded-xl bg-[#0B0F19]">
+        <table className="min-w-full divide-y divide-slate-800 text-[13px] font-sans">
           <thead>
-            <tr className="bg-[rgba(5,150,105,0.04)] text-[#059669] border-b border-[#E5E8EF] text-left text-[11px] font-bold uppercase tracking-wider">
-              <th className="py-2.5 px-4 font-bold whitespace-nowrap">SEC Tagged Concept</th>
+            <tr className="bg-[#0D111A] text-emerald-400 border-b border-slate-800 text-left text-[11px] font-bold uppercase tracking-wider font-mono">
+              <th className="py-3 px-4 font-bold whitespace-nowrap">SEC Tagged Concept</th>
               {years.map((year) => (
-                <th key={year} className="py-2.5 px-4 text-right font-bold whitespace-nowrap">
+                <th key={year} className="py-3 px-4 text-right font-bold whitespace-nowrap">
                   FY {year}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-slate-700">
+          <tbody className="divide-y divide-slate-800/60 text-slate-300">
             {activeConcepts.map((concept, idx) => {
-              // Highlight PEO / Average NEO rows
               const isHighlight =
                 concept.tag.toLowerCase().includes('peo') ||
                 concept.tag.toLowerCase().includes('nonpeo');
@@ -155,18 +153,18 @@ export const PayVersusPerformancePanel: React.FC<PayVersusPerformancePanelProps>
               return (
                 <tr
                   key={concept.tag}
-                  className={`hover:bg-slate-50/50 transition ${
-                    isHighlight ? 'bg-emerald-50/10 font-medium' : idx % 2 === 1 ? 'bg-slate-50/20' : 'bg-white'
+                  className={`hover:bg-slate-800/30 transition ${
+                    isHighlight ? 'bg-emerald-500/10 font-medium' : idx % 2 === 1 ? 'bg-[#111827]/40' : 'bg-[#0D111A]'
                   }`}
                 >
-                  <td className="py-2.5 px-4 font-sans text-slate-800 whitespace-nowrap max-w-sm truncate" title={concept.label}>
-                    <div className="font-semibold text-slate-900 leading-snug">{concept.label}</div>
-                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">{concept.tag}</div>
+                  <td className="py-3 px-4 text-slate-200 whitespace-nowrap max-w-sm truncate" title={concept.label}>
+                    <div className="font-semibold text-slate-100 leading-snug">{concept.label}</div>
+                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">{concept.tag}</div>
                   </td>
                   {years.map((year) => {
                     const rawVal = getValueForYear(concept, year);
                     return (
-                      <td key={year} className="py-2.5 px-4 text-right font-mono text-slate-900 whitespace-nowrap">
+                      <td key={year} className="py-3 px-4 text-right font-mono font-semibold text-slate-200 whitespace-nowrap">
                         {formatVal(rawVal, concept.unit)}
                       </td>
                     );
@@ -176,24 +174,6 @@ export const PayVersusPerformancePanel: React.FC<PayVersusPerformancePanelProps>
             })}
           </tbody>
         </table>
-      </div>
-
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 px-1 text-[11px] text-slate-450 font-medium">
-        <div className="flex items-center gap-1.5">
-          <HelpCircle className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-          <span>This data is harvested live from the Inline XBRL tagged facts of the company's proxy statements.</span>
-        </div>
-        {data.sourceUrl && (
-          <a
-            href={data.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[#059669] hover:underline font-semibold"
-          >
-            <span>SEC Source facts.json</span>
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
       </div>
     </div>
   );
