@@ -1,5 +1,6 @@
 import { edgarService } from '../../edgar.js';
 import { cacheService } from '../../cache.js';
+import { cleanSecContent } from '../../edgarParsing.js';
 
 export interface SecData {
   businessDescription: string;
@@ -26,19 +27,25 @@ export async function fetchSecData(ticker: string): Promise<SecData> {
         return 'Not available for this ticker.';
       }
       
-      // Filter out likely headers, footers, and table of contents artifacts
-      const cleanParagraphs = data.paragraphs.filter((p: string) => {
-        const trimmed = p.trim();
-        if (!trimmed) return false;
-        // Skip short numeric strings (like page numbers "3." or "12")
-        if (/^\d+\.?$/.test(trimmed)) return false;
-        // Skip table of contents artifacts
-        if (trimmed.toLowerCase().includes('table of contents') && trimmed.length < 100) return false;
-        if (trimmed.toLowerCase().includes('index to') && trimmed.length < 100) return false;
-        // Skip short headers with pipes or specific separator symbols
-        if (trimmed.includes('|') && trimmed.length < 100) return false;
-        return true;
-      });
+      // Filter out likely headers, footers, table of contents artifacts, and placeholder strings
+      const cleanParagraphs = data.paragraphs
+        .map((p: string) => cleanSecContent(p))
+        .filter((trimmed: string) => {
+          if (!trimmed) return false;
+          // Skip short numeric strings (like page numbers "3." or "12")
+          if (/^\d+\.?$/.test(trimmed)) return false;
+          // Skip placeholder strings
+          if (trimmed.startsWith('[Section Not Applicable') || trimmed.includes('[...Truncated due to length...]')) return false;
+          // Skip table of contents artifacts
+          if (trimmed.toLowerCase().includes('table of contents') && trimmed.length < 120) return false;
+          if (trimmed.toLowerCase().includes('index to') && trimmed.length < 120) return false;
+          // Skip short headers with pipes or specific separator symbols
+          if (trimmed.includes('|') && trimmed.length < 100) return false;
+          // Skip boilerplate Item headers
+          if (/^item\s+(1|1a|7)\.?\s*$/i.test(trimmed)) return false;
+          if (/^(part\s+[i|v|x]+|item\s+\d+)/i.test(trimmed) && trimmed.length < 40) return false;
+          return true;
+        });
 
       if (cleanParagraphs.length === 0) return 'Not available for this ticker.';
 

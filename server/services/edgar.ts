@@ -290,11 +290,52 @@ const USER_AGENT = 'Stocklens Research Agent stocklens-admin@gmail.com';
 
 async function getCik(symbol: string): Promise<string> {
   const sym = symbol.toUpperCase();
-  if (tickerToCikMap[sym]) {
-    if (tickerToCikMap[sym] === 'NONE') {
-      throw new Error(`Ticker ${sym} is known to have no SEC CIK`);
+  const normalizedVariants = [
+    sym,
+    sym.replace('-', '.'),
+    sym.replace('.', '-'),
+    sym.replace(/[-.].*$/, '')
+  ];
+
+  for (const variant of normalizedVariants) {
+    if (tickerToCikMap[variant] && tickerToCikMap[variant] !== 'NONE') {
+      return tickerToCikMap[variant];
     }
-    return tickerToCikMap[sym];
+  }
+
+  const fallbacks: Record<string, string> = {
+    AAPL: '0000320193',
+    MSFT: '0000789019',
+    GOOGL: '0001652044',
+    GOOG: '0001652044',
+    AMZN: '0001018724',
+    NVDA: '0001045810',
+    META: '0001326801',
+    TSLA: '0001318605',
+    JPM: '0000019617',
+    'BRK-B': '0001067983',
+    'BRK.B': '0001067983',
+    'BRK-A': '0001067983',
+    'BRK.A': '0001067983',
+    'BF-B': '0000014693',
+    'BF.B': '0000014693',
+    WMT: '0000104169',
+    DIS: '0001744489',
+    NFLX: '0001065280',
+    V: '0001403161',
+    MA: '0001141391',
+    JNJ: '0000200406',
+    PFE: '0000078003',
+    LLY: '0000059478',
+    UNH: '0000731766',
+    AMD: '0000002488',
+    INTC: '0000050863',
+    AVGO: '0001730168',
+    QCOM: '0000804328'
+  };
+
+  for (const variant of normalizedVariants) {
+    if (fallbacks[variant]) return fallbacks[variant];
   }
 
   // Fetch from SEC
@@ -315,18 +356,9 @@ async function getCik(symbol: string): Promise<string> {
     } catch {}
   } catch (err: any) {
     console.warn('[EDGAR] CIK lookup fallback failed, using defaults:', err.message);
-    const fallbacks: Record<string, string> = {
-      AAPL: '0000320193',
-      MSFT: '0000789019',
-      GOOGL: '0001652044',
-      GOOG: '0001652044',
-      AMZN: '0001018724',
-      NVDA: '0001045810',
-      META: '0001326801',
-      TSLA: '0001318605',
-      JPM: '0000019617',
-    };
-    if (fallbacks[sym]) return fallbacks[sym];
+    for (const variant of normalizedVariants) {
+      if (fallbacks[variant]) return fallbacks[variant];
+    }
     
     // Cache failure to avoid hitting SEC again
     tickerToCikMap[sym] = 'NONE';
@@ -337,8 +369,10 @@ async function getCik(symbol: string): Promise<string> {
     throw new Error(`Could not resolve CIK for ticker ${sym}`);
   }
 
-  if (tickerToCikMap[sym]) {
-    return tickerToCikMap[sym];
+  for (const variant of normalizedVariants) {
+    if (tickerToCikMap[variant] && tickerToCikMap[variant] !== 'NONE') {
+      return tickerToCikMap[variant];
+    }
   }
 
   // Cache failure if still not found
@@ -1524,21 +1558,22 @@ export const edgarService = {
         const shareholderProposals: any[] = [];
         
         // Scan for proposal lists in headers / headings or clean text paragraphs
-        $('h1, h2, h3, h4, h5, h6, p, td').each((_, el) => {
+        $('h1, h2, h3, h4, h5, h6, p, td, b, strong').each((_, el) => {
           const text = cleanText($(el).text());
-          const match = /^(?:proposal|item|proposal no\.)\s+(\d+)\b(.*)$/i.exec(text);
-          if (match && text.length > 10 && text.length < 150) {
+          const match = /^(?:proposal|item|proposal\s+no\.?)\s*(\d+)[\.\s:—\-]+(.*)$/i.exec(text) ||
+                        /^(?:proposal|item|proposal\s+no\.?)\s*(\d+)\b(.*)$/i.exec(text);
+          if (match && text.length > 5 && text.length < 200) {
             const num = match[1];
-            let desc = cleanText(match[2].replace(/^[\-:\s—]+/, ''));
+            let desc = cleanText(match[2].replace(/^[\-:\s—\.]+\s*/, ''));
             if (!desc && $(el).next().length > 0) {
-              desc = cleanText($(el).next().text()).slice(0, 100);
+              desc = cleanText($(el).next().text()).slice(0, 150);
             }
             
             // Avoid duplicates
-            if (!shareholderProposals.some(p => p.item.includes(num))) {
+            if (!shareholderProposals.some(p => p.item === `Proposal ${num}`)) {
               let rec: string | null = null;
               const surroundingText = $(el).parent().text().toLowerCase();
-              if (surroundingText.includes('vote against') || surroundingText.includes('recommends against') || surroundingText.includes('recommend against')) {
+              if (surroundingText.includes('vote against') || surroundingText.includes('recommends against') || surroundingText.includes('recommend against') || surroundingText.includes('recommends a vote against')) {
                 rec = 'AGAINST';
               } else if (surroundingText.includes('vote for') || surroundingText.includes('recommends for') || surroundingText.includes('recommend for') || surroundingText.includes('recommends a vote for')) {
                 rec = 'FOR';
