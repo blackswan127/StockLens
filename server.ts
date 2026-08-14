@@ -93,6 +93,12 @@ async function startServer() {
     else if (req.path.startsWith('/api/screener')) {
       res.set('Cache-Control', 'private, max-age=60');
     }
+    // Reports: never cache (always regenerate fresh)
+    else if (req.path.startsWith('/api/report')) {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+    }
     // Fundamentals/Charts: long TTL
     else if (req.path.startsWith('/api/')) {
       res.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
