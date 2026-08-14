@@ -17,14 +17,14 @@ export const IndicatorCard: React.FC<IndicatorCardProps> = ({ config, observatio
 
   if (error) {
     return (
-      <div className="border border-white/50 bg-white/95 backdrop-blur-xl rounded-2xl shadow-lg p-5 h-[160px] flex flex-col justify-center items-center">
-        <div className="text-gray-900 font-bold mb-2">{config.name}</div>
-        <div className="text-red-500 mb-4 text-sm flex items-center">
-          <span className="mr-1">⚠</span> Failed to load
+      <div className="border border-slate-800 bg-[#0D111A] rounded-2xl p-5 h-[160px] flex flex-col justify-center items-center shadow-xl">
+        <div className="text-slate-200 font-sans font-bold mb-2 text-sm">{config.name}</div>
+        <div className="text-rose-400 mb-3 text-xs font-mono flex items-center gap-1">
+          <span>⚠</span> Failed to load
         </div>
         <button
           onClick={onRetry}
-          className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded transition-colors"
+          className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono font-bold rounded-lg border border-slate-700 transition-colors cursor-pointer"
         >
           Retry
         </button>
@@ -39,7 +39,7 @@ export const IndicatorCard: React.FC<IndicatorCardProps> = ({ config, observatio
 
   const currentValueStr = config.formatter(latestObs.value);
   let changeStr = "—";
-  let changeColor = "text-gray-500";
+  let changeColor = "text-slate-500";
   let changeIcon = "";
 
   if (prevObs) {
@@ -51,9 +51,9 @@ export const IndicatorCard: React.FC<IndicatorCardProps> = ({ config, observatio
       // Handle inverse logic for UNRATE and ICSA (lower is better, so red for up)
       const isInverse = config.id === "UNRATE" || config.id === "ICSA";
       if (isPositive) {
-        changeColor = isInverse ? "text-red-500" : "text-emerald-500";
+        changeColor = isInverse ? "text-rose-400" : "text-emerald-400";
       } else {
-        changeColor = isInverse ? "text-emerald-500" : "text-red-500";
+        changeColor = isInverse ? "text-emerald-400" : "text-rose-400";
       }
 
       // Format diff roughly
@@ -74,32 +74,32 @@ export const IndicatorCard: React.FC<IndicatorCardProps> = ({ config, observatio
     <>
       <div 
         onClick={() => setIsModalOpen(true)}
-        className="border border-white/50 bg-white/95 backdrop-blur-xl rounded-2xl shadow-lg shadow-blue-500/5 p-5 cursor-pointer hover:border-emerald-300 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/20 hover:-translate-y-1.5 flex flex-col justify-between group h-full"
+        className="border border-slate-800 bg-[#0D111A] rounded-2xl p-5 cursor-pointer hover:border-slate-700 hover:bg-[#111723] transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between group h-full shadow-xl"
       >
         <div>
-          <div className="font-mono text-xs text-gray-500 mb-1">{config.id}</div>
-          <div className="font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">
+          <div className="font-mono text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">{config.id}</div>
+          <div className="font-bold text-sm text-slate-200 group-hover:text-emerald-400 transition-colors">
             {config.name}
           </div>
         </div>
         
-        <div className="flex justify-between items-end mt-2">
+        <div className="flex justify-between items-end mt-3">
           <div>
-            <div className="text-2xl font-bold text-gray-900 leading-none">
+            <div className="text-xl sm:text-2xl font-bold font-mono text-slate-100 tabular-nums leading-none">
               {currentValueStr}
             </div>
-            <div className={`text-xs font-medium mt-1.5 ${changeColor}`}>
+            <div className={`text-xs font-mono font-bold mt-1.5 tabular-nums ${changeColor}`}>
               {changeStr}
             </div>
           </div>
           
-          <div className="h-[56px] w-24 shrink-0">
+          <div className="h-[48px] w-24 shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={sparkData}>
                 <Line
                   type="monotone"
                   dataKey="value"
-                  stroke="#22c55e"
+                  stroke="#10B981"
                   strokeWidth={2}
                   dot={false}
                   isAnimationActive={false}

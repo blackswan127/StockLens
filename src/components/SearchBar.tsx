@@ -96,10 +96,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     <div ref={dropdownRef} className="relative w-full">
       {/* Search Input Container */}
       <div className="relative">
-        <Search className={`absolute text-gray-400 ${
+        <Search className={`absolute text-slate-400 ${
           isHero 
-            ? 'left-4.5 top-1/2 -translate-y-1/2 h-5.5 w-5.5 text-emerald-600' 
-            : 'left-3 top-2.5 h-4.5 w-4.5'
+            ? 'left-4.5 top-1/2 -translate-y-1/2 h-5.5 w-5.5 text-emerald-400' 
+            : 'left-3 top-2.5 h-4 w-4 text-slate-400'
         }`} />
         <input
           ref={inputRef}
@@ -111,15 +111,15 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           id={isHero ? 'hero-stock-search' : 'global-stock-search'}
           className={
             isHero
-              ? 'w-full rounded-full border border-gray-200/80 bg-white py-3.5 pl-13 pr-12 text-[15px] font-medium placeholder-gray-400 outline-none shadow-sm transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10'
-              : 'w-full rounded-lg border border-gray-200/80 bg-gray-50/50 py-2 pl-10 pr-10 text-sm placeholder-gray-400 outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/15'
+              ? 'w-full rounded-2xl border border-slate-700/80 bg-[#0D111A]/90 py-3.5 pl-12 pr-12 text-[15px] font-medium text-slate-100 placeholder-slate-500 outline-none shadow-2xl backdrop-blur-xl transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
+              : 'w-full rounded-xl border border-slate-800 bg-[#0D111A]/90 py-1.5 pl-9 pr-9 text-xs text-slate-100 placeholder-slate-500 outline-none transition-all focus:border-emerald-500 focus:bg-[#141A26] focus:ring-1 focus:ring-emerald-500/30'
           }
         />
-        <div className={`absolute right-4.5 top-1/2 -translate-y-1/2 ml-1 items-center flex gap-1 pointer-events-none`}>
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
           {isSearching ? (
-            <Loader2 className="h-4.5 w-4.5 animate-spin text-gray-400" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-400" />
           ) : !isHero && (
-            <div className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-gray-150 bg-white shadow-3xs text-[10px] text-gray-400 font-mono">
+            <div className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-800 bg-slate-900 text-[10px] text-slate-500 font-mono">
               <Command className="h-2.5 w-2.5" />
               <span>K</span>
             </div>
@@ -129,21 +129,23 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
       {/* Autocomplete Results Grid */}
       {isOpen && (
-        <div className={`absolute right-0 z-50 w-full min-w-[310px] max-h-[380px] overflow-y-auto rounded-xl border border-gray-200 bg-white p-2 shadow-xl animate-in fade-in-50 slide-in-from-top-2 duration-150 ${
-          isHero ? 'top-16' : 'top-11'
+        <div className={`absolute top-full mt-2 z-50 rounded-2xl border border-slate-800 bg-[#0D111A] p-2 shadow-2xl backdrop-blur-2xl animate-fade-in ${
+          isHero 
+            ? 'left-0 right-0 w-full max-h-[380px] overflow-y-auto' 
+            : 'right-0 w-[300px] sm:w-[360px] max-h-[380px] overflow-y-auto'
         }`}>
           
           {results.length === 0 ? (
             <div className="px-4 py-6 text-center">
-              <p className="font-sans text-sm text-gray-500 font-medium">No equities found query</p>
-              <p className="font-mono text-xs text-gray-400 mt-1">Try "AAPL", "TCS", "REL" or "Shell"</p>
+              <p className="font-sans text-xs text-slate-400 font-medium">No equities found for "{query}"</p>
+              <p className="font-mono text-[11px] text-slate-500 mt-1">Try "AAPL", "NVDA", "MSFT", or "TSLA"</p>
             </div>
           ) : (
             <div>
-              <div className="px-3 py-1 text-[10px] font-mono tracking-wider text-gray-400 uppercase font-semibold border-b border-gray-55 pb-1.5 mb-1.5 flex justify-between items-center">
-                <span>Autocomplete matches </span>
-                <span className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold">
-                  {results.filter(r => r.isLocal).length} Seeded
+              <div className="px-3 py-1.5 text-[10px] font-mono tracking-wider text-slate-500 uppercase font-semibold border-b border-slate-800/80 pb-1.5 mb-1 flex justify-between items-center">
+                <span>Matching Equities</span>
+                <span className="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-mono font-bold">
+                  {results.length} Found
                 </span>
               </div>
               <div className="space-y-0.5">
@@ -151,7 +153,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                   <button
                     key={item.symbol}
                     onClick={() => handleSelect(item.symbol)}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left hover:bg-emerald-50/40 transition-colors focus:bg-emerald-50/40 outline-none"
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left hover:bg-[#141A26] transition-colors focus:bg-[#141A26] outline-none group border border-transparent hover:border-slate-800"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       {/* Country Flag Badge */}
@@ -159,32 +161,28 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                         src={getCountryFlagUrl(item.exchange)}
                         alt="Flag"
                         referrerPolicy="no-referrer"
-                        className="h-3 w-4 rounded-sm shrink-0 shadow-3xs object-cover"
+                        className="h-3 w-4 rounded-xs shrink-0 shadow-sm object-cover"
                       />
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-bold text-[13px] text-gray-900 group-hover:text-emerald-600">
+                          <span className="font-mono font-bold text-xs text-slate-100 group-hover:text-emerald-400 transition-colors">
                             {item.displaySymbol || item.symbol}
                           </span>
-                          <span className="text-[10px] font-sans font-semibold text-gray-400 px-1 bg-gray-100/90 rounded border border-gray-150">
+                          <span className="text-[9px] font-mono text-slate-400 px-1 bg-slate-800/80 rounded border border-slate-700/80">
                             {getExchangeBadge(item.exchange)}
                           </span>
                         </div>
-                        <p className="truncate text-xs text-gray-500 font-medium mt-0.5">
+                        <p className="truncate text-[11px] text-slate-400 font-medium mt-0.5">
                           {item.description}
                         </p>
                       </div>
                     </div>
                     
-                    {/* Source marker tag */}
-                    <div className="flex items-center gap-1 shrink-0 ml-2">
-                      <span className={`text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded ${
-                        item.isLocal 
-                          ? 'bg-amber-50 text-amber-700 border border-amber-150' 
-                          : 'bg-indigo-50 text-indigo-700 border border-indigo-150'
-                      }`}>
-                        {item.isLocal ? 'Seeded' : 'Global'}
-                      </span>
+                    {/* Action arrow indicator */}
+                    <div className="flex items-center shrink-0 ml-2 text-slate-600 group-hover:text-emerald-400 transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </button>
                 ))}

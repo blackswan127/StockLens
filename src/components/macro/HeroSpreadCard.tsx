@@ -16,32 +16,32 @@ export const HeroSpreadCard: React.FC<HeroSpreadCardProps> = ({ spreadData }) =>
   const latestValue = spreadData[spreadData.length - 1].value;
   const isNormal = latestValue >= 0;
 
-  const strokeColor = isNormal ? "#22c55e" : "#ef4444";
-  const fillColor = isNormal ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)";
+  const strokeColor = isNormal ? "#10B981" : "#F43F5E";
+  const fillColor = isNormal ? "rgba(16,185,129,0.15)" : "rgba(244,63,94,0.15)";
 
   return (
     <div 
-      className="border border-white/50 bg-white/95 backdrop-blur-xl rounded-3xl p-6 relative overflow-hidden flex flex-col justify-between min-h-[300px] shadow-xl shadow-blue-500/5 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/20 hover:-translate-y-2"
+      className="border border-slate-800 bg-[#0D111A] rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between min-h-[300px] shadow-xl transition-all duration-200"
       style={{ borderLeftWidth: "4px", borderLeftColor: strokeColor }}
     >
-      <div className="flex flex-col sm:flex-row justify-between items-start mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Yield Curve Spread (10Y − 2Y)</h2>
+          <h2 className="text-lg font-bold font-sans text-slate-100">Yield Curve Spread (10Y − 2Y)</h2>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-4xl font-bold text-gray-900 tracking-tight">
+            <span className="text-3xl sm:text-4xl font-black font-mono text-slate-100 tracking-tight tabular-nums">
               {formatSpreadValue(latestValue)}
             </span>
             <div 
-              className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center ${
-                isNormal ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"
+              className={`px-3 py-1 rounded-full text-xs font-mono font-bold flex items-center border ${
+                isNormal ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-rose-500/15 text-rose-400 border-rose-500/30"
               }`}
             >
-              {isNormal ? "● Normal" : "⚠ Inverted — Recession Signal"}
+              {isNormal ? "● Normal Slope" : "⚠ Inverted — Recession Watch"}
             </div>
           </div>
         </div>
         
-        <div className="mt-4 sm:mt-0 z-10">
+        <div className="z-10">
           <TimeRangeTabs
             ranges={["1M", "6M", "1Y", "5Y", "10Y", "Max"]}
             activeRange={activeRange}
@@ -54,7 +54,7 @@ export const HeroSpreadCard: React.FC<HeroSpreadCardProps> = ({ spreadData }) =>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={filteredData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
             <Tooltip
-              contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
+              contentStyle={{ backgroundColor: "#0D111A", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", color: "#F8FAFC", fontFamily: "JetBrains Mono" }}
               labelFormatter={(label) => new Date(label).toLocaleDateString()}
               formatter={(val: any) => [formatSpreadValue(Number(val)), "Spread"]}
             />

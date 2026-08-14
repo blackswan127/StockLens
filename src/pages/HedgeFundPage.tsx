@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '../utils/apiClient.js';
-import { Briefcase, Loader2, Target, DollarSign, TrendingUp, AlertTriangle, CheckCircle, XCircle, X } from 'lucide-react';
+import { Bot, Loader2, Target, DollarSign, TrendingUp, AlertTriangle, CheckCircle, XCircle, X, ShieldCheck, Zap, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatPrice } from '../utils/formatters.js';
 import { SearchBar } from '../components/SearchBar.jsx';
+import { TerminalCard } from '../components/ui/TerminalCard.js';
+import { TelemetryBadge } from '../components/ui/TelemetryBadge.js';
+import { RadarInvestorChart } from '../components/ui/RadarInvestorChart.js';
+import { AnimatedNumber } from '../components/ui/AnimatedNumber.js';
 
 interface AgentResult {
   signal: 'bullish' | 'bearish' | 'neutral';
@@ -38,6 +42,12 @@ interface HedgeFundResult {
   summary: string[];
 }
 
+const PRESET_BASKETS = [
+  { name: 'Tech Titans', tickers: ['AAPL', 'MSFT', 'NVDA', 'GOOGL'] },
+  { name: 'Value Moats', tickers: ['BRK-B', 'JNJ', 'KO', 'PG'] },
+  { name: 'Growth & EV', tickers: ['TSLA', 'AMZN', 'META', 'PLTR'] },
+];
+
 export const HedgeFundPage: React.FC = () => {
   const [tickers, setTickers] = useState<string[]>(['AAPL', 'TSLA', 'NVDA']);
   const [cashInput, setCashInput] = useState(100000);
@@ -56,61 +66,114 @@ export const HedgeFundPage: React.FC = () => {
   };
 
   const getSignalIcon = (signal: string) => {
-    if (signal === 'bullish') return <CheckCircle className="h-5 w-5 text-emerald-500" />;
-    if (signal === 'bearish') return <XCircle className="h-5 w-5 text-rose-500" />;
-    return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+    if (signal === 'bullish') return <CheckCircle className="h-4 w-4 text-emerald-400" />;
+    if (signal === 'bearish') return <XCircle className="h-4 w-4 text-rose-400" />;
+    return <AlertTriangle className="h-4 w-4 text-amber-400" />;
   };
 
-  const getSignalColor = (signal: string) => {
-    if (signal === 'bullish') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    if (signal === 'bearish') return 'bg-rose-50 text-rose-700 border-rose-200';
-    return 'bg-amber-50 text-amber-700 border-amber-200';
+  const getSignalBadge = (signal: string) => {
+    if (signal === 'bullish') return 'telemetry-emerald';
+    if (signal === 'bearish') return 'telemetry-rose';
+    return 'telemetry-amber';
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8 animate-in fade-in duration-300">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-gray-200 pb-6">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Briefcase className="h-7 w-7 text-indigo-600" />
-            <h1 className="font-sans text-3xl font-black bg-gradient-to-r from-emerald-600 via-teal-500 to-blue-600 bg-clip-text text-transparent tracking-tight drop-shadow-sm">AI Hedge Fund Engine</h1>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8 animate-fade-in">
+      {/* Header Banner */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-800 pb-6">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-700 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+              <Bot className="h-5 w-5" />
+            </div>
+            <div className="flex items-center gap-3">
+              <h1 className="font-sans text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight">
+                7-Agent Hedge Fund Terminal
+              </h1>
+              <TelemetryBadge variant="indigo" label="MULTI-AGENT AI" pulse size="xs" />
+            </div>
           </div>
-          <p className="font-sans text-sm text-gray-500 max-w-2xl">
-            Evaluate a basket of stocks using the deterministic logic of 7 legendary investors.
-            Simulate a portfolio allocation based on conviction and risk management rules.
+          <p className="font-sans text-xs sm:text-sm text-slate-400 max-w-2xl leading-relaxed">
+            Deterministic philosophical scoring engine simulating Warren Buffett, Charlie Munger, Ben Graham, Phil Fisher, Stan Druckenmiller, Bill Ackman, and Cathie Wood.
           </p>
+        </div>
+
+        {/* Total portfolio cash preview badge */}
+        <div className="flex items-center gap-3 bg-[#0D111A] border border-slate-800 px-4 py-2.5 rounded-2xl shrink-0 shadow-md">
+          <DollarSign className="h-5 w-5 text-emerald-400" />
+          <div>
+            <span className="text-[10px] font-mono uppercase text-slate-500 block">Allocatable Capital</span>
+            <span className="font-mono font-black text-slate-100 text-sm">
+              <AnimatedNumber value={cashInput} prefix="$" decimals={0} />
+            </span>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-6 relative z-50">
-          <div className="border border-white/50 rounded-3xl bg-white/95 backdrop-blur-xl shadow-xl shadow-indigo-500/10 p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/15">
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Target className="h-5 w-5 text-indigo-500" />
-              Engine Configuration
-            </h2>
-            <div className="space-y-4">
+        {/* Left Config Panel */}
+        <div className="lg:col-span-1 space-y-6">
+          <TerminalCard
+            title="Cockpit Controls"
+            subtitle="Configure target basket & risk parameters"
+            icon={<Target className="h-4 w-4" />}
+          >
+            <div className="space-y-5">
+              {/* Presets */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Tickers to Evaluate (max 10)</label>
-                <div className="flex flex-wrap gap-2 mb-3">
+                <span className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-2">
+                  Quick Basket Presets
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {PRESET_BASKETS.map((b) => (
+                    <button
+                      key={b.name}
+                      onClick={() => setTickers(b.tickers)}
+                      className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors"
+                    >
+                      {b.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Selected Tickers */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-xs font-semibold text-slate-300">Target Equities ({tickers.length}/10)</label>
+                  {tickers.length > 0 && (
+                    <button
+                      onClick={() => setTickers([])}
+                      className="text-[10px] font-mono text-slate-500 hover:text-slate-300"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
+                
+                <div className="flex flex-wrap gap-1.5 mb-3 min-h-[38px] p-2 rounded-xl bg-[#080B11] border border-slate-800">
                   {tickers.map((ticker) => (
-                    <div key={ticker} className="flex items-center gap-1 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100 text-sm font-bold font-mono shadow-sm transition-all hover:shadow-md">
-                      {ticker}
+                    <div
+                      key={ticker}
+                      className="flex items-center gap-1 bg-[#141A26] text-emerald-400 px-2.5 py-1 rounded-lg border border-slate-700 text-xs font-bold font-mono group"
+                    >
+                      <span>{ticker}</span>
                       <button 
                         onClick={() => setTickers(tickers.filter(t => t !== ticker))}
-                        className="hover:bg-indigo-200 text-indigo-500 hover:text-indigo-800 rounded-full p-0.5 ml-1 transition-colors"
+                        className="hover:bg-slate-800 text-slate-500 hover:text-rose-400 rounded-md p-0.5 ml-1 transition-colors"
                       >
-                        <X className="h-3.5 w-3.5" />
+                        <X className="h-3 w-3" />
                       </button>
                     </div>
                   ))}
                   {tickers.length === 0 && (
-                    <span className="text-sm text-gray-500 italic py-1.5">No tickers added yet.</span>
+                    <span className="text-xs text-slate-500 italic py-1 px-1">Add up to 10 tickers below...</span>
                   )}
                 </div>
+
                 {tickers.length < 10 && (
                   <SearchBar 
-                    placeholder="Search to add ticker..." 
+                    placeholder="Search ticker to add (e.g. MSFT)..." 
                     onSelect={(sym) => {
                       if (!tickers.includes(sym.toUpperCase())) {
                         setTickers([...tickers, sym.toUpperCase()]);
@@ -119,13 +182,15 @@ export const HedgeFundPage: React.FC = () => {
                   />
                 )}
               </div>
+
+              {/* Starting Cash */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Starting Cash Balance ($)</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Capital Pool ($ USD)</label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                  <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
                   <input
                     type="number"
-                    className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono"
+                    className="w-full rounded-xl border border-slate-800 bg-[#080B11] pl-9 pr-3 py-2 text-xs font-mono text-slate-100 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
                     value={cashInput}
                     onChange={(e) => setCashInput(Number(e.target.value))}
                     min="1000"
@@ -133,132 +198,198 @@ export const HedgeFundPage: React.FC = () => {
                   />
                 </div>
               </div>
+
+              {/* Run Button */}
               <button
                 onClick={handleRun}
-                disabled={mutation.isPending}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                disabled={mutation.isPending || tickers.length === 0}
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-lg shadow-emerald-950/40 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 text-xs tracking-wider uppercase font-mono"
               >
                 {mutation.isPending ? (
                   <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Running Simulation...
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Evaluating 7 Personas...</span>
                   </>
                 ) : (
                   <>
-                    <TrendingUp className="h-5 w-5" />
-                    Run Hedge Fund Engine
+                    <Sparkles className="h-4 w-4" />
+                    <span>Execute Fund Consensus</span>
                   </>
                 )}
               </button>
             </div>
-          </div>
+          </TerminalCard>
 
+          {/* Portfolio Summary Card */}
           {mutation.data && (
-            <div className="border border-white/50 rounded-3xl bg-white/95 backdrop-blur-xl shadow-xl shadow-indigo-500/10 p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/15 mt-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-emerald-500" />
-                Portfolio Summary
-              </h2>
-              <ul className="space-y-3">
+            <TerminalCard
+              title="Execution Summary"
+              subtitle="Capital allocation & risk limits"
+              icon={<ShieldCheck className="h-4 w-4 text-emerald-400" />}
+            >
+              <ul className="space-y-2.5 text-xs text-slate-300">
                 {mutation.data.summary.map((text, idx) => (
-                  <li key={idx} className="text-sm text-gray-700 flex items-start gap-2">
-                    <span className="text-emerald-500 mt-0.5">•</span>
-                    {text}
+                  <li key={idx} className="flex items-start gap-2 bg-[#080B11]/80 p-2.5 rounded-xl border border-slate-800/80">
+                    <span className="text-emerald-400 font-bold shrink-0 mt-0.5">•</span>
+                    <span className="leading-relaxed">{text}</span>
                   </li>
                 ))}
               </ul>
-            </div>
+            </TerminalCard>
           )}
         </div>
 
+        {/* Right Results Pane */}
         <div className="lg:col-span-2 space-y-6">
           {mutation.isError && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl text-sm font-medium flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Failed to run engine. Ensure tickers are valid.
+            <div className="bg-rose-950/40 border border-rose-800/60 text-rose-300 p-4 rounded-2xl text-xs font-medium flex items-center gap-2.5">
+              <AlertTriangle className="h-5 w-5 text-rose-400 shrink-0" />
+              <span>Failed to execute engine evaluation. Please verify tickers and try again.</span>
             </div>
           )}
 
           {!mutation.data && !mutation.isPending && !mutation.isError && (
-            <div className="border border-dashed border-white/80 rounded-3xl p-12 text-center bg-white/50 backdrop-blur-xl shadow-xl shadow-indigo-500/5 flex flex-col items-center justify-center text-gray-500 h-full min-h-[300px]">
-              <Target className="h-12 w-12 text-gray-300 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Ready to Allocate</h3>
-              <p className="max-w-md mx-auto text-sm">
-                Enter your target tickers and cash balance, then run the engine to see what the legends think.
+            <div className="border border-dashed border-slate-800 rounded-3xl p-12 text-center bg-[#090D15]/60 backdrop-blur-xl flex flex-col items-center justify-center text-slate-400 min-h-[380px]">
+              <div className="h-16 w-16 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-center text-slate-500 mb-4 shadow-inner">
+                <Target className="h-8 w-8 text-emerald-500/60" />
+              </div>
+              <h3 className="text-base font-bold text-slate-200 mb-1.5">Cockpit Standing By</h3>
+              <p className="max-w-md mx-auto text-xs text-slate-500 leading-relaxed">
+                Add your target equity tickers, specify portfolio cash, and run the simulation to generate 7-agent conviction scorecards and interactive radar charts.
               </p>
             </div>
           )}
 
           {mutation.data && (
             <div className="space-y-4">
-              <h2 className="text-xl font-black text-gray-900 border-b border-gray-200 pb-2">Analysis Results</h2>
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider font-mono flex items-center gap-2">
+                  <span>Persona Decisions</span>
+                  <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400">
+                    {Object.keys(mutation.data.decisions).length} Evaluated
+                  </span>
+                </h2>
+                <span className="text-[11px] font-mono text-slate-500">Click row to inspect radar chart</span>
+              </div>
               
               {Object.entries(mutation.data.decisions).map(([symbol, decision]) => {
                 const evalData = mutation.data.evaluations[symbol];
                 const isExpanded = expandedStock === symbol;
 
+                const actionStyle =
+                  decision.action === 'BUY'
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    : decision.action === 'SELL'
+                    ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                    : 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+
                 return (
-                  <div key={symbol} className="border border-white/50 rounded-3xl bg-white/95 backdrop-blur-xl shadow-xl shadow-indigo-500/10 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/15 hover:-translate-y-1">
+                  <div
+                    key={symbol}
+                    className="rounded-2xl border border-slate-800 bg-[#0D111A] overflow-hidden transition-all duration-300 hover:border-slate-700 shadow-3d card-3d-tilt"
+                  >
                     {/* Header Row */}
                     <div 
-                      className="p-5 flex flex-wrap items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="p-5 flex flex-wrap items-center justify-between cursor-pointer hover:bg-[#141A26] transition-colors gap-4"
                       onClick={() => setExpandedStock(isExpanded ? null : symbol)}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-16 text-center py-2 rounded-lg font-black text-lg ${decision.action === 'BUY' ? 'bg-emerald-100 text-emerald-800' : decision.action === 'SELL' ? 'bg-rose-100 text-rose-800' : 'bg-gray-100 text-gray-800'}`}>
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className={`px-3 py-1.5 rounded-xl font-black font-mono text-xs border tracking-wider shrink-0 ${actionStyle}`}>
                           {decision.action}
                         </div>
-                        <div>
-                          <h3 className="font-bold text-xl text-gray-900 flex items-center gap-2">
-                            {symbol}
-                            <span className="text-sm font-medium text-gray-500 font-mono">
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
+                            <span>{symbol}</span>
+                            <span className="text-xs font-semibold text-slate-400 font-mono">
                               {evalData ? formatPrice(evalData.price, 'USD') : ''}
                             </span>
                           </h3>
-                          <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                          <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2 font-mono">
                             {decision.quantity > 0 ? (
-                              <span className="font-semibold text-indigo-600">
+                              <span className="text-emerald-400 font-semibold">
                                 Allocated {decision.quantity} shares ({formatPrice(decision.allocationAmount, 'USD')})
                               </span>
                             ) : (
-                              <span>No allocation</span>
+                              <span className="text-slate-500">Zero allocation</span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="mt-4 sm:mt-0 max-w-sm text-xs text-gray-600">
-                        <ul className="space-y-1">
-                          {decision.reasoning.map((r, i) => (
-                            <li key={i}>• {r}</li>
-                          ))}
-                        </ul>
+
+                      {/* Brief reasoning snippet */}
+                      <div className="flex items-center gap-4 ml-auto">
+                        <div className="hidden sm:block max-w-xs text-right text-[11px] text-slate-400">
+                          <span className="truncate block">{decision.reasoning[0] || 'Standard risk filter applied'}</span>
+                        </div>
+                        <div className="p-1 rounded-lg bg-slate-800/80 text-slate-400 btn-3d">
+                          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Expanded Details */}
+                    {/* Expanded 7-Agent Details & Radar Chart */}
                     {isExpanded && evalData && (
-                      <div className="border-t border-gray-100 bg-gray-50/50 p-5">
-                        <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-200 pb-2">Individual Agent Scorecards</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {Object.entries(evalData.agents).map(([agentName, result]) => (
-                            <div key={agentName} className={`p-4 rounded-2xl border ${getSignalColor(result.signal)} shadow-sm backdrop-blur-md`}>
-                              <div className="flex justify-between items-center mb-2">
-                                <span className="font-bold capitalize">{agentName.replace(/([A-Z])/g, ' $1').trim()}</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-white/50">{result.confidence.toFixed(0)}% Conviction</span>
-                                  {getSignalIcon(result.signal)}
-                                </div>
-                              </div>
-                              <ul className="text-xs space-y-1 mt-2">
-                                {result.reasoning.map((r, i) => (
-                                  <li key={i} className={r.startsWith('✅') ? 'text-emerald-700' : r.startsWith('❌') ? 'text-rose-700' : ''}>
-                                    {r}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          ))}
+                      <div className="border-t border-slate-800 bg-[#080B11] p-6 space-y-6 animate-fade-in">
+                        
+                        {/* Radar Chart Visualizer Row */}
+                        <div className="bg-[#0D111A] rounded-2xl p-4 border border-slate-800 flex flex-col md:flex-row items-center justify-around gap-6 shadow-3d">
+                          <div>
+                            <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold block mb-1">
+                              7-Investor Conviction Radar
+                            </span>
+                            <p className="text-[11px] text-slate-500 max-w-xs leading-relaxed">
+                              Multi-vector analysis measuring alignment across value, growth, quality, quant momentum, and margin of safety.
+                            </p>
+                          </div>
+                          <RadarInvestorChart agents={evalData.agents} symbol={symbol} size={280} />
                         </div>
+
+                        {/* Individual Agent Cards Grid */}
+                        <div>
+                          <h4 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-3">
+                            Individual Persona Scorecards
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {Object.entries(evalData.agents).map(([agentKey, result]) => {
+                              const badgeClass = getSignalBadge(result.signal);
+                              return (
+                                <div
+                                  key={agentKey}
+                                  className="p-4 rounded-xl border border-slate-800 bg-[#0D111A] space-y-2 hover:border-slate-700 transition-colors shadow-3d card-3d-tilt"
+                                >
+                                  <div className="flex justify-between items-center">
+                                    <span className="font-sans font-bold text-xs text-slate-200 capitalize">
+                                      {agentKey.replace(/([A-Z])/g, ' $1').trim()}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                                        {result.confidence.toFixed(0)}% Conviction
+                                      </span>
+                                      {getSignalIcon(result.signal)}
+                                    </div>
+                                  </div>
+                                  <ul className="text-[11px] space-y-1 text-slate-400">
+                                    {result.reasoning.map((r, i) => (
+                                      <li
+                                        key={i}
+                                        className={
+                                          r.startsWith('✅')
+                                            ? 'text-emerald-400'
+                                            : r.startsWith('❌')
+                                            ? 'text-rose-400'
+                                            : 'text-slate-300'
+                                        }
+                                      >
+                                        {r}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
                       </div>
                     )}
                   </div>

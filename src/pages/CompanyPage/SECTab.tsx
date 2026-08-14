@@ -214,21 +214,21 @@ export const SECTab: React.FC<SECTabProps> = ({
   };
 
   return (
-    <div id="sec" className="space-y-6 scroll-mt-20">
-      <div className="bg-white border border-[#E5E8EF] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] space-y-5">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-100 pb-4">
+    <div id="sec" className="space-y-6 scroll-mt-20 animate-fade-in">
+      <div className="bg-[#0D111A] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-800/80 pb-4">
           <div>
-            <h3 className="text-[14px] font-bold text-slate-900 uppercase tracking-[0.08em] flex items-center gap-1.5">
-              <span>🏛️ SEC EDGAR Filings Integration</span>
-              <span className="bg-emerald-50 text-[#059669] text-[10px] px-1.5 py-0.5 rounded font-mono uppercase tracking-wider font-semibold">Live Integration</span>
+            <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <span>🏛️ SEC EDGAR Filings & XBRL Intelligence</span>
+              <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded font-mono uppercase tracking-wider font-bold">Live Stream</span>
             </h3>
-            <p className="text-[11px] font-medium text-slate-400 mt-1">
-              Access standardized financial statements, form 4 insider transactions, institutional 13F portfolios, and AI-powered 10-K section diffing.
+            <p className="text-[11px] font-mono text-slate-500 mt-1">
+              Direct primary filings: XBRL standardized financial data, Form 4 insider rosters, 13F institutional portfolios, and Section diffs.
             </p>
           </div>
 
           {/* Interactive sub-tabs switcher */}
-          <div className="flex bg-slate-50 p-1 rounded-lg border border-[#E5E8EF] overflow-x-auto scrollbar-none w-full lg:w-auto shrink-0 gap-1">
+          <div className="flex bg-[#080B11] p-1 rounded-xl border border-slate-800 overflow-x-auto scrollbar-none w-full lg:w-auto shrink-0 gap-1 font-mono text-xs">
             {[
               { id: 'standardized', label: '📊 Standardized Statements' },
               { id: 'insiders', label: '👥 Insider Activities' },
@@ -241,10 +241,10 @@ export const SECTab: React.FC<SECTabProps> = ({
                 onClick={() => {
                   setActiveSecSubTab(subTab.id as any);
                 }}
-                className={`flex-1 lg:flex-none px-4 py-2 text-xs font-semibold rounded-md transition-colors whitespace-nowrap ${
+                className={`flex-1 lg:flex-none px-3.5 py-1.5 font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
                   activeSecSubTab === subTab.id 
-                    ? 'bg-[#059669] text-white shadow-sm font-bold' 
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/50'
+                    ? 'bg-[#141A26] text-emerald-400 border border-slate-700 shadow-sm' 
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
                 }`}
               >
                 {subTab.label}
@@ -255,9 +255,9 @@ export const SECTab: React.FC<SECTabProps> = ({
 
         {/* Sub-tab: Standardized Statements */}
         {activeSecSubTab === 'standardized' && (
-          <div className="space-y-5 animate-in fade-in duration-200">
-            <div className="bg-slate-50 rounded-xl p-4 border border-[#E5E8EF] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="flex flex-wrap gap-2">
+          <div className="space-y-5 animate-fade-in">
+            <div className="bg-[#080B11] rounded-xl p-4 border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="flex flex-wrap gap-1.5 font-mono text-xs">
                 {[
                   { id: 'income', label: 'Income Statement' },
                   { id: 'balance', label: 'Balance Sheet' },
@@ -266,10 +266,10 @@ export const SECTab: React.FC<SECTabProps> = ({
                   <button
                     key={stmt.id}
                     onClick={() => setActiveSecStatement(stmt.id as any)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                    className={`px-3 py-1.5 font-semibold rounded-lg border transition-all cursor-pointer ${
                       activeSecStatement === stmt.id
-                        ? 'bg-white border-[#059669] text-[#059669] shadow-xs font-bold'
-                        : 'bg-white border-[#E5E8EF] text-slate-500 hover:text-slate-800'
+                        ? 'bg-[#141A26] border-emerald-500/50 text-emerald-400 shadow-xs font-bold'
+                        : 'bg-[#0D111A] border-slate-800 text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     {stmt.label}
@@ -277,13 +277,13 @@ export const SECTab: React.FC<SECTabProps> = ({
                 ))}
               </div>
 
-              <div className="flex items-center gap-2.5 w-full md:w-auto">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide shrink-0">Compare with Peer:</span>
+              <div className="flex items-center gap-2.5 w-full md:w-auto font-mono text-xs">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Compare Peer:</span>
                 <div className="relative flex-1 md:flex-none">
                   <select
                     value={secComparePeer}
                     onChange={(e) => setSecComparePeer(e.target.value)}
-                    className="w-full md:w-48 bg-white border border-[#E5E8EF] rounded-lg py-1.5 px-3 text-xs font-sans font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#059669]"
+                    className="w-full md:w-48 bg-[#0D111A] border border-slate-800 rounded-lg py-1.5 px-3 text-xs font-mono font-semibold text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   >
                     <option value="">None (Select Ticker)</option>
                     {peers && peers.filter(p => p.symbol !== upperSymbol).map(peer => (
@@ -296,7 +296,7 @@ export const SECTab: React.FC<SECTabProps> = ({
                 {secComparePeer && (
                   <button
                     onClick={() => setSecComparePeer('')}
-                    className="px-2.5 py-1.5 text-[10px] text-red-500 hover:bg-red-50 border border-red-200 rounded-lg font-bold uppercase transition"
+                    className="px-2.5 py-1.5 text-[10px] text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-lg font-bold uppercase transition"
                   >
                     Clear
                   </button>

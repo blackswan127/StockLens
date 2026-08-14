@@ -1,15 +1,46 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", "Fira Code", SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* Font smoothing & rendering overrides */
+:root {
+  --bg-void: #06080D;
+  --surface-card: #0D111A;
+  --surface-hover: #141A26;
+  --surface-elevated: #1B2232;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(255, 255, 255, 0.16);
+  --accent-emerald: #10B981;
+  --accent-rose: #F43F5E;
+  --accent-amber: #F59E0B;
+  --accent-indigo: #6366F1;
+  --accent-violet: #8B5CF6;
+  --accent-sky: #38BDF8;
+}
+
+/* Base smoothing & dark background */
 html, body {
+  background-color: #06080D;
+  color: #E2E8F0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Global input & form controls visibility guarantee */
+input, select, textarea {
+  color: #F1F5F9;
+}
+input::placeholder, textarea::placeholder {
+  color: #64748B;
+}
+
+/* Numeric alignment rule for zero jitter during price shifts */
+.font-mono, [data-tabular="true"] {
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 /* Smooth in-page anchoring; respect reduced-motion preferences */
@@ -28,11 +59,11 @@ html {
   }
 }
 
-/* Accessible keyboard focus — visible ring only for keyboard users, not mouse clicks */
+/* Accessible keyboard focus ring */
 :focus-visible {
-  outline: 2px solid var(--color-emerald-500, #10b981);
+  outline: 2px solid var(--accent-emerald, #10B981);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 /* Custom scrollbar utility (fully hidden) */
@@ -44,29 +75,29 @@ html {
   scrollbar-width: none;
 }
 
-/* Thin, themed scrollbars app-wide for a polished, production feel */
+/* Obsidian Pro ultra-thin scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
 *::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 *::-webkit-scrollbar-track {
   background: transparent;
 }
 *::-webkit-scrollbar-thumb {
-  background-color: rgba(100, 116, 139, 0.3);
+  background-color: rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   background-clip: content-box;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(100, 116, 139, 0.55);
+  background-color: rgba(255, 255, 255, 0.25);
 }
 
-/* ---- Reusable motion utilities (used across pages for content reveal) ---- */
+/* Reusable Terminal & Motion Utilities */
 @keyframes sl-fade-in-up {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -75,7 +106,11 @@ html {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-@keyframes sl-shimmer {
+@keyframes sl-pulse-glow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 0.8; transform: scale(1.05); }
+}
+@keyframes sl-dark-shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
@@ -86,15 +121,110 @@ html {
 .animate-fade-in {
   animation: sl-fade-in 0.35s ease-out both;
 }
+.animate-pulse-glow {
+  animation: sl-pulse-glow 3s ease-in-out infinite;
+}
 
 /* Skeleton shimmer surface for loading placeholders */
 .sl-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(148, 163, 184, 0.08) 25%,
-    rgba(148, 163, 184, 0.20) 37%,
-    rgba(148, 163, 184, 0.08) 63%
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 37%,
+    rgba(255, 255, 255, 0.03) 63%
   );
   background-size: 200% 100%;
-  animation: sl-shimmer 1.4s ease-in-out infinite;
+  animation: sl-dark-shimmer 1.5s ease-in-out infinite;
 }
+
+/* Obsidian Glass Surface Helpers & 3D Visual Engine */
+.obsidian-card {
+  background: #0D111A;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.1) inset, 0 12px 30px -8px rgba(0, 0, 0, 0.8), 0 4px 12px -2px rgba(0, 0, 0, 0.6);
+  transform: perspective(1200px) translateZ(0);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, border-color 0.2s ease;
+}
+
+.obsidian-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: perspective(1200px) translateY(-4px) rotateX(1.5deg) translateZ(10px);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.2) inset, 0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 25px -5px rgba(16, 185, 129, 0.15);
+}
+
+.obsidian-card-active {
+  background: #141A26;
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 1px 0 0 rgba(16, 185, 129, 0.3) inset, 0 16px 36px -8px rgba(0, 0, 0, 0.85), 0 0 20px -3px rgba(16, 185, 129, 0.2);
+}
+
+/* 3D Tactile Physical Tokens */
+.shadow-3d {
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.12) inset, 0 10px 25px -5px rgba(0, 0, 0, 0.75), 0 2px 8px -1px rgba(0, 0, 0, 0.55);
+}
+
+.shadow-3d-lg {
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.15) inset, 0 20px 45px -10px rgba(0, 0, 0, 0.85), 0 4px 14px -2px rgba(0, 0, 0, 0.6);
+}
+
+.shadow-3d-glow {
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.2) inset, 0 20px 45px -10px rgba(0, 0, 0, 0.9), 0 0 30px -5px rgba(16, 185, 129, 0.2);
+}
+
+.shadow-3d-emboss {
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* 3D Tactile Interactive Buttons */
+.btn-3d {
+  position: relative;
+  transform: perspective(600px) translateZ(0);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.15) inset, 0 3px 0 0 rgba(0, 0, 0, 0.7), 0 6px 16px rgba(0, 0, 0, 0.5);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-3d:hover {
+  transform: perspective(600px) translateY(-1.5px) translateZ(4px);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.25) inset, 0 4px 0 0 rgba(0, 0, 0, 0.75), 0 10px 22px rgba(0, 0, 0, 0.6);
+}
+
+.btn-3d:active {
+  transform: perspective(600px) translateY(2px) translateZ(0);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.08) inset, 0 1px 0 0 rgba(0, 0, 0, 0.7), 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.card-3d-tilt {
+  transform: perspective(1000px) translateZ(0);
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease, border-color 0.2s ease;
+  will-change: transform;
+}
+
+.card-3d-tilt:hover {
+  transform: perspective(1000px) translateY(-6px) rotateX(2deg) rotateY(-1deg) translateZ(15px);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.2) inset, 0 25px 55px -12px rgba(0, 0, 0, 0.92), 0 0 30px -5px rgba(16, 185, 129, 0.18);
+}
+
+.telemetry-emerald {
+  color: #10B981;
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.telemetry-rose {
+  color: #F43F5E;
+  background-color: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+}
+
+.telemetry-amber {
+  color: #F59E0B;
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.telemetry-indigo {
+  color: #818CF8;
+  background-color: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+

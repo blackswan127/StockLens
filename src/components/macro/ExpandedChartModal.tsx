@@ -27,27 +27,27 @@ export const ExpandedChartModal: React.FC<ExpandedChartModalProps> = ({
   const filteredData = filterByRange(observations, activeRange);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in" onClick={onClose}>
       <div
-        className="w-full max-w-[800px] bg-white rounded-xl shadow-xl p-8"
+        className="w-full max-w-[800px] bg-[#0D111A] border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8"
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
       >
-        <div className="flex justify-between items-start mb-6">
-          <div className="max-w-[75%]">
-            <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-            <div className="text-3xl font-bold text-gray-900 mt-2">{currentValue}</div>
+        <div className="flex justify-between items-start mb-6 gap-4">
+          <div className="max-w-[80%]">
+            <h2 className="text-xl font-bold font-sans text-slate-100">{title}</h2>
+            <div className="text-3xl font-black font-mono text-slate-100 mt-1 tabular-nums">{currentValue}</div>
             {interpretation && (
-              <div className="mt-4 p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-sm text-indigo-900 leading-relaxed font-medium">
+              <div className="mt-3 p-3 bg-[#080B11] border border-slate-800 rounded-xl text-xs text-slate-300 leading-relaxed font-sans">
                 {interpretation}
               </div>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -63,31 +63,33 @@ export const ExpandedChartModal: React.FC<ExpandedChartModalProps> = ({
 
         <div className="h-[320px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={filteredData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+            <AreaChart data={filteredData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 12, fill: "#6b7280" }}
+                tick={{ fontSize: 11, fill: "#64748B", fontFamily: "JetBrains Mono" }}
                 tickFormatter={(val) => {
                   const d = new Date(val);
                   return `${d.getMonth() + 1}/${d.getFullYear().toString().slice(2)}`;
                 }}
                 tickMargin={10}
+                stroke="#334155"
               />
               <YAxis
                 domain={["auto", "auto"]}
-                tick={{ fontSize: 12, fill: "#6b7280" }}
+                tick={{ fontSize: 11, fill: "#64748B", fontFamily: "JetBrains Mono" }}
                 tickFormatter={(val) => val.toString()}
+                stroke="#334155"
               />
               <Tooltip
-                contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
+                contentStyle={{ backgroundColor: "#0D111A", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", color: "#F8FAFC", fontFamily: "JetBrains Mono" }}
                 labelFormatter={(label) => new Date(label).toLocaleDateString()}
               />
               <Area
                 type="monotone"
                 dataKey="value"
-                stroke="#22c55e"
+                stroke="#10B981"
                 strokeWidth={2}
-                fill="rgba(34,197,94,0.08)"
+                fill="rgba(16,185,129,0.15)"
               />
             </AreaChart>
           </ResponsiveContainer>

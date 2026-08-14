@@ -10,7 +10,6 @@ import { CompanyPageSkeleton } from '../../components/Skeleton.jsx';
 
 import { OverviewTab } from './OverviewTab.jsx';
 import { AnalysisTab } from './AnalysisTab.jsx';
-import { CongressionalTrading } from '../../components/congress/CongressionalTrading.jsx';
 import { InfoTab } from './InfoTab.jsx';
 import { SECTab } from './SECTab.jsx';
 
@@ -278,148 +277,165 @@ export const CompanyPage: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full py-6">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 animate-in fade-in duration-200">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 animate-fade-in">
         
         {/* Breadcrumbs */}
-        <div className="text-[12px] font-sans text-slate-500 font-semibold uppercase tracking-[0.08em] flex items-center gap-1">
-          <Link to="/" className="hover:text-[#059669]">Ticker</Link>
+        <div className="text-xs font-mono text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+          <Link to="/" className="hover:text-emerald-400 transition-colors">TERMINAL</Link>
           <span>/</span>
-          <span className="text-slate-400">Company</span>
+          <span className="text-slate-600">EQUITY</span>
           <span>/</span>
-          <span className="text-slate-900 font-bold">{profile.name} Share Price</span>
+          <span className="text-slate-300 font-bold">{upperSymbol} ({profile.name})</span>
         </div>
 
         {/* Primary Ticker Summary Box (Company Header) */}
-        <div className="border border-white/50 bg-white/95 backdrop-blur-xl rounded-3xl p-6 shadow-xl shadow-indigo-500/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/15">
-          <div className="space-y-3.5">
+        <div className="rounded-3xl border border-slate-800 bg-[#0D111A]/95 backdrop-blur-xl p-6 shadow-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 transition-all duration-300 hover:border-slate-700">
+          <div className="space-y-3">
             <div className="flex items-center gap-3.5 flex-wrap">
               {profile.logo ? (
                 <img 
                   src={profile.logo} 
                   alt="Logo" 
-                  className="h-10 w-10 object-contain p-1 border border-[#E5E8EF] rounded-lg bg-white" 
+                  className="h-11 w-11 object-contain p-1.5 border border-slate-800 rounded-xl bg-slate-900 shadow-sm" 
                   referrerPolicy="no-referrer"
                   onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                 />
               ) : null}
-              <h1 className="font-sans font-black text-2xl sm:text-3xl bg-gradient-to-r from-emerald-600 via-teal-500 to-blue-600 bg-clip-text text-transparent tracking-tight leading-none drop-shadow-sm">
-                {profile.name}
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-2.5 flex-wrap text-[12.5px] font-semibold">
-              <span className="font-mono text-[#059669] bg-[#059669]/10 border border-[#059669]/15 px-2.5 py-0.5 rounded-md">
-                {profile.exchange || 'Unknown exchange'}
-              </span>
-              <span className="text-[#E5E8EF] font-sans px-1">|</span>
-              <span className="text-slate-500 font-sans flex items-center gap-1">
-                Sector: <span className="font-bold text-[#059669] hover:underline cursor-pointer">{profile.sector}</span>
-              </span>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="font-sans font-extrabold text-2xl sm:text-3xl text-slate-100 tracking-tight">
+                    {profile.name}
+                  </h1>
+                  <span className="font-mono text-xs font-bold text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-md border border-slate-700">
+                    {upperSymbol}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-1 text-xs font-medium text-slate-400">
+                  <span className="font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                    {profile.exchange || 'NYSE/NASDAQ'}
+                  </span>
+                  <span className="text-slate-700">•</span>
+                  <span>Sector: <span className="font-semibold text-slate-200">{profile.sector || 'Equities'}</span></span>
+                  {profile.industry && (
+                    <>
+                      <span className="text-slate-700">•</span>
+                      <span className="hidden sm:inline">Industry: <span className="font-semibold text-slate-300">{profile.industry}</span></span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Live Currency Quote Panel */}
-          <div className="flex items-center gap-4 w-full md:w-auto md:ml-auto md:justify-end">
+          {/* Live Currency Quote Panel & Actions */}
+          <div className="flex items-center gap-4 w-full md:w-auto md:ml-auto md:justify-end flex-wrap">
             <div className="text-right">
-              <div className="flex items-baseline justify-end gap-2.5">
+              <div className="flex items-baseline justify-end gap-3">
                 {!quote ? (
                   <>
-                    <div className="h-9 w-32 bg-slate-100 animate-pulse rounded-md"></div>
-                    <div className="h-6 w-20 bg-slate-100 animate-pulse rounded-md"></div>
+                    <div className="h-10 w-32 bg-slate-800/60 animate-pulse rounded-lg"></div>
+                    <div className="h-6 w-20 bg-slate-800/60 animate-pulse rounded-lg"></div>
                   </>
                 ) : (
                   <>
-                    <span className="font-sans font-semibold text-[44px] text-slate-900 tracking-tight leading-none">
+                    <span className="font-mono font-black text-3xl sm:text-4xl text-slate-100 tracking-tight leading-none tabular-nums">
                       {formatPrice(livePriceVal, profile.exchange)}
                     </span>
-                    <span className={`inline-flex items-center gap-0.5 font-mono text-[12px] font-bold px-2 py-0.5 rounded-md ${
-                      isUp ? 'bg-emerald-50 text-[#16A34A] border border-[#16A34A]/15' : 'bg-rose-50 text-[#DC2626] border border-[#DC2626]/15'
+                    <span className={`inline-flex items-center gap-0.5 font-mono text-xs font-bold px-2 py-0.5 rounded-md border ${
+                      isUp 
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                        : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                     }`}>
                       {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{liveChangeAmount.toFixed(2)} ({isUp ? '+' : ''}{liveChangePercent.toFixed(2)}%)
                     </span>
                   </>
                 )}
               </div>
-              <p className="text-[10px] text-slate-400 font-medium mt-1.5">
-                Prices delayed 15 min · Source: Yahoo Finance Scraper · Last updated: {quote?.updated_at ? new Date(quote.updated_at).toLocaleTimeString() : new Date().toLocaleTimeString()}
+              <p className="text-[10px] font-mono text-slate-500 mt-1">
+                Feed: Yahoo Live Sync · Updated: {quote?.updated_at ? new Date(quote.updated_at).toLocaleTimeString() : new Date().toLocaleTimeString()}
               </p>
             </div>
 
-            <button
-              onClick={handleCopyLink}
-              className="p-2.5 rounded-lg border border-[#E5E8EF] text-slate-400 hover:text-[#059669] bg-white hover:bg-[#059669]/5 transition-all hover:scale-105 cursor-pointer"
-              title="Copy Shareable Link"
-            >
-              {copied ? (
-                <Check className="h-4.5 w-4.5 text-[#16A34A]" />
-              ) : (
-                <ExternalLink className="h-4.5 w-4.5" />
-              )}
-            </button>
-
-            <button
-              onClick={() => toggleStar.mutate()}
-              disabled={toggleStar.isPending}
-              className={`p-2.5 rounded-lg border transition-all hover:scale-105 cursor-pointer ${
-                isStarred
-                  ? 'bg-amber-50 border-amber-200 text-[#F59E0B] hover:bg-amber-100/30'
-                  : 'bg-white border-[#E5E8EF] text-slate-400 hover:text-slate-600'
-              }`}
-              title="Toggle Watchlist"
-            >
-              {toggleStar.isPending ? (
-                <Loader2 className="h-4.5 w-4.5 animate-spin text-slate-400" />
-              ) : (
-                <Star className={`h-4.5 w-4.5 ${isStarred ? 'fill-current' : ''}`} />
-              )}
-            </button>
-
-            <div className="h-6 w-px bg-slate-200 hidden md:block"></div>
-
+            {/* Quick Action Toolbar */}
             <div className="flex items-center gap-2">
-              <select
-                value={reportType}
-                onChange={(e) => setReportType(e.target.value as 'snapshot' | 'full')}
-                className="bg-white border border-[#E5E8EF] text-slate-600 text-xs font-bold rounded-lg px-2 py-2 focus:outline-none focus:ring-1 focus:ring-[#059669]"
+              <button
+                onClick={handleCopyLink}
+                className="p-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-emerald-400 bg-slate-900/80 hover:bg-slate-800 transition-all hover:scale-105"
+                title="Copy Shareable Link"
               >
-                <option value="full">Full Report</option>
-                <option value="snapshot">Snapshot</option>
-              </select>
+                {copied ? (
+                  <Check className="h-4 w-4 text-emerald-400" />
+                ) : (
+                  <ExternalLink className="h-4 w-4" />
+                )}
+              </button>
 
-              <a
-                href={`/api/report/${upperSymbol}?format=pdf&type=${reportType}`}
-                download={`${upperSymbol}_Report.pdf`}
-                className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg hover:bg-rose-100 transition-all hover:scale-105 cursor-pointer text-xs font-bold font-sans"
-                title="Generate PDF Report"
+              <button
+                onClick={() => toggleStar.mutate()}
+                disabled={toggleStar.isPending}
+                className={`p-2.5 rounded-xl border transition-all hover:scale-105 ${
+                  isStarred
+                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                    : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+                title="Toggle Watchlist"
               >
-                <FileText className="h-4 w-4" />
-                <span>PDF</span>
-              </a>
+                {toggleStar.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                ) : (
+                  <Star className={`h-4 w-4 ${isStarred ? 'fill-current' : ''}`} />
+                )}
+              </button>
 
-              <a
-                href={`/api/report/${upperSymbol}?format=word&type=${reportType}`}
-                download={`${upperSymbol}_Report.docx`}
-                className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg hover:bg-blue-100 transition-all hover:scale-105 cursor-pointer text-xs font-bold font-sans"
-                title="Generate Word Report"
-              >
-                <FileText className="h-4 w-4" />
-                <span>Word</span>
-              </a>
+              <div className="h-6 w-px bg-slate-800 hidden md:block"></div>
+
+              {/* AI Research Report Downloader */}
+              <div className="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+                <select
+                  value={reportType}
+                  onChange={(e) => setReportType(e.target.value as 'snapshot' | 'full')}
+                  className="bg-[#080B11] border border-slate-800 text-slate-300 text-xs font-mono rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                >
+                  <option value="full">Full Report</option>
+                  <option value="snapshot">Snapshot</option>
+                </select>
+
+                <a
+                  href={`/api/report/${upperSymbol}?format=pdf&type=${reportType}`}
+                  download={`${upperSymbol}_Report.pdf`}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/30 rounded-lg hover:bg-rose-500/20 transition-all text-xs font-mono font-bold"
+                  title="Generate PDF Report"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  <span>PDF</span>
+                </a>
+
+                <a
+                  href={`/api/report/${upperSymbol}?format=word&type=${reportType}`}
+                  download={`${upperSymbol}_Report.docx`}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 rounded-lg hover:bg-indigo-500/20 transition-all text-xs font-mono font-bold"
+                  title="Generate Word Report"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  <span>Word</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Primary Tab Navigation Row (Sticky Pill Switcher) */}
-        <div className="border border-white/50 bg-white/95 backdrop-blur-xl rounded-2xl p-2 shadow-lg shadow-blue-500/5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sticky top-1 z-30">
+        <div className="border border-slate-800 bg-[#0D111A]/95 backdrop-blur-2xl rounded-2xl p-2 shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sticky top-1 z-30">
           <div className="flex items-center gap-2">
-            <div className="px-2.5 py-1 bg-[#059669] text-white font-sans text-[11px] font-bold uppercase tracking-wider rounded-md shrink-0 select-none">
-              Standalone
+            <div className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[11px] font-bold uppercase tracking-wider rounded-lg shrink-0 select-none flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              INTELLIGENCE HUB
             </div>
-            <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-            <span className="font-sans text-[12px] text-slate-500 font-semibold uppercase tracking-[0.05em] hidden md:inline">NAVIGATE REPORT:</span>
+            <div className="h-4 w-px bg-slate-800 hidden sm:block" />
+            <span className="font-mono text-xs text-slate-500 uppercase tracking-widest hidden md:inline">SECTIONS:</span>
           </div>
 
-          {/* Mobile Dropdown Menu (hidden on sm screens) */}
+          {/* Mobile Dropdown Menu */}
           <div className="block sm:hidden relative w-full">
             <select
               value={activePrimaryTab}
@@ -428,20 +444,20 @@ export const CompanyPage: React.FC = () => {
                 setActivePrimaryTab(tabId);
                 handleScrollToSection(tabId);
               }}
-              className="w-full bg-slate-50 border border-[#E5E8EF] rounded-lg py-2 px-3 text-xs font-sans font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#059669]"
+              className="w-full bg-[#080B11] border border-slate-800 rounded-xl py-2 px-3 text-xs font-sans font-bold text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
               <option value="overview">Overview</option>
-              <option value="analysis">Analysis</option>
-              <option value="info">Company Info</option>
-              {isUSStock && <option value="sec">SEC Filings</option>}
+              <option value="analysis">Valuation & DCF Analysis</option>
+              <option value="info">Company Profile</option>
+              {isUSStock && <option value="sec">SEC EDGAR Filings</option>}
             </select>
           </div>
 
-          {/* Desktop Segmented Buttons (hidden on mobile) */}
-          <div className="hidden sm:flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-[#E5E8EF] animate-in fade-in duration-150">
+          {/* Desktop Segmented Buttons */}
+          <div className="hidden sm:flex items-center gap-1 bg-[#080B11] p-1 rounded-xl border border-slate-800">
             {[
               { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-              { id: 'analysis', label: 'Analysis', icon: TrendingUp },
+              { id: 'analysis', label: 'Valuation & DCF', icon: TrendingUp },
               { id: 'info', label: 'Company Info', icon: Building2 },
               ...(isUSStock ? [{ id: 'sec', label: 'SEC Filings', icon: FileText }] : [])
             ].map((tab) => {
@@ -454,13 +470,13 @@ export const CompanyPage: React.FC = () => {
                     setActivePrimaryTab(tab.id as any);
                     handleScrollToSection(tab.id);
                   }}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 font-sans text-[13.5px] font-bold rounded-md transition duration-155 cursor-pointer ${
-                    ia 
-                      ? 'bg-[#059669] text-white shadow-sm font-bold' 
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/50'
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-sans text-xs font-semibold transition-all ${
+                    ia
+                      ? 'bg-[#141A26] text-emerald-400 border border-slate-700 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
                   }`}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
+                  <Icon className="h-3.5 w-3.5" />
                   <span>{tab.label}</span>
                 </button>
               );
@@ -493,10 +509,6 @@ export const CompanyPage: React.FC = () => {
           isNasdaq={isNasdaq}
           financials={financials}
         />
-
-
-
-        <CongressionalTrading ticker={upperSymbol} />
 
         <InfoTab
           detailData={detailData}

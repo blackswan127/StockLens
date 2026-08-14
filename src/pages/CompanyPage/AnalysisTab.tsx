@@ -74,7 +74,7 @@ interface AnalysisTabProps {
   financials: any;
 }
 
-const CustomLabel: React.FC<any> = ({ x = 0, y = 0, value }) => {
+const CustomLabel: React.FC<any> = ({ x = 0, y = 0, value, index }) => {
   if (value === undefined || value === null || value === '') return null;
   
   let valStr = value.toString();
@@ -94,25 +94,25 @@ const CustomLabel: React.FC<any> = ({ x = 0, y = 0, value }) => {
     }
   }
   
-  const width = Math.max(34, valStr.length * 5.5 + 8);
+  const width = Math.max(28, valStr.length * 6 + 6);
   return (
     <g>
       <rect
         x={x - width / 2}
-        y={y - 20}
+        y={y - 18}
         width={width}
-        height={13}
-        fill="#FFFFFF"
-        stroke="#1A6EFF"
+        height={14}
+        fill="#0D111A"
+        stroke="rgba(255, 255, 255, 0.16)"
         strokeWidth={1}
-        rx={3}
+        rx={4}
       />
       <text
         x={x}
-        y={y - 11}
-        fill="#1A6EFF"
+        y={y - 8}
+        fill="#F1F5F9"
         fontSize={8}
-        fontFamily="sans-serif"
+        fontFamily="JetBrains Mono, monospace"
         fontWeight="bold"
         textAnchor="middle"
       >
@@ -438,21 +438,20 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
   };
 
   const getGrowthColorClass = (valStr: string): string => {
-    if (!valStr || valStr === '—') return 'text-slate-800';
+    if (!valStr || valStr === '—') return 'text-slate-500 font-mono';
     const val = parseFloat(valStr.replace(/%/g, ''));
-    if (isNaN(val)) return 'text-slate-800';
-    if (val < 0) return 'text-[#DC2626] font-bold';
-    if (val >= 15) return 'text-[#16A34A] font-bold';
-    return 'text-slate-800 font-medium';
+    if (isNaN(val)) return 'text-slate-400 font-mono';
+    if (val < 0) return 'text-rose-400 font-mono font-bold';
+    if (val > 0) return 'text-emerald-400 font-mono font-bold';
+    return 'text-slate-300 font-mono font-semibold';
   };
 
   return (
-    <div id="analysis" className="space-y-6 scroll-mt-20">
+    <div id="analysis" className="space-y-6 scroll-mt-20 animate-fade-in">
       <div id="charts" className="space-y-3">
-        {/* Styled as pill toggle (active = #059669 bg, inactive = white bg) */}
-        <div className="bg-white border border-[#E5E8EF] rounded-lg p-1 shadow-sm flex items-center gap-1 max-w-sm sm:max-w-none w-fit">
-          <button className="px-4 py-1.5 bg-[#059669] text-white font-sans text-xs font-semibold rounded-md transition-all">
-            Price Chart
+        <div className="bg-[#0D111A] border border-slate-800 rounded-xl p-1 shadow-sm flex items-center gap-1 max-w-sm sm:max-w-none w-fit">
+          <button className="px-4 py-1.5 bg-[#141A26] text-emerald-400 border border-slate-700 font-mono text-xs font-bold rounded-lg transition-all shadow-sm">
+            Interactive Price & Technical Chart
           </button>
         </div>
         
@@ -460,32 +459,31 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
       </div>
 
       {/* Peer Comparison Section */}
-      <div id="peers" className="bg-white border border-[#E5E8EF] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] space-y-4">
-        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-          <h3 className="text-[12.5px] font-semibold text-slate-555 uppercase tracking-[0.08em]">
-            Peer Comparison
+      <div id="peers" className="bg-[#0D111A] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
+          <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">
+            Sector Peer Benchmarking & Relative Multiples
           </h3>
-          {/* Dynamic sector label pulled from profile.sector */}
-          <span className="text-[11.5px] font-mono text-slate-500 uppercase tracking-wide font-semibold">
-            {profile.sector} sector peers
+          <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">
+            {profile.sector} Sector Cohort
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-[#E5E8EF] text-[14.5px] font-sans">
+        <div className="overflow-x-auto border border-slate-800 rounded-xl bg-[#080B11]">
+          <table className="min-w-full divide-y divide-slate-800 text-xs font-sans">
             <thead>
-              <tr className="bg-[rgba(5,150,105,0.06)] text-[#059669] border-b border-[#E5E8EF] text-left text-[12.5px] font-bold uppercase tracking-wider">
+              <tr className="bg-[#0D111A] text-slate-400 border-b border-slate-800 text-left font-mono font-bold uppercase tracking-wider">
                 <th className="py-3.5 px-4 font-bold text-left whitespace-nowrap">Company</th>
                 <th className="text-right py-3.5 px-4 font-bold whitespace-nowrap">
-                  Price <span className="text-[#94A3B8] text-[10.5px] font-normal lowercase normal-case ml-0.5">{currencySuffixLabel}</span>
+                  Price <span className="text-slate-500 font-normal lowercase normal-case ml-0.5">{currencySuffixLabel}</span>
                 </th>
                 <th className="text-right py-3.5 px-4 font-bold whitespace-nowrap">
-                  MCAP <span className="text-[#94A3B8] text-[10.5px] font-normal lowercase normal-case ml-0.5">{mcapSuffixLabel}</span>
+                  MCAP <span className="text-slate-500 font-normal lowercase normal-case ml-0.5">{mcapSuffixLabel}</span>
                 </th>
                 <th className="text-right py-3.5 px-4 font-bold whitespace-nowrap">P/B</th>
                 <th className="text-right py-3.5 px-4 font-bold whitespace-nowrap">P/E</th>
                 <th className="text-right py-3.5 px-4 font-bold whitespace-nowrap">
-                  EPS <span className="text-[#94A3B8] text-[10.5px] font-normal lowercase normal-case ml-0.5">{currencySuffixLabel}</span>
+                  EPS <span className="text-slate-500 font-normal lowercase normal-case ml-0.5">{currencySuffixLabel}</span>
                 </th>
                 <th className="text-right py-3.5 px-4 font-bold whitespace-nowrap">ROE %</th>
                 <th className="text-right py-3.5 px-4 font-bold whitespace-nowrap">ROCE %</th>
@@ -493,63 +491,64 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
                 <th className="text-right py-3.5 px-4 font-bold whitespace-nowrap">EV/EBITDA</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E5E8EF] text-slate-700 bg-white">
-              {/* Highlight current ticker row (AAPL) with a solid contiguous border and bg-[#F0F5FF]/50 */}
-              <tr className="bg-[#F0F5FF]/40 text-slate-900 font-bold">
-                <td className="py-3.5 px-4 text-[#059669] border-y-2 border-l-2 border-slate-900 font-bold whitespace-nowrap">{profile.name} (This Ticker)</td>
-                <td className="text-right py-3.5 px-4 border-y-2 border-slate-900 font-bold whitespace-nowrap">{formatPrice(livePriceVal, profile.exchange)}</td>
-                <td className="text-right py-3.5 px-4 border-y-2 border-slate-900 font-bold whitespace-nowrap">{formatMarketCap(ratios?.market_cap, profile.exchange)}</td>
-                <td className="text-right py-3.5 px-4 border-y-2 border-slate-900 font-bold whitespace-nowrap">{ratios?.pb || '—'}</td>
-                <td className="text-right py-3.5 px-4 border-y-2 border-slate-900 font-bold whitespace-nowrap">{ratios?.pe || '—'}</td>
-                <td className="text-right py-3.5 px-4 border-y-2 border-slate-900 font-bold whitespace-nowrap">{ratios?.eps || '—'}</td>
-                <td className="text-right py-3.5 px-4 border-y-2 border-slate-900 font-bold text-[#16A34A] whitespace-nowrap">{ratios?.roe || '—'}</td>
-                <td className="text-right py-3.5 px-4 border-y-2 border-slate-900 font-bold text-[#16A34A] whitespace-nowrap">{ratios?.roce || '—'}</td>
-                <td className="text-right py-3.5 px-4 border-y-2 border-slate-900 font-bold whitespace-nowrap">3.56</td>
-                <td className="text-right py-3.5 px-4 border-y-2 border-r-2 border-slate-900 font-bold whitespace-nowrap">24.63</td>
+            <tbody className="divide-y divide-slate-800/60 text-slate-300">
+              {/* Highlight current ticker row with solid contiguous border */}
+              <tr className="bg-emerald-500/10 text-slate-100 font-bold border-l-2 border-emerald-400">
+                <td className="py-3.5 px-4 text-emerald-400 font-bold whitespace-nowrap flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                  <span>{profile.name} (Primary)</span>
+                </td>
+                <td className="text-right py-3.5 px-4 font-mono font-bold whitespace-nowrap tabular-nums">{formatPrice(livePriceVal, profile.exchange)}</td>
+                <td className="text-right py-3.5 px-4 font-mono font-bold whitespace-nowrap tabular-nums">{formatMarketCap(ratios?.market_cap, profile.exchange)}</td>
+                <td className="text-right py-3.5 px-4 font-mono font-bold whitespace-nowrap tabular-nums">{ratios?.pb || '—'}</td>
+                <td className="text-right py-3.5 px-4 font-mono font-bold whitespace-nowrap tabular-nums">{ratios?.pe || '—'}</td>
+                <td className="text-right py-3.5 px-4 font-mono font-bold whitespace-nowrap tabular-nums">{ratios?.eps || '—'}</td>
+                <td className="text-right py-3.5 px-4 font-mono font-bold text-emerald-400 whitespace-nowrap tabular-nums">{ratios?.roe || '—'}</td>
+                <td className="text-right py-3.5 px-4 font-mono font-bold text-emerald-400 whitespace-nowrap tabular-nums">{ratios?.roce || '—'}</td>
+                <td className="text-right py-3.5 px-4 font-mono font-bold whitespace-nowrap tabular-nums">3.56</td>
+                <td className="text-right py-3.5 px-4 font-mono font-bold whitespace-nowrap tabular-nums">24.63</td>
               </tr>
               {isPeersPending ? (
                 <tr>
-                  <td colSpan={10} className="py-8 text-center text-slate-400 animate-pulse whitespace-nowrap">Loading competitors...</td>
+                  <td colSpan={10} className="py-8 text-center text-slate-500 font-mono text-xs animate-pulse whitespace-nowrap">Loading competitor metrics...</td>
                 </tr>
               ) : peers && peers.length > 0 ? (
                 peers.filter(p => p.symbol !== upperSymbol).slice(0, 5).map((p, pIdx) => {
-                  // Alternating row shading (#F8F9FB on even rows)
-                  const isEven = pIdx % 2 === 1;
                   return (
                     <tr 
                       key={pIdx} 
-                      className={`${isEven ? 'bg-[#F8F9FB]' : 'bg-white'} hover:bg-slate-50/70 transition cursor-pointer text-slate-700`} 
+                      className="hover:bg-[#141A26] transition-colors cursor-pointer text-slate-300" 
                       onClick={() => handlePeerClick(p.symbol)}
                     >
-                      <td className="py-3.5 px-4 font-sans font-semibold text-[#059669] whitespace-nowrap">
-                        <div className="flex items-center justify-between gap-1.5">
-                          <span className="hover:underline">{p.name}</span>
+                      <td className="py-3 px-4 font-sans font-semibold text-slate-200 whitespace-nowrap">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="hover:text-emerald-400 transition-colors">{p.name}</span>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setComparePeer(p);
                             }}
-                            className="px-2 py-0.75 bg-[#059669]/10 hover:bg-[#059669]/20 text-[#059669] border border-[#059669]/15 rounded font-sans text-[10px] font-bold uppercase tracking-wider transition shrink-0 cursor-pointer"
+                            className="px-2 py-0.5 bg-[#141A26] hover:bg-emerald-500/20 text-emerald-400 border border-slate-700 hover:border-emerald-500/40 rounded font-mono text-[10px] font-bold uppercase tracking-wider transition shrink-0 cursor-pointer"
                           >
                             Compare
                           </button>
                         </div>
                       </td>
-                      <td className="text-right py-3.5 px-4 font-medium whitespace-nowrap">{formatPrice(p.price, p.exchange)}</td>
-                      <td className="text-right py-3.5 px-4 whitespace-nowrap">{formatMarketCap(p.mcap, p.exchange)}</td>
-                      <td className="text-right py-3.5 px-4 whitespace-nowrap">{p.pb}</td>
-                      <td className="text-right py-3.5 px-4 whitespace-nowrap">{p.pe}</td>
-                      <td className="text-right py-3.5 px-4 whitespace-nowrap">{formatPrice(p.price * 0.08, p.exchange)}</td>
-                      <td className="text-right py-3.5 px-4 text-[#16A34A] font-semibold whitespace-nowrap">{p.roe}</td>
-                      <td className="text-right py-3.5 px-4 text-[#16A34A] font-semibold whitespace-nowrap">{(p.pe * 0.18).toFixed(2)}%</td>
-                      <td className="text-right py-3.5 px-4 whitespace-nowrap">0.25</td>
-                      <td className="text-right py-3.5 px-4 whitespace-nowrap">4.10</td>
+                      <td className="text-right py-3 px-4 font-mono whitespace-nowrap tabular-nums text-slate-200">{formatPrice(p.price, p.exchange)}</td>
+                      <td className="text-right py-3 px-4 font-mono whitespace-nowrap tabular-nums text-slate-300">{formatMarketCap(p.mcap, p.exchange)}</td>
+                      <td className="text-right py-3 px-4 font-mono whitespace-nowrap tabular-nums text-slate-400">{p.pb}</td>
+                      <td className="text-right py-3 px-4 font-mono whitespace-nowrap tabular-nums text-slate-400">{p.pe}</td>
+                      <td className="text-right py-3 px-4 font-mono whitespace-nowrap tabular-nums text-slate-400">{formatPrice(p.price * 0.08, p.exchange)}</td>
+                      <td className="text-right py-3 px-4 font-mono text-emerald-400 font-semibold whitespace-nowrap tabular-nums">{p.roe}</td>
+                      <td className="text-right py-3 px-4 font-mono text-emerald-400 font-semibold whitespace-nowrap tabular-nums">{(p.pe * 0.18).toFixed(2)}%</td>
+                      <td className="text-right py-3 px-4 font-mono whitespace-nowrap tabular-nums text-slate-400">0.25</td>
+                      <td className="text-right py-3 px-4 font-mono whitespace-nowrap tabular-nums text-slate-400">4.10</td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={10} className="py-4 text-center text-slate-400">No peers loaded.</td>
+                  <td colSpan={10} className="py-6 text-center font-mono text-xs text-slate-500">No peers loaded.</td>
                 </tr>
               )}
             </tbody>
@@ -558,50 +557,50 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
         
         {/* Deep Side-by-Side Comparison Panel */}
         {comparePeer && (
-          <div className="mt-6 p-5 bg-[#F8F9FB] border border-[#E5E8EF] rounded-xl space-y-4 animate-in slide-in-from-bottom-2 duration-200 relative shadow-sm text-slate-700">
+          <div className="mt-6 p-5 bg-[#080B11] border border-slate-800 rounded-2xl space-y-4 animate-fade-in relative shadow-xl text-slate-300">
             <button 
               onClick={() => setComparePeer(null)} 
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-200/50 transition cursor-pointer"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition cursor-pointer"
               title="Close Comparison"
             >
               <X className="h-4 w-4" />
             </button>
 
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4.5 w-4.5 text-[#059669]" />
-              <h4 className="font-sans font-bold text-xs text-slate-800 uppercase tracking-wider">
-                Interactive Side-by-Side Analysis
+              <Sparkles className="h-4 w-4 text-emerald-400" />
+              <h4 className="font-mono font-bold text-xs text-slate-200 uppercase tracking-wider">
+                Interactive Side-by-Side Duopoly Analysis
               </h4>
             </div>
 
             <div className="grid grid-cols-3 gap-4 text-xs font-sans">
-              <div className="font-bold text-slate-450 uppercase tracking-wider text-[10px] self-end pb-1 border-b border-slate-200">Metric</div>
-              <div className="font-bold text-[#059669] pb-1 border-b border-[#059669]/20 text-center uppercase tracking-wider truncate">{profile.name}</div>
-              <div className="font-bold text-[#6366F1] pb-1 border-b border-[#6366F1]/20 text-center uppercase tracking-wider truncate">{comparePeer.name}</div>
+              <div className="font-mono font-bold text-slate-500 uppercase tracking-wider text-[10px] self-end pb-1 border-b border-slate-800">Metric</div>
+              <div className="font-mono font-bold text-emerald-400 pb-1 border-b border-emerald-500/30 text-center uppercase tracking-wider truncate">{profile.name}</div>
+              <div className="font-mono font-bold text-indigo-400 pb-1 border-b border-indigo-500/30 text-center uppercase tracking-wider truncate">{comparePeer.name}</div>
 
-              <div className="font-semibold text-slate-500 py-1.5 border-b border-slate-100">Last Price</div>
-              <div className="font-mono font-bold text-slate-900 py-1.5 border-b border-slate-100 text-center">{formatPrice(livePriceVal, profile.exchange)}</div>
-              <div className="font-mono font-bold text-slate-950 py-1.5 border-b border-slate-100 text-center">{formatPrice(comparePeer.price, comparePeer.exchange)}</div>
+              <div className="font-medium text-slate-400 py-1.5 border-b border-slate-800/80">Last Price</div>
+              <div className="font-mono font-bold text-slate-100 py-1.5 border-b border-slate-800/80 text-center">{formatPrice(livePriceVal, profile.exchange)}</div>
+              <div className="font-mono font-bold text-slate-100 py-1.5 border-b border-slate-800/80 text-center">{formatPrice(comparePeer.price, comparePeer.exchange)}</div>
 
-              <div className="font-semibold text-slate-500 py-1.5 border-b border-slate-100">Market Cap</div>
-              <div className="font-mono text-slate-700 py-1.5 border-b border-slate-100 text-center">{formatMarketCap(ratios?.market_cap, profile.exchange)}</div>
-              <div className="font-mono text-slate-700 py-1.5 border-b border-slate-100 text-center">{formatMarketCap(comparePeer.mcap, comparePeer.exchange)}</div>
+              <div className="font-medium text-slate-400 py-1.5 border-b border-slate-800/80">Market Cap</div>
+              <div className="font-mono text-slate-300 py-1.5 border-b border-slate-800/80 text-center">{formatMarketCap(ratios?.market_cap, profile.exchange)}</div>
+              <div className="font-mono text-slate-300 py-1.5 border-b border-slate-800/80 text-center">{formatMarketCap(comparePeer.mcap, comparePeer.exchange)}</div>
 
-              <div className="font-semibold text-slate-500 py-1.5 border-b border-slate-100">Price to Earnings (P/E)</div>
-              <div className="font-mono text-slate-700 py-1.5 border-b border-slate-100 text-center">{ratios?.pe || '—'}</div>
-              <div className="font-mono text-slate-700 py-1.5 border-b border-slate-100 text-center">{comparePeer.pe || 'N/A'}</div>
+              <div className="font-medium text-slate-400 py-1.5 border-b border-slate-800/80">Price to Earnings (P/E)</div>
+              <div className="font-mono text-slate-300 py-1.5 border-b border-slate-800/80 text-center">{ratios?.pe || '—'}</div>
+              <div className="font-mono text-slate-300 py-1.5 border-b border-slate-800/80 text-center">{comparePeer.pe || 'N/A'}</div>
 
-              <div className="font-semibold text-slate-500 py-1.5 border-b border-slate-100">Price to Book (P/B)</div>
-              <div className="font-mono text-slate-700 py-1.5 border-b border-slate-100 text-center">{ratios?.pb || '—'}</div>
-              <div className="font-mono text-slate-700 py-1.5 border-b border-slate-100 text-center">{comparePeer.pb || 'N/A'}</div>
+              <div className="font-medium text-slate-400 py-1.5 border-b border-slate-800/80">Price to Book (P/B)</div>
+              <div className="font-mono text-slate-300 py-1.5 border-b border-slate-800/80 text-center">{ratios?.pb || '—'}</div>
+              <div className="font-mono text-slate-300 py-1.5 border-b border-slate-800/80 text-center">{comparePeer.pb || 'N/A'}</div>
 
-              <div className="font-semibold text-slate-500 py-1.5 border-b border-slate-100">Return on Equity (ROE)</div>
-              <div className="font-mono text-[#16A34A] font-bold py-1.5 border-b border-slate-100 text-center">{ratios?.roe || '—'}</div>
-              <div className="font-mono text-[#16A34A] font-bold py-1.5 border-b border-slate-100 text-center">{comparePeer.roe || 'N/A'}</div>
+              <div className="font-medium text-slate-400 py-1.5 border-b border-slate-800/80">Return on Equity (ROE)</div>
+              <div className="font-mono text-emerald-400 font-bold py-1.5 border-b border-slate-800/80 text-center">{ratios?.roe || '—'}</div>
+              <div className="font-mono text-emerald-400 font-bold py-1.5 border-b border-slate-800/80 text-center">{comparePeer.roe || 'N/A'}</div>
 
-              <div className="font-semibold text-slate-500 py-1.5 border-b border-slate-100">Return on Capital (ROCE)</div>
-              <div className="font-mono text-[#16A34A] font-bold py-1.5 border-b border-slate-100 text-center">{ratios?.roce || '—'}</div>
-              <div className="font-mono text-[#16A34A] font-bold py-1.5 border-b border-slate-100 text-center">{(comparePeer.pe * 0.18).toFixed(2)}%</div>
+              <div className="font-medium text-slate-400 py-1.5 border-b border-slate-800/80">Return on Capital (ROCE)</div>
+              <div className="font-mono text-emerald-400 font-bold py-1.5 border-b border-slate-800/80 text-center">{ratios?.roce || '—'}</div>
+              <div className="font-mono text-emerald-400 font-bold py-1.5 border-b border-slate-800/80 text-center">{(comparePeer.pe * 0.18).toFixed(2)}%</div>
             </div>
           </div>
         )}
@@ -610,14 +609,15 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
       <DCFCalculator symbol={upperSymbol} exchange={profile.exchange} profile={profile} />
 
       {/* Ratios Comprehensive Sparklines Section */}
-      <div id="ratios" className="bg-white border border-[#E5E8EF] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] space-y-6">
-        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-          <h3 className="text-xl font-bold text-slate-800">
-            Ratios
+      <div id="ratios" className="bg-[#0D111A] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+        <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
+          <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">
+            Multi-Period Growth Rates & Solvency Trends
           </h3>
+          <span className="text-[11px] font-mono text-slate-500">Historical trajectory analysis</span>
         </div>
 
-        {/* Structured Grid layout with clean vertical/horizontal separators */}
+        {/* Structured Grid layout */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           {[
             {
@@ -649,10 +649,9 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
               yr5: '—'
             }
           ].map((card, cardIdx) => (
-            <div key={cardIdx} className="p-4 bg-white border border-[#E5E8EF] rounded-xl space-y-4 shadow-sm flex flex-col justify-between min-h-[220px]">
+            <div key={cardIdx} className="p-4 bg-[#080B11] border border-slate-800 rounded-xl space-y-4 shadow-3d card-3d-tilt flex flex-col justify-between min-h-[220px]">
               <div className="flex items-center gap-1.5">
-                <span className="text-[14px] font-sans text-slate-800 font-bold block">{card.title}</span>
-                <Info className="h-3.5 w-3.5 text-[#1A6EFF]" />
+                <span className="text-xs font-mono text-slate-200 font-bold block uppercase">{card.title}</span>
               </div>
               
               {/* Sparkline LineChart */}
@@ -663,34 +662,34 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
                       <Line
                         type="monotone"
                         dataKey="value"
-                        stroke="#1A6EFF"
+                        stroke="#10B981"
                         strokeWidth={2}
                         label={<CustomLabel />}
-                        dot={{ r: 3, fill: '#1A6EFF', stroke: '#1A6EFF', strokeWidth: 1 }}
-                        activeDot={{ r: 4, fill: '#1A6EFF', stroke: '#1A6EFF', strokeWidth: 1 }}
+                        dot={{ r: 2.5, fill: '#080B11', stroke: '#10B981', strokeWidth: 1.5 }}
+                        activeDot={{ r: 4.5, fill: '#10B981', stroke: '#FFFFFF', strokeWidth: 1.5 }}
                         isAnimationActive={false}
                       />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-xs text-slate-400">
+                  <div className="h-full flex items-center justify-center font-mono text-xs text-slate-500">
                     No history available
                   </div>
                 )}
               </div>
 
-              <div className="grid grid-cols-3 gap-1 text-center pt-2 border-t border-slate-100">
+              <div className="grid grid-cols-3 gap-1 text-center pt-2 border-t border-slate-800/80">
                 <div>
-                  <span className="text-[9px] text-slate-400 font-sans font-bold block uppercase">1 Year</span>
-                  <span className={`font-sans font-bold text-xs mt-1 block ${getGrowthColorClass(card.yr1)}`}>{card.yr1}</span>
+                  <span className="text-[9px] text-slate-500 font-mono font-bold block uppercase">1 Year</span>
+                  <span className={`font-mono font-bold text-xs mt-1 block ${getGrowthColorClass(card.yr1)}`}>{card.yr1}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] text-slate-400 font-sans font-bold block uppercase">3 Year</span>
-                  <span className={`font-sans font-bold text-xs mt-1 block ${getGrowthColorClass(card.yr3)}`}>{card.yr3}</span>
+                  <span className="text-[9px] text-slate-500 font-mono font-bold block uppercase">3 Year</span>
+                  <span className={`font-mono font-bold text-xs mt-1 block ${getGrowthColorClass(card.yr3)}`}>{card.yr3}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] text-slate-400 font-sans font-bold block uppercase">5 Year</span>
-                  <span className={`font-sans font-bold text-xs mt-1 block ${getGrowthColorClass(card.yr5)}`}>{card.yr5}</span>
+                  <span className="text-[9px] text-slate-500 font-mono font-bold block uppercase">5 Year</span>
+                  <span className={`font-mono font-bold text-xs mt-1 block ${getGrowthColorClass(card.yr5)}`}>{card.yr5}</span>
                 </div>
               </div>
             </div>
@@ -712,20 +711,17 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
               type: r.type 
             }))
           ].map((item, idx) => (
-            <div key={idx} className="p-4 bg-white border border-[#E5E8EF] rounded-xl flex flex-col justify-between gap-3 shadow-sm group hover:border-[#1A6EFF]/50 transition relative overflow-hidden min-h-[110px]">
+            <div key={idx} className="p-4 bg-[#080B11] border border-slate-800 rounded-xl flex flex-col justify-between gap-3 shadow-sm group hover:border-slate-700 transition-colors relative overflow-hidden min-h-[110px]">
               <div className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[12px] font-sans text-slate-800 font-bold block">{item.tag}</span>
-                  <Info className="h-3.5 w-3.5 text-[#1A6EFF]" />
-                </div>
+                <span className="text-[11px] font-mono text-slate-400 font-bold block uppercase">{item.tag}</span>
                 {item.isCustom && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[8px] bg-emerald-50 text-[#059669] px-1.5 py-0.2 rounded font-sans font-bold uppercase tracking-wider">
+                    <span className="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.2 rounded font-mono font-bold uppercase tracking-wider">
                       {item.type === 'manual' ? 'Custom' : 'Calc'}
                     </span>
                     <button
                       onClick={() => handleDeleteCustomRatio(item.id)}
-                      className="text-slate-400 hover:text-red-500 transition p-0.5 cursor-pointer"
+                      className="text-slate-500 hover:text-rose-400 transition p-0.5 cursor-pointer"
                       title="Delete custom ratio"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -734,7 +730,7 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
                 )}
               </div>
               <div className="flex items-baseline gap-1.5 z-10">
-                <span className="font-sans font-extrabold text-slate-900 text-[26px] leading-none">{item.val}</span>
+                <span className="font-mono font-bold text-slate-100 text-2xl leading-none tabular-nums">{item.val}</span>
               </div>
             </div>
           ))}
@@ -743,17 +739,17 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
           {!showAddRatioForm ? (
             <button
               onClick={() => setShowAddRatioForm(true)}
-              className="p-3.5 bg-slate-50 border border-dashed border-[#E5E8EF] rounded-xl flex items-center justify-center gap-2 hover:bg-slate-100/50 hover:border-slate-300 transition shadow-sm text-xs font-semibold text-[#059669] cursor-pointer"
+              className="p-3.5 bg-[#080B11] border border-dashed border-slate-800 rounded-xl flex items-center justify-center gap-2 hover:bg-[#141A26] hover:border-slate-700 transition shadow-sm text-xs font-mono font-bold text-emerald-400 cursor-pointer"
             >
               <Plus className="h-4 w-4" />
               <span>Add Custom Ratio</span>
             </button>
           ) : (
-            <div className="p-4 bg-slate-50 border border-[#E5E8EF] rounded-xl flex flex-col gap-3.5 shadow-sm col-span-2 text-xs">
-              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                <span className="font-bold text-slate-700 uppercase tracking-wider text-[9px]">Custom Ratio Builder</span>
+            <div className="p-4 bg-[#080B11] border border-slate-800 rounded-xl flex flex-col gap-3.5 shadow-sm col-span-2 text-xs">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                <span className="font-mono font-bold text-slate-300 uppercase tracking-wider text-[10px]">Custom Ratio Builder</span>
                 {/* Tab Switcher */}
-                <div className="flex bg-slate-200/60 p-0.5 rounded-lg border border-slate-200 shrink-0 gap-0.5 text-[10px]">
+                <div className="flex bg-[#0D111A] p-0.5 rounded-lg border border-slate-800 shrink-0 gap-0.5 text-[10px] font-mono">
                   {[
                     { id: 'formula', label: 'Formula' },
                     { id: 'custom_division', label: 'Division' },
@@ -765,8 +761,8 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
                       onClick={() => setRatioBuilderMode(tab.id as any)}
                       className={`px-2 py-0.5 font-semibold rounded-md transition-colors whitespace-nowrap cursor-pointer ${
                         ratioBuilderMode === tab.id 
-                          ? 'bg-[#059669] text-white font-bold shadow-xs' 
-                          : 'text-slate-500 hover:text-slate-900'
+                          ? 'bg-[#141A26] text-emerald-400 border border-slate-700 font-bold shadow-xs' 
+                          : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
                       {tab.label}
@@ -776,12 +772,12 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
               </div>
 
               {ratioBuilderMode === 'formula' && (
-                <div className="space-y-2 text-slate-700">
-                  <label className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Select Financial Formula</label>
+                <div className="space-y-2 text-slate-300">
+                  <label className="text-[10px] font-mono font-bold text-slate-400 block uppercase tracking-wider">Select Financial Formula</label>
                   <select
                     value={selectedFormula}
                     onChange={(e) => setSelectedFormula(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-white border border-[#E5E8EF] rounded-lg focus:outline-none focus:border-[#059669] text-xs font-sans cursor-pointer text-slate-700"
+                    className="w-full px-2.5 py-1.5 bg-[#0D111A] border border-slate-800 rounded-lg focus:outline-none focus:border-emerald-500 text-xs font-mono cursor-pointer text-slate-200"
                   >
                     <option value="peg">PEG Ratio (PE / Sales Growth)</option>
                     <option value="ev_ebitda">EV / EBITDA (Enterprise Value / EBITDA)</option>
@@ -792,21 +788,18 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
                     <option value="fcf_yield">Free Cash Flow Yield % (FCF / Market Cap)</option>
                     <option value="op_margin">Operating Margin % (EBITDA / Revenue)</option>
                   </select>
-                  <span className="text-[9px] text-slate-400 font-mono block italic">
-                    Calculated dynamically using current live price and financial reports.
-                  </span>
                 </div>
               )}
 
               {ratioBuilderMode === 'custom_division' && (
-                <div className="space-y-3 text-slate-700">
+                <div className="space-y-3 text-slate-300">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Numerator</label>
+                      <label className="text-[10px] font-mono font-bold text-slate-400 block uppercase tracking-wider">Numerator</label>
                       <select
                         value={numKey}
                         onChange={(e) => setNumKey(e.target.value)}
-                        className="w-full px-2 py-1.5 bg-white border border-[#E5E8EF] rounded-lg focus:outline-none focus:border-[#059669] text-xs font-sans cursor-pointer text-slate-700"
+                        className="w-full px-2 py-1.5 bg-[#0D111A] border border-slate-800 rounded-lg focus:outline-none focus:border-emerald-500 text-xs font-mono cursor-pointer text-slate-200"
                       >
                         {availableMetrics.map(m => (
                           <option key={m.key} value={m.key}>{m.label}</option>
@@ -814,11 +807,11 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Denominator</label>
+                      <label className="text-[10px] font-mono font-bold text-slate-400 block uppercase tracking-wider">Denominator</label>
                       <select
                         value={denKey}
                         onChange={(e) => setDenKey(e.target.value)}
-                        className="w-full px-2 py-1.5 bg-white border border-[#E5E8EF] rounded-lg focus:outline-none focus:border-[#059669] text-xs font-sans cursor-pointer text-slate-700"
+                        className="w-full px-2 py-1.5 bg-[#0D111A] border border-slate-800 rounded-lg focus:outline-none focus:border-emerald-500 text-xs font-mono cursor-pointer text-slate-200"
                       >
                         {availableMetrics.map(m => (
                           <option key={m.key} value={m.key}>{m.label}</option>
@@ -827,44 +820,44 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Custom Ratio Name</label>
+                    <label className="text-[10px] font-mono font-bold text-slate-400 block uppercase tracking-wider">Custom Ratio Name</label>
                     <input
                       type="text"
                       placeholder="e.g. Cash to Assets Ratio"
                       value={newRatioName}
                       onChange={(e) => setNewRatioName(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-[#E5E8EF] rounded-lg focus:outline-none focus:border-[#059669] font-sans text-slate-700"
+                      className="w-full px-2.5 py-1.5 bg-[#0D111A] border border-slate-800 rounded-lg focus:outline-none focus:border-emerald-500 font-mono text-slate-200"
                     />
                   </div>
                 </div>
               )}
 
               {ratioBuilderMode === 'manual' && (
-                <div className="grid grid-cols-2 gap-2.5 text-slate-700">
+                <div className="grid grid-cols-2 gap-2.5 text-slate-300">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Ratio Name</label>
+                    <label className="text-[10px] font-mono font-bold text-slate-400 block uppercase tracking-wider">Ratio Name</label>
                     <input
                       type="text"
                       placeholder="e.g. NPM %"
                       value={newRatioName}
                       onChange={(e) => setNewRatioName(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-[#E5E8EF] rounded-lg focus:outline-none focus:border-[#059669] text-slate-700"
+                      className="w-full px-2.5 py-1.5 bg-[#0D111A] border border-slate-800 rounded-lg focus:outline-none focus:border-emerald-500 font-mono text-slate-200"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Static Value</label>
+                    <label className="text-[10px] font-mono font-bold text-slate-400 block uppercase tracking-wider">Static Value</label>
                     <input
                       type="text"
                       placeholder="e.g. 24.5%"
                       value={newRatioValue}
                       onChange={(e) => setNewRatioValue(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-[#E5E8EF] rounded-lg focus:outline-none focus:border-[#059669] text-slate-700"
+                      className="w-full px-2.5 py-1.5 bg-[#0D111A] border border-slate-800 rounded-lg focus:outline-none focus:border-emerald-500 font-mono text-slate-200"
                     />
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 text-[10px] border-t border-slate-200/60 pt-2.5">
+              <div className="flex justify-end gap-2 text-[10px] font-mono border-t border-slate-800 pt-2.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -872,16 +865,16 @@ export const AnalysisTab: React.FC<AnalysisTabProps> = ({
                     setNewRatioName('');
                     setNewRatioValue('');
                   }}
-                  className="px-2.5 py-1 text-slate-500 hover:text-slate-800 font-bold cursor-pointer"
+                  className="px-2.5 py-1 text-slate-400 hover:text-slate-200 font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleAddCustomRatio}
-                  className="px-3.5 py-1.5 bg-[#059669] text-white rounded-md font-bold hover:bg-[#059669]/90 transition cursor-pointer"
+                  className="px-3.5 py-1.5 bg-[#141A26] text-emerald-400 border border-emerald-500/40 rounded-md font-bold hover:bg-emerald-500/20 transition cursor-pointer"
                 >
-                  Add Custom Ratio
+                  Save Ratio
                 </button>
               </div>
             </div>

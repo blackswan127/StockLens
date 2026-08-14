@@ -5,7 +5,7 @@ import apiClient from '../utils/apiClient.js';
 import { StockCard } from '../components/StockCard.jsx';
 import { CardSkeleton } from '../components/Skeleton.jsx';
 import { SearchBar } from '../components/SearchBar.jsx';
-import { Star, Newspaper, Plus, Sparkles, Building, Briefcase, ExternalLink } from 'lucide-react';
+import { Star, Newspaper, Plus, Sparkles, Building, Briefcase, ExternalLink, Activity, RefreshCw, AlertCircle } from 'lucide-react';
 import { formatDate } from '../utils/formatters.js';
 
 interface WatchItem {
@@ -15,6 +15,15 @@ interface WatchItem {
   price: number | null;
   change: number;
   change_pct: number;
+}
+
+interface IndexQuote {
+  name: string;
+  symbol: string;
+  price: number | null;
+  change: number | null;
+  change_pct: number | null;
+  unavailable?: boolean;
 }
 
 interface NewsItem {
@@ -49,6 +58,16 @@ export const WatchlistPage: React.FC = () => {
     }
   });
 
+  // 1.5. Fetch global market indices
+  const { data: indices, isPending: isIndicesPending, refetch: refetchIndices } = useQuery<IndexQuote[]>({
+    queryKey: ['marketIndicesMain'],
+    queryFn: async () => {
+      const resp = await apiClient.get('/market/indices');
+      return resp.data || [];
+    },
+    refetchInterval: 60000 // 1 minute live sync
+  });
+
   // 2. Fetch global market news
   const { data: news, isPending: isNewsPending } = useQuery<NewsItem[]>({
     queryKey: ['marketNews'],
@@ -70,34 +89,113 @@ export const WatchlistPage: React.FC = () => {
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8 animate-fade-in">
       {/* 1. Centered Hero Search Section */}
-      <div className="relative z-50 rounded-3xl border border-white/50 bg-white/60 backdrop-blur-3xl shadow-2xl shadow-emerald-500/10 py-12 px-6 sm:px-12 text-center">
+      <div className="relative z-50 rounded-3xl border border-slate-800 bg-[#0D111A]/95 backdrop-blur-2xl shadow-3d-lg py-12 px-6 sm:px-12 text-center">
         <div className="relative z-10 max-w-3xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-mono text-[10px] font-bold uppercase tracking-wider">
-            <Sparkles className="h-3 w-3 text-emerald-650" />
-            <span>Active Financial Analysis Engine</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold uppercase tracking-wider shadow-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>INSTITUTIONAL EQUITY INTELLIGENCE</span>
           </div>
           
-          <h1 className="font-sans text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-600 via-teal-500 to-blue-600 bg-clip-text text-transparent leading-tight drop-shadow-sm">
-            The Modern Stock Screener that <br className="hidden sm:inline" />
-            helps you <span className="text-emerald-600 bg-emerald-50/40 px-2 rounded-lg border border-emerald-100/30">pick better stocks</span>.
+          <h1 className="font-sans text-3xl sm:text-5xl font-black tracking-tight text-slate-100 leading-tight">
+            Financial Terminal & <br className="hidden sm:inline" />
+            <span className="text-emerald-400">Intrinsic Value Screener</span>.
           </h1>
           
-          <p className="font-sans text-xs sm:text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
-            Instantly search and analyze over 200+ global equities with high-fidelity historical charts, deep ratios analyzer, insider logs, and YoY risk diff reports.
+          <p className="font-sans text-xs sm:text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
+            Direct real-time monitoring across 200+ global equities with CAPM DCF valuations, 7-persona hedge fund radar ratings, and SEC EDGAR automated XBRL ingestion.
           </p>
 
           <div className="w-full max-w-xl mx-auto pt-2">
             <SearchBar 
               variant="hero" 
-              placeholder="Type a Company Name or Brand to Search" 
+              placeholder="Search ticker, company name, or brand (e.g. NVDA, Apple, RELIANCE)..." 
             />
           </div>
         </div>
+      </div>
 
-        {/* Decorative background grids */}
-        <div className="absolute inset-0 rounded-2xl bg-[linear-gradient(to_right,#e2e8f0_0.75px,transparent_0.75px),linear-gradient(to_bottom,#e2e8f0_0.75px,transparent_0.75px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30 select-none pointer-events-none" />
+      {/* 1.5 Global Market Indices Benchmarks Row */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4 text-emerald-400" />
+            <h2 className="font-sans text-sm font-bold text-slate-200 tracking-tight">Global Market Benchmarks</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[10px] text-slate-500 uppercase tracking-wider hidden sm:inline-block">
+              Multi-Exchange Telemetry
+            </span>
+            <button
+              onClick={() => refetchIndices()}
+              className="p-1 rounded text-slate-400 hover:text-emerald-400 hover:bg-slate-800/60 transition-colors cursor-pointer"
+              title="Sync Live Indices"
+            >
+              <RefreshCw className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {isIndicesPending ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-20 bg-slate-800/60 rounded-xl animate-pulse border border-slate-800 shadow-3d" />
+            ))
+          ) : (
+            indices?.map((idx) => {
+              if (idx.unavailable || idx.price === null || idx.change_pct === null) {
+                return (
+                  <div
+                    key={idx.symbol}
+                    className="p-3.5 border border-slate-800 bg-[#0D111A] rounded-xl shadow-3d flex flex-col justify-between"
+                  >
+                    <div>
+                      <span className="font-sans font-bold text-xs text-slate-200 tracking-tight block truncate">
+                        {idx.name}
+                      </span>
+                      <div className="font-mono text-[9px] text-slate-500 uppercase">
+                        {idx.symbol}
+                      </div>
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-1 text-slate-500 font-mono text-[9px]">
+                      <AlertCircle className="h-2.5 w-2.5" />
+                      <span>Unavailable</span>
+                    </div>
+                  </div>
+                );
+              }
+
+              const isUp = idx.change_pct >= 0;
+              return (
+                <div 
+                  key={idx.symbol}
+                  className="p-3.5 border border-slate-800 bg-[#0D111A] rounded-xl shadow-3d card-3d-tilt transition-all duration-200 hover:border-slate-700 flex flex-col justify-between"
+                >
+                  <div>
+                    <span className="font-sans font-bold text-xs text-slate-200 tracking-tight block truncate">
+                      {idx.name}
+                    </span>
+                    <div className="font-mono text-[9px] text-slate-500 uppercase">
+                      {idx.symbol}
+                    </div>
+                  </div>
+
+                  <div className="mt-2 flex items-baseline justify-between gap-1">
+                    <span className="font-mono font-bold text-xs sm:text-sm text-slate-100 tabular-nums truncate">
+                      {idx.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    <span className={`font-mono text-[10px] font-bold px-1.5 py-0.2 rounded border tabular-nums shrink-0 ${
+                      isUp ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                    }`}>
+                      {isUp ? '+' : ''}{idx.change_pct.toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* 2. Main Two-Column Hub Layout */}
@@ -105,17 +203,17 @@ export const WatchlistPage: React.FC = () => {
         
         {/* Left 2 Columns: Watchlist Grid */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
             <div className="flex items-center gap-2">
-              <Star className="h-5.5 w-5.5 text-amber-500 fill-current" />
-              <h2 className="font-sans text-xl font-bold text-gray-900 tracking-tight">Your Saved Watchlist</h2>
+              <Star className="h-5 w-5 text-amber-400 fill-current" />
+              <h2 className="font-sans text-lg font-bold text-slate-100 tracking-tight">Active Portfolio Watchlist</h2>
             </div>
             
             <Link 
               to="/screener" 
-              className="font-sans text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+              className="font-mono text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
             >
-              Browse Screener →
+              Open Universal Screener →
             </Link>
           </div>
 
@@ -142,13 +240,13 @@ export const WatchlistPage: React.FC = () => {
             </div>
           ) : (
             /* Watchlist Empty Active State */
-            <div className="border border-dashed border-white/80 rounded-3xl p-8 sm:p-12 text-center bg-white/50 backdrop-blur-xl shadow-xl shadow-indigo-500/5">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+            <div className="border border-dashed border-slate-800 rounded-3xl p-8 sm:p-12 text-center bg-[#0D111A]/90 backdrop-blur-xl shadow-xl">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
                 <Star className="h-6 w-6" />
               </div>
-              <h3 className="mt-4 font-sans text-base font-bold text-gray-900">Watchlist is currently empty</h3>
-              <p className="mt-1 font-sans text-xs text-gray-500 max-w-sm mx-auto">
-                Build your personal investment monitor board. Search a stock, or tap one of these popular tickers below to get started instantly:
+              <h3 className="mt-4 font-sans text-base font-bold text-slate-200">Watchlist is currently empty</h3>
+              <p className="mt-1 font-sans text-xs text-slate-400 max-w-sm mx-auto">
+                Track and monitor companies in real time. Search any ticker above, or tap these popular high-volume instruments:
               </p>
               
               {/* Seeding suggestions layout */}
@@ -158,9 +256,9 @@ export const WatchlistPage: React.FC = () => {
                     key={s.symbol}
                     onClick={() => addStockMutation.mutate(s.symbol)}
                     disabled={addStockMutation.isPending}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all shadow-3xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-emerald-500/15 hover:border-emerald-500/40 text-xs font-mono font-bold text-slate-300 hover:text-emerald-400 transition-all cursor-pointer"
                   >
-                    <Plus className="h-3 w-3 text-emerald-600" />
+                    <Plus className="h-3 w-3 text-emerald-400" />
                     <span>{s.symbol}</span>
                   </button>
                 ))}
@@ -170,29 +268,29 @@ export const WatchlistPage: React.FC = () => {
         </div>
 
         {/* Right 1 Column: Immersive Financial Hub News */}
-        <div className="space-y-6 rounded-3xl border border-white/50 bg-white/90 backdrop-blur-2xl shadow-2xl shadow-indigo-500/10 p-6">
-          <div className="flex items-center gap-2 border-b border-gray-100/50 pb-4">
-            <Newspaper className="h-5.5 w-5.5 text-emerald-600" />
-            <h2 className="font-sans text-xl font-bold text-gray-900 tracking-tight">Market Bulletins</h2>
+        <div className="space-y-6 rounded-3xl border border-slate-800 bg-[#0D111A]/95 backdrop-blur-2xl shadow-2xl p-6">
+          <div className="flex items-center gap-2 border-b border-slate-800/80 pb-4">
+            <Newspaper className="h-5 w-5 text-emerald-400" />
+            <h2 className="font-sans text-lg font-bold text-slate-100 tracking-tight">Market Telemetry & Wire</h2>
           </div>
 
           <div className="space-y-4">
             {isNewsPending ? (
               Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="border-b border-gray-100 pb-4 last:border-0 space-y-2 animate-pulse">
-                  <div className="h-3 w-28 bg-gray-200 rounded" />
-                  <div className="h-4 w-full bg-gray-200 rounded" />
-                  <div className="h-3.5 w-5/6 bg-gray-200 rounded" />
+                <div key={idx} className="border-b border-slate-800 pb-4 last:border-0 space-y-2 animate-pulse">
+                  <div className="h-3 w-28 bg-slate-800 rounded" />
+                  <div className="h-4 w-full bg-slate-800 rounded" />
+                  <div className="h-3.5 w-5/6 bg-slate-800 rounded" />
                 </div>
               ))
             ) : news && news.length > 0 ? (
               news.map((item) => (
-                <article key={item.id} className="border-b border-gray-100/50 pb-4 last:border-0 last:pb-0 group transition-all duration-200 hover:-translate-y-0.5">
-                  <div className="flex justify-between items-baseline gap-2 mb-1">
-                    <span className="font-mono text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-150 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                <article key={item.id} className="border-b border-slate-800/80 pb-4 last:border-0 last:pb-0 group transition-all duration-200 hover:-translate-y-0.5">
+                  <div className="flex justify-between items-baseline gap-2 mb-1.5">
+                    <span className="font-mono text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded uppercase tracking-wider">
                       {item.source || 'BULLETIN'}
                     </span>
-                    <span className="font-mono text-[10px] text-gray-400">
+                    <span className="font-mono text-[10px] text-slate-500">
                       {formatDate(item.datetime * 1000)}
                     </span>
                   </div>
@@ -201,25 +299,25 @@ export const WatchlistPage: React.FC = () => {
                     href={item.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="block group-hover:text-emerald-600 focus:text-emerald-700 outline-none"
+                    className="block group-hover:text-emerald-400 outline-none transition-colors"
                   >
-                    <h3 className="font-sans font-bold text-[13.5px] leading-snug text-gray-900 group-hover:underline flex items-start gap-1">
+                    <h3 className="font-sans font-bold text-xs sm:text-[13px] leading-snug text-slate-200 group-hover:text-emerald-400 flex items-start gap-1">
                       <span>{item.headline}</span>
-                      <ExternalLink className="h-3 w-3 shrink-0 text-gray-400 group-hover:text-emerald-500 inline-block mt-0.5" />
+                      <ExternalLink className="h-3 w-3 shrink-0 text-slate-500 group-hover:text-emerald-400 inline-block mt-0.5" />
                     </h3>
                   </a>
                   
                   {item.summary && (
-                    <p className="font-sans text-xs text-gray-500 line-clamp-2 mt-1 leading-relaxed">
+                    <p className="font-sans text-xs text-slate-400 line-clamp-2 mt-1 leading-relaxed">
                       {item.summary}
                     </p>
                   )}
                 </article>
               ))
             ) : (
-              <div className="text-center py-8 text-gray-400 border border-dashed border-gray-150 rounded-xl bg-gray-50/50">
-                <p className="font-sans text-sm">Bulletins feed temporarily offline</p>
-                <p className="font-mono text-xs mt-1">Please try again shortly</p>
+              <div className="text-center py-8 text-slate-500 border border-dashed border-slate-800 rounded-xl bg-[#080B11]">
+                <p className="font-mono text-xs">Bulletins feed temporarily offline</p>
+                <p className="font-mono text-[10px] text-slate-600 mt-1">Live background polling active</p>
               </div>
             )}
           </div>

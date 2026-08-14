@@ -426,76 +426,88 @@ export const DCFCalculator: React.FC<DCFCalculatorProps> = ({ symbol, exchange, 
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-[#E5E8EF] rounded-xl p-5 shadow-sm animate-pulse flex items-center justify-center min-h-[100px]">
-        <div className="text-slate-400 font-sans text-sm">Loading intrinsic valuation data...</div>
+      <div className="bg-[#0D111A] border border-slate-800 rounded-2xl p-6 shadow-xl animate-pulse flex items-center justify-center min-h-[100px]">
+        <div className="text-slate-400 font-mono text-xs flex items-center gap-2">
+          <Activity className="h-4 w-4 animate-spin text-emerald-400" />
+          <span>Calibrating intrinsic DCF valuation models...</span>
+        </div>
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="bg-white border border-[#E5E8EF] rounded-xl p-5 shadow-sm flex items-center gap-3 text-red-500 font-sans text-sm">
-        <AlertTriangle className="h-5 w-5 shrink-0" />
+      <div className="bg-rose-950/40 border border-rose-800/60 rounded-2xl p-5 shadow-xl flex items-center gap-3 text-rose-300 font-sans text-xs">
+        <AlertTriangle className="h-5 w-5 text-rose-400 shrink-0" />
         <span>Failed to fetch DCF data: {error?.message || 'Data unavailable.'}</span>
       </div>
     );
   }
 
   return (
-    <div className="bg-white border border-[#E5E8EF] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+    <div className="bg-[#0D111A] border border-slate-800 rounded-2xl shadow-xl overflow-hidden transition-all duration-300 hover:border-slate-700">
       {/* Header Button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-5 py-4 flex items-center justify-between hover:bg-slate-50/50 transition cursor-pointer text-left"
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-[#141A26] transition-colors cursor-pointer text-left group"
       >
-        <div className="flex items-center gap-2">
-          <Calculator className="h-5 w-5 text-[#059669]" />
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+            <Calculator className="h-4 w-4" />
+          </div>
           <div>
-            <h3 className="text-[14.5px] font-bold text-slate-800 uppercase tracking-wide">
-              Discounted Cash Flow (DCF) Calculator
-            </h3>
-            <p className="text-[11.5px] text-slate-500 mt-0.5">
-              Estimate intrinsic value of {data.companyName || symbol} dynamically
+            <div className="flex items-center gap-2">
+              <h3 className="font-sans text-sm font-bold text-slate-100 uppercase tracking-wider">
+                Discounted Cash Flow (DCF) Valuation Suite
+              </h3>
+              <span className="font-mono text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.2 rounded">
+                CAPM + Damodaran
+              </span>
+            </div>
+            <p className="font-mono text-[11px] text-slate-400 mt-0.5">
+              Intrinsic valuation, Monte Carlo simulations & 2D sensitivity matrices for {data.companyName || symbol}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {data?.dataConfidence && (
             <div className="hidden sm:flex items-center" title="Cross-validation confidence vs SEC EDGAR filings">
-              <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
-                data.dataConfidence === 'high' ? 'bg-emerald-100 text-emerald-700' :
-                data.dataConfidence === 'medium' ? 'bg-amber-100 text-amber-700' :
-                'bg-slate-100 text-slate-600'
+              <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-mono font-bold uppercase tracking-wider border ${
+                data.dataConfidence === 'high' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                data.dataConfidence === 'medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                'bg-slate-800 text-slate-400 border-slate-700'
               }`}>
-                {data.dataConfidence === 'high' ? 'SEC Validated' :
-                 data.dataConfidence === 'medium' ? 'SEC Diverged' :
-                 'Unvalidated'}
+                {data.dataConfidence === 'high' ? '● SEC Validated' :
+                 data.dataConfidence === 'medium' ? '● SEC Diverged' :
+                 '○ Unvalidated'}
               </span>
             </div>
           )}
           {dcfResult && !dcfError && (
-            <div className="hidden sm:flex items-center gap-2 text-xs">
-              <span className="text-slate-500">Fair Value:</span>
-              <span className={`font-mono font-bold ${dcfResult.upsidePercent > 0 ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
+            <div className="hidden sm:flex items-center gap-2 text-xs font-mono">
+              <span className="text-slate-400">Fair Value:</span>
+              <span className={`font-black text-sm tabular-nums ${dcfResult.upsidePercent > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                 {formatPrice(dcfResult.fairValuePerShare, exchange, symbol)}
               </span>
             </div>
           )}
-          {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+          <div className="p-1 rounded-lg bg-slate-800/80 text-slate-400 group-hover:text-slate-200">
+            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </div>
         </div>
       </button>
 
       {isExpanded && (
-        <div className="p-5 border-t border-[#E5E8EF] space-y-6 text-slate-700 font-sans text-sm animate-in fade-in duration-200">
+        <div className="p-6 border-t border-slate-800 space-y-6 text-slate-300 font-sans text-sm animate-fade-in bg-[#090D15]/90">
           
           {/* Bear / Base / Bull Scenario Controls */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50 border border-[#E5E8EF] p-3 rounded-xl">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#0D111A] border border-slate-800 p-4 rounded-xl">
             <div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Valuation Scenario</span>
-              <span className="text-[11px] text-slate-500">Select Bear, Base, or Bull to load preset projection ranges.</span>
+              <span className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider block">Valuation Scenario Presets</span>
+              <span className="text-[11px] text-slate-400 font-mono">Select Bear, Base, or Bull to load calibrated projection bounds.</span>
             </div>
             
-            <div className="flex bg-slate-200/60 p-0.5 rounded-lg border border-slate-200 shrink-0 gap-0.5 text-xs font-semibold">
+            <div className="flex bg-[#080B11] p-1 rounded-xl border border-slate-800 shrink-0 gap-1 text-xs font-mono font-semibold">
               {[
                 { id: 'bear', label: 'Bear 🐻' },
                 { id: 'base', label: 'Base 📊' },
@@ -505,10 +517,10 @@ export const DCFCalculator: React.FC<DCFCalculatorProps> = ({ symbol, exchange, 
                   type="button"
                   key={btn.id}
                   onClick={() => applyScenario(btn.id as any)}
-                  className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                     scenario === btn.id 
-                      ? 'bg-[#059669] text-white font-bold shadow-sm' 
-                      : 'text-slate-500 hover:text-slate-800'
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold shadow-sm' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                   }`}
                 >
                   {btn.label}

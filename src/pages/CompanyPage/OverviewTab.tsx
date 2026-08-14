@@ -114,38 +114,43 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const overallStars = hasRatios ? Math.round((valuationStars + efficiencyStars + financialsStars) / 3) : 0;
 
   return (
-    <div id="overview" className="space-y-6 scroll-mt-20 animate-in fade-in duration-200">
+    <div id="overview" className="space-y-6 scroll-mt-20 animate-fade-in">
       {/* Two-Column Grid Setup containing Price Summary + Essentials */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Price Summary Panel */}
-        <div className="lg:col-span-4 bg-white border border-[#E5E8EF] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] space-y-4">
-          <h3 className="text-[12.5px] font-semibold text-slate-555 uppercase tracking-[0.08em] border-b border-slate-100 pb-2">
-            Price Summary
-          </h3>
+        <div className="lg:col-span-4 bg-[#0D111A] border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+          <div className="flex justify-between items-center border-b border-slate-800/80 pb-2">
+            <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
+              Price Range Extremes
+            </h3>
+            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              Live Session
+            </span>
+          </div>
           
-          <div className="grid grid-cols-2 border border-[#E5E8EF] rounded-xl overflow-hidden bg-white">
-            <div className="p-4 border-r border-b border-[#E5E8EF] hover:bg-slate-50/40 transition">
-              <span className="text-[12px] font-sans text-slate-500 font-semibold uppercase tracking-[0.03em] block">Today's High</span>
-              <span className="font-mono font-bold text-slate-900 text-[17px] mt-1.5 block">
+          <div className="grid grid-cols-2 border border-slate-800 rounded-xl overflow-hidden bg-[#080B11]">
+            <div className="p-4 border-r border-b border-slate-800 hover:bg-[#141A26] transition-colors">
+              <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider block">Today's High</span>
+              <span className="font-mono font-bold text-slate-100 text-base mt-1 block tabular-nums">
                 {quote?.high ? formatPrice(quote.high, profile.exchange) : '—'}
               </span>
             </div>
-            <div className="p-4 border-b border-[#E5E8EF] hover:bg-slate-50/40 transition">
-              <span className="text-[12px] font-sans text-slate-500 font-semibold uppercase tracking-[0.03em] block">Today's Low</span>
-              <span className="font-mono font-bold text-slate-900 text-[17px] mt-1.5 block">
+            <div className="p-4 border-b border-slate-800 hover:bg-[#141A26] transition-colors">
+              <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider block">Today's Low</span>
+              <span className="font-mono font-bold text-slate-100 text-base mt-1 block tabular-nums">
                 {quote?.low ? formatPrice(quote.low, profile.exchange) : '—'}
               </span>
             </div>
-            <div className="p-4 border-r border-[#E5E8EF] hover:bg-slate-50/40 transition">
-              <span className="text-[12px] font-sans text-slate-500 font-semibold uppercase tracking-[0.03em] block">52 Week High</span>
-              <span className="font-mono font-bold text-slate-900 text-[17px] mt-1.5 block">
+            <div className="p-4 border-r border-slate-800 hover:bg-[#141A26] transition-colors">
+              <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider block">52W High</span>
+              <span className="font-mono font-bold text-emerald-400 text-base mt-1 block tabular-nums">
                 {quote?.high_52w ? formatPrice(quote.high_52w, profile.exchange) : '—'}
               </span>
             </div>
-            <div className="p-4 hover:bg-slate-50/40 transition">
-              <span className="text-[12px] font-sans text-slate-500 font-semibold uppercase tracking-[0.03em] block">52 Week Low</span>
-              <span className="font-mono font-bold text-slate-900 text-[17px] mt-1.5 block">
+            <div className="p-4 hover:bg-[#141A26] transition-colors">
+              <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider block">52W Low</span>
+              <span className="font-mono font-bold text-rose-400 text-base mt-1 block tabular-nums">
                 {quote?.low_52w ? formatPrice(quote.low_52w, profile.exchange) : '—'}
               </span>
             </div>
@@ -153,37 +158,36 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
 
         {/* Company Essentials Panel */}
-        <div className="lg:col-span-8 bg-white border border-[#E5E8EF] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-            <h3 className="text-[12.5px] font-semibold text-slate-555 uppercase tracking-[0.08em]">
-              Company Essentials
+        <div className="lg:col-span-8 bg-[#0D111A] border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+          <div className="flex justify-between items-center border-b border-slate-800/80 pb-2">
+            <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
+              Company Fundamental Essentials
             </h3>
-            <span className="text-[10px] font-mono text-slate-400">Consolidated numbers</span>
+            <span className="text-[10px] font-mono text-slate-500">Consolidated figures (TTM)</span>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-4 border-t border-l border-[#E5E8EF] rounded-xl overflow-hidden">
+          <div className="grid grid-cols-2 sm:grid-cols-4 border-t border-l border-slate-800 rounded-xl overflow-hidden bg-[#080B11]">
             {[
               { label: 'MARKET CAP', value: ratios?.market_cap ? formatMarketCap(ratios.market_cap, profile.exchange) : '—' },
               { label: 'ENTERPRISE VALUE', value: ratios?.enterprise_value ? formatMarketCap(ratios.enterprise_value, profile.exchange) : '—' },
               { label: 'NO. OF SHARES', value: ratios?.shares_outstanding ? formatShares(ratios.shares_outstanding, profile.exchange, profile.symbol) : '—' },
-              { label: 'P/E', value: ratios?.pe || '—' },
-              { label: 'P/B', value: ratios?.pb || '—' },
-              { label: 'DIV. YIELD (%)', value: ratios?.dividend_yield || '—' },
-              { label: 'BOOK VALUE (TTM)', value: ratios?.book_value ? formatPrice(ratios.book_value, profile.exchange) : '—' },
-              { label: 'CASH', value: ratios?.total_cash ? formatMarketCap(ratios.total_cash, profile.exchange) : '—' },
-              { label: 'DEBT', value: ratios?.total_debt ? formatMarketCap(ratios.total_debt, profile.exchange) : '—' },
+              { label: 'P/E RATIO', value: ratios?.pe || '—' },
+              { label: 'P/B RATIO', value: ratios?.pb || '—' },
+              { label: 'DIV. YIELD', value: ratios?.dividend_yield || '—' },
+              { label: 'BOOK VALUE', value: ratios?.book_value ? formatPrice(ratios.book_value, profile.exchange) : '—' },
+              { label: 'TOTAL CASH', value: ratios?.total_cash ? formatMarketCap(ratios.total_cash, profile.exchange) : '—' },
+              { label: 'TOTAL DEBT', value: ratios?.total_debt ? formatMarketCap(ratios.total_debt, profile.exchange) : '—' },
               { label: 'EPS (TTM)', value: ratios?.eps || '—' },
-              { label: 'SALES GROWTH (%)', value: ratios?.sales_growth || '—' },
-              { label: 'ROE (%)', value: ratios?.roe || '—' },
-              { label: 'ROCE (%)', value: ratios?.roce || '—' },
-              { label: 'PROFIT GROWTH (%)', value: ratios?.profit_growth || '—' }
+              { label: 'SALES GROWTH', value: ratios?.sales_growth || '—' },
+              { label: 'ROE', value: ratios?.roe || '—' },
+              { label: 'ROCE', value: ratios?.roce || '—' },
+              { label: 'PROFIT GROWTH', value: ratios?.profit_growth || '—' }
             ].map((stat, statIdx) => (
-              <div key={statIdx} className="p-3.5 border-r border-b border-[#E5E8EF] bg-white hover:bg-slate-50/45 transition">
-                <span className="text-[12px] font-sans text-slate-500 font-semibold uppercase tracking-[0.03em] flex items-center gap-1">
+              <div key={statIdx} className="p-3.5 border-r border-b border-slate-800 hover:bg-[#141A26] transition-colors">
+                <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider flex items-center gap-1">
                   <span>{stat.label}</span>
-                  <HelpCircle className="h-3 w-3 text-slate-350 cursor-help" />
                 </span>
-                <span className="font-mono font-bold text-slate-900 text-[17px] mt-1 block">
+                <span className="font-mono font-bold text-slate-100 text-sm sm:text-[15px] mt-1 block tabular-nums">
                   {stat.value}
                 </span>
               </div>
@@ -193,21 +197,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       </div>
 
       {/* FinStar Ratings Panel */}
-      <div 
-        className="bg-white rounded-xl p-5 border border-[#E5E8EF] shadow-[0_1px_3px_rgba(0,0,0,0.06)] space-y-6"
-        style={{ fontFamily: "'Inter', sans-serif" }}
-      >
+      <div className="bg-[#0D111A] rounded-2xl p-5 border border-slate-800 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-slate-900 leading-tight">FinStar Rating</h2>
+              <h2 className="text-lg font-bold text-slate-100 leading-tight">FinStar Quantitative Scorecard</h2>
               <FinStarRating stars={overallStars} />
             </div>
-            <p className="text-xs font-normal text-slate-500 mt-1">Automated visual scoring based on current quarterly filing factors.</p>
+            <p className="text-xs font-mono text-slate-400 mt-1">Algorithmic scoring factoring valuation multiples, ROE hurdles, and capital structure safety.</p>
           </div>
           
-          <span className="bg-slate-900 text-white rounded-lg px-4 py-1.5 text-xs font-bold tracking-[0.02em] inline-flex items-center shrink-0 shadow-sm">
-            Star Score: {overallStars} / 5
+          <span className="bg-[#141A26] text-emerald-400 border border-emerald-500/30 rounded-xl px-3.5 py-1.5 text-xs font-mono font-bold tracking-wider inline-flex items-center shrink-0 shadow-sm">
+            Composite Score: {overallStars} / 5
           </span>
         </div>
 
@@ -216,7 +217,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             {[
               { 
                 tag: 'Ownership', 
-                stat: { status: '—', stars: 0, desc: 'Promoter ownership details unavailable.' } 
+                stat: { status: '—', stars: 0, desc: 'Institutional & insider ownership tracking.' } 
               },
               { 
                 tag: 'Valuation', 
@@ -245,33 +246,23 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             ].map((item, i) => (
               <div 
                 key={i} 
-                className="bg-white border border-[#E5E8EF] rounded-lg p-5 shadow-sm hover:border-slate-300 transition flex flex-col justify-between gap-4"
+                className="bg-[#080B11] border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition-colors flex flex-col justify-between gap-3"
               >
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   <div className="flex justify-between items-center gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-[12px] font-bold tracking-[0.08em] uppercase text-slate-555 truncate">
-                        {item.tag}
-                      </span>
-                      <div className="relative group/tooltip inline-block shrink-0">
-                        <BadgeInfo className="h-3.5 w-3.5 text-slate-400 hover:text-slate-900 cursor-pointer transition-colors duration-150" />
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-950 text-white font-sans text-[11px] font-medium leading-relaxed rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition duration-150 shadow-lg pointer-events-none z-50 text-justify">
-                          {getTooltipContent(item.tag, ratios)}
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-sm border-transparent border-t-slate-950 border-4 -mt-px" />
-                        </div>
-                      </div>
-                    </div>
+                    <span className="text-[11px] font-mono font-bold tracking-wider uppercase text-slate-400">
+                      {item.tag}
+                    </span>
                     {(() => {
                       const status = item.stat.status || '';
                       const s = status.toLowerCase();
-                      let badgeClass = 'border-l-[#16A34A] text-slate-800'; // default stable
-                      if (s.includes('poor') || s.includes('expensive')) badgeClass = 'border-l-[#DC2626] text-slate-800';
-                      else if (s.includes('strong')) badgeClass = 'border-l-[#1a6eff] text-slate-800';
-                      else if (s.includes('good') || s.includes('attractive')) badgeClass = 'border-l-[#16A34A] text-slate-800';
-                      else if (s.includes('fair') || s.includes('average')) badgeClass = 'border-l-[#F59E0B] text-slate-800'; 
+                      let badgeColor = 'bg-slate-800 text-slate-300 border-slate-700';
+                      if (s.includes('poor') || s.includes('expensive')) badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+                      else if (s.includes('strong') || s.includes('good') || s.includes('attractive')) badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+                      else if (s.includes('fair') || s.includes('average')) badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
                       
                       return (
-                        <span className={`border-l-[3px] ${badgeClass} bg-white rounded-r-md pl-2 pr-1 py-0.5 text-xs font-bold inline-flex items-center shrink-0`}>
+                        <span className={`border px-2 py-0.5 rounded-md text-[10px] font-mono font-bold ${badgeColor}`}>
                           {status}
                         </span>
                       );
@@ -281,14 +272,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   <FinStarRating stars={item.stat.stars} starClassName="h-3.5 w-3.5" />
                 </div>
 
-                <p className="text-xs font-normal text-slate-600 leading-relaxed">
+                <p className="text-xs font-sans text-slate-400 leading-relaxed">
                   {item.stat.desc}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <div className="py-8 text-center font-mono text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">
+          <div className="py-8 text-center font-mono text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl">
             Rating data unavailable for this company
           </div>
         )}
@@ -296,18 +287,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
       {/* Shareholding Pattern Card */}
       <div id="shareholding" className="space-y-6 scroll-mt-20">
-        <div className="bg-white border border-[#E5E8EF] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] space-y-6">
-          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-            <h3 className="text-[11.5px] font-semibold text-slate-500 uppercase tracking-[0.08em]">
-              Shareholding Pattern
+        <div className="bg-[#0D111A] border border-slate-800 rounded-2xl p-5 shadow-xl space-y-6">
+          <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
+            <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
+              Shareholding Structure & Institutional Claims
             </h3>
-            <span className="text-[10px] font-mono text-slate-400">Equity capital split</span>
+            <span className="text-[10px] font-mono text-slate-500">SEC 13F / Proxy disclosures</span>
           </div>
 
           {isShareholdingPending ? (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-400 font-mono text-xs space-y-3">
-              <Loader2 className="h-6 w-6 animate-spin text-[#059669]" />
-              <span>Loading shareholding pattern data...</span>
+            <div className="flex flex-col items-center justify-center py-16 text-slate-500 font-mono text-xs space-y-3">
+              <Loader2 className="h-6 w-6 animate-spin text-emerald-400" />
+              <span>Syncing shareholding pattern disclosures...</span>
             </div>
           ) : shareholding && (
             (shareholding.majorHolders && shareholding.majorHolders.insidersPercentHeld !== null) ||
@@ -318,10 +309,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               {/* Major Holders Breakdown */}
               {shareholding.majorHolders && shareholding.majorHolders.insidersPercentHeld !== null && (
                 <div className="space-y-3">
-                  <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.08em]">Major Holders</h4>
-                  <div className="border border-[#E5E8EF] rounded-xl overflow-hidden bg-white">
+                  <h4 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Major Holders Split</h4>
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-[#080B11]">
                     <table className="w-full text-left font-sans text-xs">
-                      <tbody className="divide-y divide-[#E5E8EF]">
+                      <tbody className="divide-y divide-slate-800">
                         {[
                           {
                             label: '% of Shares Held by All Insiders',
@@ -348,11 +339,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                               : '—'
                           }
                         ].map((row, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50/50 transition">
-                            <td className="px-4 py-3 font-mono font-bold text-slate-900 w-1/4 border-r border-[#E5E8EF] text-right bg-slate-50/10 whitespace-nowrap">
+                          <tr key={idx} className="hover:bg-[#141A26] transition-colors">
+                            <td className="px-4 py-3 font-mono font-bold text-emerald-400 w-1/4 border-r border-slate-800 text-right bg-[#0D111A]/40 whitespace-nowrap">
                               {row.value}
                             </td>
-                            <td className="px-4 py-3 text-slate-650 font-medium">
+                            <td className="px-4 py-3 text-slate-300 font-medium">
                               {row.label}
                             </td>
                           </tr>
@@ -366,77 +357,34 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               {/* Top Institutional Holders */}
               {shareholding.institutionalHolders && shareholding.institutionalHolders.length > 0 && (
                 <div className="space-y-3">
-                  <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.08em]">Top Institutional Holders</h4>
-                  <div className="border border-[#E5E8EF] rounded-xl overflow-hidden bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+                  <h4 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Top Institutional 13F Holders</h4>
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-[#080B11]">
                     <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-[#E5E8EF] text-xs font-sans text-left">
+                      <table className="min-w-full divide-y divide-slate-800 text-xs font-sans text-left">
                         <thead>
-                          <tr className="bg-[rgba(5,150,105,0.04)] text-[#059669] border-b border-[#E5E8EF] text-[10.5px] font-bold uppercase tracking-wider whitespace-nowrap">
-                            <th className="py-3 px-4 font-bold text-left whitespace-nowrap">Holder</th>
-                            <th className="py-3 px-4 font-bold text-right whitespace-nowrap">Shares</th>
-                            <th className="py-3 px-4 font-bold text-center whitespace-nowrap">Date Reported</th>
-                            <th className="py-3 px-4 font-bold text-right whitespace-nowrap">% Out</th>
-                            <th className="py-3 px-4 font-bold text-right whitespace-nowrap">Value</th>
+                          <tr className="bg-[#0D111A] text-slate-400 border-b border-slate-800 text-[10.5px] font-mono font-bold uppercase tracking-wider whitespace-nowrap">
+                            <th className="py-3 px-4 text-left">Institution</th>
+                            <th className="py-3 px-4 text-right">Shares Held</th>
+                            <th className="py-3 px-4 text-center">Reported Date</th>
+                            <th className="py-3 px-4 text-right">% Float</th>
+                            <th className="py-3 px-4 text-right text-emerald-400">Position Value</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-[#E5E8EF] text-slate-700 bg-white">
+                        <tbody className="divide-y divide-slate-800/60 text-slate-300">
                           {shareholding.institutionalHolders.map((item: any, idx: number) => {
-                            const isEven = idx % 2 === 1;
                             const currency = getCurrencySymbol(profile.exchange, profile.symbol);
                             const valFormatted = item.value 
                               ? `${currency}${Math.round(item.value).toLocaleString()}` 
                               : '—';
                             return (
-                              <tr key={idx} className={`${isEven ? 'bg-[#F8F9FB]/40' : 'bg-white'} hover:bg-slate-50/50 transition`}>
-                                <td className="py-3 px-4 font-bold text-slate-900 whitespace-nowrap">{item.organization}</td>
+                              <tr key={idx} className="hover:bg-[#141A26] transition-colors">
+                                <td className="py-3 px-4 font-semibold text-slate-100 whitespace-nowrap">{item.organization}</td>
                                 <td className="py-3 px-4 text-right font-mono font-medium whitespace-nowrap">{item.position ? formatShares(item.position, profile.exchange, profile.symbol) : '—'}</td>
-                                <td className="py-3 px-4 text-center font-mono text-slate-600 whitespace-nowrap">{item.reportDate ? formatDate(item.reportDate) : '—'}</td>
-                                <td className="py-3 px-4 text-right font-mono text-slate-600 whitespace-nowrap">
+                                <td className="py-3 px-4 text-center font-mono text-slate-500 whitespace-nowrap">{item.reportDate ? formatDate(item.reportDate) : '—'}</td>
+                                <td className="py-3 px-4 text-right font-mono text-slate-400 whitespace-nowrap">
                                   {item.pctHeld !== null ? `${(item.pctHeld * 100).toFixed(2)}%` : '—'}
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono font-medium whitespace-nowrap">{valFormatted}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Top Mutual Fund Holders */}
-              {shareholding.mutualFundHolders && shareholding.mutualFundHolders.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.08em]">Top Mutual Fund Holders</h4>
-                  <div className="border border-[#E5E8EF] rounded-xl overflow-hidden bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-[#E5E8EF] text-xs font-sans text-left">
-                        <thead>
-                          <tr className="bg-[rgba(5,150,105,0.04)] text-[#059669] border-b border-[#E5E8EF] text-[10.5px] font-bold uppercase tracking-wider whitespace-nowrap">
-                            <th className="py-3 px-4 font-bold text-left whitespace-nowrap">Holder</th>
-                            <th className="py-3 px-4 font-bold text-right whitespace-nowrap">Shares</th>
-                            <th className="py-3 px-4 font-bold text-center whitespace-nowrap">Date Reported</th>
-                            <th className="py-3 px-4 font-bold text-right whitespace-nowrap">% Out</th>
-                            <th className="py-3 px-4 font-bold text-right whitespace-nowrap">Value</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#E5E8EF] text-slate-700 bg-white">
-                          {shareholding.mutualFundHolders.map((item: any, idx: number) => {
-                            const isEven = idx % 2 === 1;
-                            const currency = getCurrencySymbol(profile.exchange, profile.symbol);
-                            const valFormatted = item.value 
-                              ? `${currency}${Math.round(item.value).toLocaleString()}` 
-                              : '—';
-                            return (
-                              <tr key={idx} className={`${isEven ? 'bg-[#F8F9FB]/40' : 'bg-white'} hover:bg-slate-50/50 transition`}>
-                                <td className="py-3 px-4 font-bold text-slate-900 whitespace-nowrap">{item.organization}</td>
-                                <td className="py-3 px-4 text-right font-mono font-medium whitespace-nowrap">{item.position ? formatShares(item.position, profile.exchange, profile.symbol) : '—'}</td>
-                                <td className="py-3 px-4 text-center font-mono text-slate-600 whitespace-nowrap">{item.reportDate ? formatDate(item.reportDate) : '—'}</td>
-                                <td className="py-3 px-4 text-right font-mono text-slate-600 whitespace-nowrap">
-                                  {item.pctHeld !== null ? `${(item.pctHeld * 100).toFixed(2)}%` : '—'}
-                                </td>
-                                <td className="py-3 px-4 text-right font-mono font-medium whitespace-nowrap">{valFormatted}</td>
+                                <td className="py-3 px-4 text-right font-mono font-bold text-emerald-400 whitespace-nowrap">{valFormatted}</td>
                               </tr>
                             );
                           })}
@@ -448,7 +396,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               )}
             </div>
           ) : (
-            <div className="py-12 text-center font-mono text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">
+            <div className="py-12 text-center font-mono text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl">
               Shareholding pattern data unavailable for this company
             </div>
           )}

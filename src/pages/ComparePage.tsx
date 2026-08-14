@@ -311,24 +311,24 @@ export const ComparePage: React.FC = () => {
     const rawValues = columnsData.map(col => col?.details && !col.details.error ? getRawValue(col.details) : null);
 
     return (
-      <tr className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-        <td className="py-3 px-4 text-xs font-semibold text-gray-500 bg-gray-50/30 w-[240px] sticky left-0 z-10 border-r border-gray-150 backdrop-blur-xs">
+      <tr className="border-b border-slate-800/80 hover:bg-[#141A26] transition-colors">
+        <td className="py-3 px-4 text-xs font-mono font-semibold text-slate-400 bg-[#0D111A] w-[240px] sticky left-0 z-10 border-r border-slate-800 backdrop-blur-xs">
           {label}
         </td>
         {columnsData.map((col, idx) => {
           if (!col) {
-            return <td key={idx} className="py-3 px-4 text-center text-gray-300 font-mono text-xs">—</td>;
+            return <td key={idx} className="py-3 px-4 text-center text-slate-600 font-mono text-xs">—</td>;
           }
           if (col.loading) {
             return (
               <td key={idx} className="py-3 px-4 text-center">
-                <div className="h-4 w-12 bg-gray-100 rounded animate-pulse mx-auto" />
+                <div className="h-4 w-12 bg-slate-800 rounded animate-pulse mx-auto" />
               </td>
             );
           }
           if (col.details?.error) {
             return (
-              <td key={idx} className="py-3 px-4 text-center text-rose-500 font-medium text-[11px]">
+              <td key={idx} className="py-3 px-4 text-center text-rose-400 font-mono text-[11px]">
                 Error
               </td>
             );
@@ -338,7 +338,7 @@ export const ComparePage: React.FC = () => {
           const highlightClass = getCellHighlight(rawValues, rawVal, isBetter);
 
           return (
-            <td key={idx} className={`py-3 px-4 text-xs font-medium text-gray-700 text-right font-mono transition-all ${highlightClass}`}>
+            <td key={idx} className={`py-3 px-4 text-xs font-medium text-slate-200 text-right font-mono transition-all tabular-nums ${highlightClass}`}>
               {col.details ? getValue(col.details) : '—'}
             </td>
           );
@@ -348,102 +348,110 @@ export const ComparePage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8 animate-in fade-in duration-300">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8 animate-fade-in">
       
       {/* 1. Page Header Title Block */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-gray-200 pb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-800/80 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Scale className="h-7 w-7 text-emerald-600" />
-            <h1 className="font-sans text-3xl font-black bg-gradient-to-r from-emerald-600 via-teal-500 to-blue-600 bg-clip-text text-transparent tracking-tight drop-shadow-sm">Compare Stocks</h1>
+            <Scale className="h-6 w-6 text-emerald-400" />
+            <h1 className="font-sans text-2xl sm:text-3xl font-black text-slate-100 tracking-tight">
+              Cross-Company Benchmarking Matrix
+            </h1>
           </div>
-          <p className="font-sans text-sm text-gray-500 max-w-2xl">
-            Compare key stats, performance, balance sheets, and multiples side-by-side. Add up to four stocks to begin.
+          <p className="font-mono text-xs text-slate-400 max-w-2xl">
+            Multi-column side-by-side comparisons: valuation multiples, capital efficiency, common-size P&L, and cash flows.
           </p>
         </div>
 
         {/* Global Toolbar Controls */}
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           {/* Highlight toggle */}
-          <label className="inline-flex items-center cursor-pointer bg-white/90 backdrop-blur-xl px-3.5 py-2 rounded-xl border border-white/50 shadow-lg shadow-blue-500/5 hover:bg-white transition-colors">
+          <label className="inline-flex items-center cursor-pointer bg-[#0D111A] px-3.5 py-2 rounded-xl border border-slate-800 shadow-sm hover:border-slate-700 transition-colors">
             <input 
               type="checkbox" 
               checked={highlightHighLow} 
               onChange={() => setHighlightHighLow(!highlightHighLow)} 
               className="sr-only peer" 
             />
-            <div className="relative w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
-            <span className="ms-2 text-xs font-semibold text-gray-700 select-none">Highlight Highs/Lows</span>
+            <div className="relative w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500 peer-checked:after:bg-slate-950"></div>
+            <span className="ms-2 text-xs font-mono font-bold text-slate-300 select-none">Highlight High/Low</span>
           </label>
 
           {/* Common Size toggle */}
-          <label className="inline-flex items-center cursor-pointer bg-white/90 backdrop-blur-xl px-3.5 py-2 rounded-xl border border-white/50 shadow-lg shadow-blue-500/5 hover:bg-white transition-colors">
+          <label className="inline-flex items-center cursor-pointer bg-[#0D111A] px-3.5 py-2 rounded-xl border border-slate-800 shadow-sm hover:border-slate-700 transition-colors">
             <input 
               type="checkbox" 
               checked={commonSize} 
               onChange={() => setCommonSize(!commonSize)} 
               className="sr-only peer" 
             />
-            <div className="relative w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
-            <span className="ms-2 text-xs font-semibold text-gray-700 select-none">Common Size %</span>
+            <div className="relative w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500 peer-checked:after:bg-slate-950"></div>
+            <span className="ms-2 text-xs font-mono font-bold text-slate-300 select-none">Common Size %</span>
           </label>
 
           {/* Currency dropdown */}
-          <div className="relative bg-white/90 backdrop-blur-xl px-3 py-2 rounded-xl border border-white/50 shadow-lg shadow-blue-500/5 flex items-center gap-1.5">
-            <span className="text-[10px] uppercase font-bold text-gray-400">Display Currency:</span>
+          <div className="relative bg-[#0D111A] px-3 py-2 rounded-xl border border-slate-800 shadow-sm flex items-center gap-1.5 font-mono text-xs">
+            <span className="text-[10px] uppercase font-bold text-slate-500">Currency:</span>
             <select
               value={currencyMode}
               onChange={(e) => setCurrencyMode(e.target.value as 'USD' | 'LCL')}
-              className="text-xs font-semibold text-gray-800 outline-none cursor-pointer bg-transparent"
+              className="text-xs font-bold text-slate-200 outline-none cursor-pointer bg-transparent"
             >
-              <option value="USD">USD ($)</option>
-              <option value="LCL">Reported Currency</option>
+              <option value="USD" className="bg-[#0D111A]">USD ($)</option>
+              <option value="LCL" className="bg-[#0D111A]">Reported Currency</option>
             </select>
           </div>
         </div>
       </div>
 
       {/* 2. Symbol Add/Remove Column Headers */}
-      <div className="grid grid-cols-1 md:grid-cols-5 border border-white/50 rounded-3xl bg-white/95 backdrop-blur-xl shadow-xl shadow-indigo-500/10 overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-5 border border-slate-800 rounded-2xl bg-[#0D111A]/95 shadow-xl relative z-30">
         {/* Row Header Helper Label */}
-        <div className="p-4 bg-gray-50/50 flex flex-col justify-center border-b md:border-b-0 md:border-r border-gray-200">
-          <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-xs uppercase tracking-wider mb-1">
-            <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-            <span>Analysis Engine</span>
+        <div className="p-4 bg-[#080B11] flex flex-col justify-center border-b md:border-b-0 md:border-r border-slate-800 rounded-t-2xl md:rounded-tr-none md:rounded-l-2xl">
+          <div className="flex items-center gap-1.5 text-emerald-400 font-mono font-bold text-xs uppercase tracking-wider mb-1">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>Analysis Matrix</span>
           </div>
-          <span className="text-xs text-gray-400 font-medium">
-            Type symbol or company name in any empty column slot.
+          <span className="text-xs font-mono text-slate-500">
+            Type ticker symbol in any open slot to benchmark.
           </span>
         </div>
 
         {/* Selected stocks grid */}
-        <div className="md:col-span-4 grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-200" ref={searchContainerRef}>
+        <div className="md:col-span-4 grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-800" ref={searchContainerRef}>
           {selectedSymbols.map((symbol, idx) => {
             const hasStock = !!symbol;
             const item = columnsData[idx]?.details;
+            const isSearchingCurrent = activeSearchIndex === idx;
 
             return (
-              <div key={idx} className="p-4 flex flex-col justify-between h-[115px] relative hover:bg-gray-50/20 transition-all group">
+              <div 
+                key={idx} 
+                className={`p-4 flex flex-col justify-between min-h-[115px] relative hover:bg-[#141A26] transition-all group bg-[#0D111A] ${
+                  isSearchingCurrent ? 'z-50' : 'z-10'
+                }`}
+              >
                 
                 {/* 1. Header with symbol and delete action */}
                 {hasStock ? (
                   <div className="flex justify-between items-start w-full">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-base text-gray-900">{symbol}</span>
+                        <span className="font-mono font-black text-base text-slate-100">{symbol}</span>
                         {item && !item.error && (
-                          <span className="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                          <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider border border-slate-700">
                             {item.profile.exchange}
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-gray-400 font-medium line-clamp-2 mt-0.5 w-[90%]">
+                      <p className="text-[11px] text-slate-400 font-medium line-clamp-2 mt-0.5 w-[90%]">
                         {item && !item.error ? item.profile.name : 'Loading company info...'}
                       </p>
                     </div>
                     <button
                       onClick={() => handleRemoveSymbol(idx)}
-                      className="p-1 rounded-md text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                      className="p-1 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                       title="Remove column"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -454,38 +462,38 @@ export const ComparePage: React.FC = () => {
                     {activeSearchIndex === idx ? (
                       <div className="relative w-full">
                         <div className="relative">
-                          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
                           <input
                             ref={searchInputRef}
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Enter symbol (e.g. AAPL)"
-                            className="w-full rounded-md border border-emerald-500 bg-white py-1.5 pl-8 pr-7 text-xs outline-none shadow-sm focus:ring-2 focus:ring-emerald-500/10 font-mono"
+                            className="w-full rounded-xl border border-emerald-500/80 bg-[#080B11] py-1.5 pl-8 pr-7 text-xs text-slate-100 placeholder-slate-500 outline-none shadow-sm focus:ring-2 focus:ring-emerald-500/20 font-mono"
                             autoFocus
                           />
                           {isSearching && (
-                            <Loader2 className="absolute right-2.5 top-2.5 h-3 w-3 animate-spin text-gray-400" />
+                            <Loader2 className="absolute right-2.5 top-2.5 h-3 w-3 animate-spin text-emerald-400" />
                           )}
                         </div>
 
                         {/* Search Autocomplete Popover Dropdown */}
                         {searchQuery.trim() && (
-                          <div className="absolute left-0 right-0 z-50 mt-1 max-h-[180px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-1 shadow-lg divide-y divide-gray-50">
+                          <div className="absolute left-0 top-full mt-1.5 z-50 w-full min-w-[240px] max-h-[260px] overflow-y-auto rounded-xl border border-slate-700 bg-[#0D111A] p-1.5 shadow-2xl shadow-black/80 divide-y divide-slate-800/60 backdrop-blur-2xl">
                             {searchResults.length === 0 && !isSearching ? (
-                              <div className="p-3 text-center text-xs text-gray-400">No results</div>
+                              <div className="p-3 text-center text-xs font-mono text-slate-400">No results found for "{searchQuery}"</div>
                             ) : (
                               searchResults.map((res) => (
                                 <button
                                   key={res.symbol}
                                   onClick={() => handleSelectSymbol(res.symbol, idx)}
-                                  className="w-full flex justify-between items-center px-2 py-1.5 hover:bg-emerald-50/50 rounded-md text-left transition-colors font-mono"
+                                  className="w-full flex justify-between items-center px-2.5 py-2 hover:bg-[#141A26] rounded-lg text-left transition-colors font-mono cursor-pointer"
                                 >
                                   <div className="min-w-0">
-                                    <div className="text-xs font-bold text-gray-900">{res.symbol}</div>
-                                    <div className="text-[10px] text-gray-400 truncate max-w-[140px]">{res.description}</div>
+                                    <div className="text-xs font-bold text-slate-100">{res.symbol}</div>
+                                    <div className="text-[10px] text-slate-400 truncate max-w-[140px]">{res.description}</div>
                                   </div>
-                                  <div className="text-[8px] bg-gray-100 text-gray-400 px-1 rounded uppercase">
+                                  <div className="text-[8px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-mono uppercase border border-slate-700">
                                     {res.exchange}
                                   </div>
                                 </button>
@@ -500,7 +508,7 @@ export const ComparePage: React.FC = () => {
                           setActiveSearchIndex(idx);
                           setTimeout(() => searchInputRef.current?.focus(), 50);
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-gray-300 text-xs font-semibold text-gray-500 bg-white hover:border-emerald-500 hover:text-emerald-600 transition-all hover:bg-emerald-50/10"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-slate-700 text-xs font-mono font-bold text-slate-400 bg-slate-800/40 hover:border-emerald-500/60 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all cursor-pointer"
                       >
                         <Plus className="h-3.5 w-3.5" />
                         <span>Add Stock</span>
@@ -511,8 +519,8 @@ export const ComparePage: React.FC = () => {
                 
                 {/* 2. Price quote info at the bottom of headers */}
                 {hasStock && item && !item.error && (
-                  <div className="mt-2 pt-2 border-t border-gray-100 flex justify-between items-baseline">
-                    <span className="font-mono text-sm font-black text-gray-950">
+                  <div className="mt-2 pt-2 border-t border-slate-800/80 flex justify-between items-baseline">
+                    <span className="font-mono text-sm font-black text-slate-100 tabular-nums">
                       {formatPrice(item.keyStats.peRatio ? item.keyStats.peRatio * (item.keyStats.eps || 0) : 100, item.profile.exchange, item.symbol)}
                     </span>
                     {item.pricePerformance.oneWeek !== null && (
@@ -530,46 +538,46 @@ export const ComparePage: React.FC = () => {
 
       {/* 3. Comparison Categories Table */}
       {fetchSymbols.length === 0 ? (
-        <div className="border border-dashed border-gray-200 rounded-2xl bg-white p-12 text-center shadow-3xs">
-          <Scale className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-          <h3 className="font-sans text-sm font-semibold text-gray-900">No stocks selected</h3>
-          <p className="font-sans text-xs text-gray-400 mt-1 max-w-xs mx-auto">
-            Click "+ Add Stock" above and search for a company (e.g. AAPL, MSFT, RELIANCE) to start comparing financial metrics.
+        <div className="border border-dashed border-slate-800 rounded-2xl bg-[#0D111A] p-12 text-center shadow-xl">
+          <Scale className="h-10 w-10 text-slate-600 mx-auto mb-3" />
+          <h3 className="font-sans text-sm font-bold text-slate-200">No securities selected for comparison</h3>
+          <p className="font-mono text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+            Click "+ Add Stock" in any column slot above to benchmark financial statements, returns, and valuation multiples.
           </p>
         </div>
       ) : (
-        <div className="border border-white/50 rounded-3xl bg-white/95 backdrop-blur-xl shadow-xl shadow-indigo-500/10 overflow-hidden">
+        <div className="border border-slate-800 rounded-2xl bg-[#0D111A] shadow-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50/50">
-                  <th className="py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider sticky left-0 z-10 bg-gray-50 border-r border-gray-150 w-[240px]">
+                <tr className="border-b border-slate-800 bg-[#080B11]">
+                  <th className="py-3 px-4 text-xs font-mono font-bold text-slate-400 uppercase tracking-wider sticky left-0 z-10 bg-[#080B11] border-r border-slate-800 w-[240px]">
                     Metrics / Symbol
                   </th>
                   {selectedSymbols.map((sym, idx) => (
-                    <th key={idx} className="py-3 px-4 text-xs font-black text-gray-950 text-right font-mono min-w-[120px]">
+                    <th key={idx} className="py-3 px-4 text-xs font-mono font-black text-slate-100 text-right min-w-[120px]">
                       {sym || '—'}
                     </th>
                   ))}
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody className="divide-y divide-slate-800/60">
                 
                 {/* ========================================================
                     SECTION 1: GENERAL STATS
                     ======================================================== */}
                 <tr 
                   onClick={() => toggleSection('general')} 
-                  className="bg-gray-50/50 border-b border-gray-200 cursor-pointer select-none font-sans"
+                  className="bg-[#080B11] border-b border-slate-800 cursor-pointer select-none font-mono"
                 >
-                  <td colSpan={5} className="py-2.5 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${collapsedSections.general ? '-rotate-90' : ''}`} />
+                  <td colSpan={5} className="py-2.5 px-4 text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-emerald-400">
+                      <ChevronDown className={`h-4 w-4 text-emerald-400 transition-transform ${collapsedSections.general ? '-rotate-90' : ''}`} />
                       General Key Statistics
                     </span>
-                    <span className="text-[10px] text-gray-400 lowercase font-medium tracking-normal font-mono">
-                      (profile and metadata)
+                    <span className="text-[10px] text-slate-500 lowercase font-normal tracking-normal font-mono">
+                      (profile & capitalization metadata)
                     </span>
                   </td>
                 </tr>

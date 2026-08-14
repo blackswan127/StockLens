@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../utils/apiClient.js';
-import { LineChart, AlertCircle, RefreshCw } from 'lucide-react';
+import { LineChart, AlertCircle, RefreshCw, Activity } from 'lucide-react';
 
 interface IndexQuote {
   name: string;
@@ -23,26 +23,28 @@ export const MarketDashboardPage: React.FC = () => {
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8 animate-fade-in">
       
       {/* 1. Header with title and manual updates */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-150 pb-5">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-5">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <LineChart className="h-6 w-6 text-emerald-600" />
-            <h1 className="font-sans text-3xl font-black bg-gradient-to-r from-emerald-600 via-teal-500 to-blue-600 bg-clip-text text-transparent tracking-tight drop-shadow-sm">Financial Market Dashboard</h1>
+            <Activity className="h-6 w-6 text-emerald-400" />
+            <h1 className="font-sans text-2xl sm:text-3xl font-black text-slate-100 tracking-tight">
+              Global Market Dashboard
+            </h1>
           </div>
-          <p className="font-sans text-xs sm:text-sm text-gray-500 max-w-2xl">
-            Monitor real-time movers, multi-region key indices, and global sector leadership rotations.
+          <p className="font-mono text-xs text-slate-400 max-w-2xl">
+            Real-time multi-exchange key indices, benchmark yields, and macroeconomic sentiment telemetry.
           </p>
         </div>
 
         <button
           onClick={() => { refetchIndices(); }}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 border border-gray-200 hover:border-gray-300 rounded-lg text-xs font-semibold text-gray-700 bg-white shadow-3xs transition-all hover:bg-gray-50"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 border border-slate-800 hover:border-slate-700 rounded-xl text-xs font-mono font-bold text-slate-300 bg-[#0D111A] hover:bg-slate-800 transition-all cursor-pointer shadow-sm"
         >
-          <RefreshCw className="h-3.5 w-3.5 text-emerald-650" />
-          <span>Refresh All Listings</span>
+          <RefreshCw className="h-3.5 w-3.5 text-emerald-400" />
+          <span>Sync Live Feeds</span>
         </button>
       </div>
 
@@ -50,7 +52,7 @@ export const MarketDashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         {isIndicesPending ? (
           Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-24 bg-gray-100 rounded-xl animate-pulse" />
+            <div key={i} className="h-24 bg-slate-800/60 rounded-2xl animate-pulse border border-slate-800" />
           ))
         ) : (
           indices?.map((idx) => {
@@ -58,21 +60,19 @@ export const MarketDashboardPage: React.FC = () => {
               return (
                 <div
                   key={idx.symbol}
-                  className="p-5 border border-white/50 bg-white/95 backdrop-blur-xl rounded-3xl shadow-xl shadow-blue-500/5 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/15 hover:-translate-y-2 flex flex-col justify-between"
+                  className="p-4 border border-slate-800 bg-[#0D111A]/95 rounded-2xl shadow-xl flex flex-col justify-between"
                 >
                   <div>
-                    <span className="font-sans font-extrabold text-[13px] text-gray-900 tracking-tight">
+                    <span className="font-sans font-bold text-xs text-slate-200 tracking-tight">
                       {idx.name}
                     </span>
-                    <div className="font-mono text-[10px] text-gray-400 font-semibold uppercase">
+                    <div className="font-mono text-[10px] text-slate-500 uppercase">
                       {idx.symbol}
                     </div>
                   </div>
-                  <div className="mt-2 flex items-center gap-1.5 text-gray-400">
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    <span className="font-mono text-[11px] font-semibold uppercase">
-                      Unavailable
-                    </span>
+                  <div className="mt-2 flex items-center gap-1.5 text-slate-500 font-mono text-[10px]">
+                    <AlertCircle className="h-3 w-3" />
+                    <span>Unavailable</span>
                   </div>
                 </div>
               );
@@ -82,23 +82,23 @@ export const MarketDashboardPage: React.FC = () => {
             return (
               <div 
                 key={idx.symbol}
-                className="p-5 border border-white/50 bg-white/95 backdrop-blur-xl rounded-3xl shadow-xl shadow-blue-500/5 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/15 hover:-translate-y-2 flex flex-col justify-between"
+                className="p-4 border border-slate-800 bg-[#0D111A]/95 rounded-2xl shadow-xl transition-all duration-300 hover:border-slate-700 hover:bg-[#111723] hover:-translate-y-1 flex flex-col justify-between"
               >
                 <div>
-                  <span className="font-sans font-extrabold text-[13px] text-gray-900 tracking-tight">
+                  <span className="font-sans font-bold text-xs text-slate-200 tracking-tight">
                     {idx.name}
                   </span>
-                  <div className="font-mono text-[10px] text-gray-400 font-semibold uppercase">
+                  <div className="font-mono text-[10px] text-slate-500 uppercase">
                     {idx.symbol}
                   </div>
                 </div>
 
                 <div className="mt-2 flex items-baseline justify-between">
-                  <span className="font-mono font-bold text-base text-gray-950">
+                  <span className="font-mono font-bold text-sm sm:text-base text-slate-100 tabular-nums">
                     {idx.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
-                  <span className={`font-mono text-xs font-extrabold flex items-center ${
-                    isUp ? 'text-emerald-600' : 'text-rose-600'
+                  <span className={`font-mono text-[11px] font-bold px-1.5 py-0.2 rounded border tabular-nums ${
+                    isUp ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
                   }`}>
                     {isUp ? '+' : ''}{idx.change_pct.toFixed(2)}%
                   </span>

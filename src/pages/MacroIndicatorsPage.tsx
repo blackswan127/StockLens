@@ -33,12 +33,15 @@ export const MacroIndicatorsPage: React.FC = () => {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-black flex items-center gap-2 bg-gradient-to-r from-emerald-600 via-teal-500 to-blue-600 bg-clip-text text-transparent drop-shadow-sm">
-            📊 Macro Indicators
-          </h1>
-          <div className="flex justify-between items-center text-sm text-gray-500 mt-2">
+          <div className="flex items-center gap-2 mb-1">
+            <Globe className="h-6 w-6 text-emerald-400" />
+            <h1 className="text-2xl sm:text-3xl font-black font-sans text-slate-100 tracking-tight">
+              Macro Indicators
+            </h1>
+          </div>
+          <div className="flex justify-between items-center text-xs font-mono text-slate-500 mt-1">
             <p>Key U.S. economic data · Source: Federal Reserve (FRED)</p>
-            <p>Last updated: {new Date().toLocaleDateString()}</p>
+            <p>Sync status: Active</p>
           </div>
         </div>
         <MacroSkeleton />
@@ -52,20 +55,23 @@ export const MacroIndicatorsPage: React.FC = () => {
   const spreadData = dgs10.length > 0 && dgs2.length > 0 ? calcSpread(dgs10, dgs2) : [];
 
   const SectionHeader = ({ title, icon }: { title: string; icon?: string }) => (
-    <h3 className="font-bold font-sans text-gray-900 mb-4 flex items-center gap-2 text-lg">
+    <h3 className="font-bold font-sans text-slate-200 mb-4 flex items-center gap-2 text-base">
       {icon && <span>{icon}</span>} {title}
     </h3>
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
       {/* PAGE HEADER */}
       <div className="mb-8">
-        <h1 className="text-4xl font-black flex items-center gap-2 bg-gradient-to-r from-emerald-600 via-teal-500 to-blue-600 bg-clip-text text-transparent drop-shadow-sm">
-          📊 Macro Indicators
-        </h1>
-        <div className="flex justify-between items-center text-sm text-gray-500 mt-2">
-          <p>Key U.S. economic data · Source: Federal Reserve (FRED)</p>
+        <div className="flex items-center gap-2 mb-1">
+          <Globe className="h-6 w-6 text-emerald-400" />
+          <h1 className="text-2xl sm:text-3xl font-black font-sans text-slate-100 tracking-tight">
+            Macro Indicators
+          </h1>
+        </div>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs font-mono text-slate-500 gap-1 mt-1">
+          <p>Key U.S. macroeconomic telemetry · Source: Federal Reserve (FRED)</p>
           <p>Last updated: {new Date().toLocaleDateString()}</p>
         </div>
       </div>
@@ -85,9 +91,9 @@ export const MacroIndicatorsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
         
         {/* Section A */}
-        <div className="p-6 border border-white/50 bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl shadow-indigo-500/5">
+        <div className="p-6 border border-slate-800 bg-[#0D111A]/95 rounded-2xl shadow-xl">
           <SectionHeader title="Rates & Yields" icon="📈" />
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-3.5">
             {(["FEDFUNDS", "DGS10", "DGS2", "T10Y2Y", "BAMLH0A0HYM2"] as MacroSeriesId[]).map((id) => (
               <IndicatorCard
                 key={id}
@@ -101,10 +107,10 @@ export const MacroIndicatorsPage: React.FC = () => {
         </div>
 
         {/* Section B & C Column */}
-        <div className="space-y-10">
-          <div className="p-6 border border-white/50 bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl shadow-indigo-500/5">
+        <div className="space-y-8">
+          <div className="p-6 border border-slate-800 bg-[#0D111A]/95 rounded-2xl shadow-xl">
             <SectionHeader title="Inflation & Growth" icon="💹" />
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-3.5">
               {(["CPIAUCSL", "PCEPI", "GDPC1", "M2SL"] as MacroSeriesId[]).map((id) => (
                 <IndicatorCard
                   key={id}
@@ -117,9 +123,9 @@ export const MacroIndicatorsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-6 border border-white/50 bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl shadow-indigo-500/5">
+          <div className="p-6 border border-slate-800 bg-[#0D111A]/95 rounded-2xl shadow-xl">
             <SectionHeader title="Labor Market" icon="👷" />
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-3.5">
               {(["UNRATE", "PAYEMS", "ICSA"] as MacroSeriesId[]).map((id) => (
                 <IndicatorCard
                   key={id}
@@ -132,9 +138,9 @@ export const MacroIndicatorsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-6 border border-white/50 bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl shadow-indigo-500/5">
+          <div className="p-6 border border-slate-800 bg-[#0D111A]/95 rounded-2xl shadow-xl">
             <SectionHeader title="Consumer & Housing" icon="🛍️" />
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-3.5">
               {(["RSAFS", "HOUST", "UMCSENT"] as MacroSeriesId[]).map((id) => (
                 <IndicatorCard
                   key={id}

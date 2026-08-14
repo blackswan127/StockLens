@@ -49,7 +49,7 @@ export const StockCard: React.FC<StockCardProps> = ({
 
   return (
     <div
-      className="group relative border border-white/50 bg-white/95 backdrop-blur-xl rounded-3xl p-5 shadow-xl shadow-blue-500/5 transition-all duration-300 hover:border-white hover:shadow-2xl hover:shadow-indigo-500/20 hover:-translate-y-2 flex flex-col justify-between h-44"
+      className="group relative border border-slate-800 bg-[#0D111A]/95 backdrop-blur-xl rounded-2xl p-5 shadow-3d card-3d-tilt flex flex-col justify-between h-44 hover:border-slate-700"
       onMouseEnter={() => prefetch(symbol)}
       onFocus={() => prefetch(symbol)}
     >
@@ -60,10 +60,10 @@ export const StockCard: React.FC<StockCardProps> = ({
             <img
               src={getCountryFlagUrl(exchange)}
               alt="Exchange flag"
-              className="h-3 w-4 rounded-sm shrink-0 object-cover shadow-3xs"
+              className="h-3 w-4 rounded-sm shrink-0 object-cover shadow-sm opacity-80"
               referrerPolicy="no-referrer"
             />
-            <span className="text-[10px] font-sans font-bold text-gray-400 uppercase tracking-wide">
+            <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
               {getExchangeBadge(exchange)}
             </span>
           </div>
@@ -75,10 +75,10 @@ export const StockCard: React.FC<StockCardProps> = ({
               toggleStar.mutate();
             }}
             disabled={toggleStar.isPending}
-            className={`p-1.5 rounded-lg border transition-all ${
+            className={`p-1.5 rounded-lg border btn-3d transition-all cursor-pointer ${
               isStarred
-                ? 'bg-amber-50 border-amber-200 text-amber-500 hover:bg-amber-100/70'
-                : 'bg-gray-50 border-gray-150 text-gray-400 hover:text-gray-600 hover:bg-gray-100/80'
+                ? 'bg-amber-500/15 border-amber-500/30 text-amber-400 hover:bg-amber-500/25'
+                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-700/80'
             }`}
             title={isStarred ? 'Remove from Watchlist' : 'Add to Watchlist'}
           >
@@ -92,10 +92,10 @@ export const StockCard: React.FC<StockCardProps> = ({
           className="block mt-2.5 min-w-0"
         >
           <div className="flex items-baseline gap-2">
-            <h3 className="font-mono font-bold text-lg text-gray-900 group-hover:text-emerald-600 transition-colors tracking-tight">
+            <h3 className="font-mono font-black text-lg text-slate-100 group-hover:text-emerald-400 transition-colors tracking-tight">
               {symbol}
             </h3>
-            <span className="truncate text-xs text-gray-400 font-medium max-w-[120px] sm:max-w-none">
+            <span className="truncate text-xs text-slate-400 font-medium max-w-[120px] sm:max-w-none">
               {name}
             </span>
           </div>
@@ -103,13 +103,13 @@ export const StockCard: React.FC<StockCardProps> = ({
       </div>
 
       {/* Pricing block */}
-      <div className="pt-3 border-t border-gray-50 flex items-end justify-between">
+      <div className="pt-3 border-t border-slate-800/80 flex items-end justify-between">
         <div>
-          <div className="font-mono font-bold text-xl text-gray-950">
+          <div className="font-mono font-bold text-xl text-slate-100 tabular-nums">
             {formatPrice(price, exchange)}
           </div>
-          <div className={`flex items-center gap-1 font-mono text-[12px] font-bold mt-0.5 ${
-            isUp ? 'text-emerald-600' : 'text-rose-600'
+          <div className={`flex items-center gap-1 font-mono text-xs font-bold mt-0.5 ${
+            isUp ? 'text-emerald-400' : 'text-rose-400'
           }`}>
             {isUp ? (
               <TrendingUp className="h-3.5 w-3.5" />
@@ -123,7 +123,7 @@ export const StockCard: React.FC<StockCardProps> = ({
         {/* Detailed direct navigation action button */}
         <Link
           to={`/company/${encodeURIComponent(symbol)}`}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50 hover:bg-emerald-50 hover:text-emerald-700 transition-colors border border-gray-150"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-slate-200 bg-[#141A26] hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40 transition-all border border-slate-700 btn-3d"
         >
           <Eye className="h-3.5 w-3.5" />
           <span>Analyze</span>

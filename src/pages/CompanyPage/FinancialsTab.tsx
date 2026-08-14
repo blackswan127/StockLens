@@ -66,17 +66,17 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
   if (isFinancialsPending) {
     return (
-      <div id="financials" className="bg-white border border-[#E5E8EF] rounded-xl p-8 text-center space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#059669] mx-auto"></div>
-        <p className="font-mono text-xs text-slate-400">Loading financial statements...</p>
+      <div id="financials" className="bg-[#0D111A] border border-slate-800 rounded-2xl p-8 text-center space-y-4 shadow-xl">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400 mx-auto"></div>
+        <p className="font-mono text-xs text-slate-400">Loading fundamental financial statements...</p>
       </div>
     );
   }
 
   if (financialsErr) {
     return (
-      <div id="financials" className="bg-white border border-[#E5E8EF] rounded-xl p-8 text-center text-slate-400 font-mono text-xs">
-        Failed to load financials data.
+      <div id="financials" className="bg-rose-950/40 border border-rose-800/60 rounded-2xl p-8 text-center text-rose-300 font-mono text-xs shadow-xl">
+        Failed to load financial statement data.
       </div>
     );
   }
@@ -88,31 +88,31 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
     cashFlows;
 
   return (
-    <div id="financials" className="space-y-6 scroll-mt-20">
-      <div id="statements-sect" className="bg-white border border-[#E5E8EF] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] space-y-5">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-100 pb-4">
+    <div id="financials" className="space-y-6 scroll-mt-20 animate-fade-in">
+      <div id="statements-sect" className="bg-[#0D111A] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-800/80 pb-4">
           <div>
-            <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.08em]">
-              Financial Results & Statements
+            <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">
+              Financial Results & Accounting Statements
             </h3>
-            <p className="text-[10px] font-mono text-slate-400 mt-1">All historical variables and details are formatted in consolidated millions/crores.</p>
+            <p className="text-[11px] font-mono text-slate-500 mt-1">Consolidated metrics from quarterly and annual SEC / Exchange filings.</p>
           </div>
 
           {/* Tab buttons switcher - styled as pill toggles */}
-          <div className="flex bg-slate-50 p-1 rounded-lg border border-[#E5E8EF] overflow-x-auto scrollbar-none w-full lg:w-auto shrink-0 gap-1">
+          <div className="flex bg-[#080B11] p-1 rounded-xl border border-slate-800 overflow-x-auto scrollbar-none w-full lg:w-auto shrink-0 gap-1 font-mono text-xs">
             {[
-              { id: 'quarterly', label: 'Quarterly Result' },
-              { id: 'pnl', label: 'Profit & Loss' },
+              { id: 'quarterly', label: 'Quarterly Results' },
+              { id: 'pnl', label: 'Profit & Loss (P&L)' },
               { id: 'balance', label: 'Balance Sheet' },
               { id: 'cash', label: 'Cash Flows' }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveStatementTab(tab.id as any)}
-                className={`flex-1 lg:flex-none px-3.5 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                className={`flex-1 lg:flex-none px-3.5 py-1.5 font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
                   activeStatementTab === tab.id 
-                    ? 'bg-[#059669] text-white shadow-sm font-bold' 
-                    : 'text-slate-500 hover:text-slate-900'
+                    ? 'bg-[#141A26] text-emerald-400 border border-slate-700 shadow-sm' 
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                 }`}
               >
                 {tab.label}
@@ -123,34 +123,34 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({
 
         {/* Table Render Zone */}
         {currentStatementData.length === 0 ? (
-          <div className="py-12 text-center font-mono text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">
+          <div className="py-12 text-center font-mono text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl">
             {activeStatementTab === 'quarterly' 
               ? 'Quarterly data unavailable for this company' 
               : 'Annual financial statement data unavailable for this company'}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-[#E5E8EF] text-[14.5px] font-sans">
+          <div className="overflow-x-auto border border-slate-800 rounded-xl bg-[#080B11]">
+            <table className="min-w-full divide-y divide-slate-800 text-xs font-sans">
               <thead>
-                <tr className="bg-[rgba(5,150,105,0.06)] text-[#059669] border-b border-[#E5E8EF] text-left text-[12.5px] font-bold uppercase tracking-wider">
+                <tr className="bg-[#0D111A] text-slate-400 border-b border-slate-800 text-left font-mono font-bold uppercase tracking-wider">
                   <th className="py-3.5 px-4 font-bold text-left whitespace-nowrap">Particulars</th>
                   {currentStatementData[0]?.periods.map((period: string, i: number) => (
                     <th key={i} className="text-right py-3.5 px-4 font-bold pl-4 whitespace-nowrap">{period}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <tbody className="divide-y divide-slate-800/60 text-slate-300">
                 {currentStatementData.map((row: any, rIdx: number) => {
                   const isBoldRow = ['Revenue', 'Gross Profit', 'Net Profit / Net Income', 'Total Assets', 'Total Liabilities', 'Shareholders\' Equity', 'Operating Cash Flow'].includes(row.particulars);
-                  const isEven = rIdx % 2 === 1;
                   return (
-                    <tr key={rIdx} className={`${isBoldRow ? 'font-bold text-slate-900 bg-[rgba(5,150,105,0.06)]/30' : isEven ? 'bg-slate-50/20' : 'bg-white'} hover:bg-slate-50/50 transition`}>
-                      <td className="py-3.5 px-4 font-sans font-medium text-slate-800 flex items-center gap-1.5 whitespace-nowrap">
+                    <tr key={rIdx} className={`${isBoldRow ? 'font-bold text-slate-100 bg-[#0D111A]/80' : 'hover:bg-[#141A26]'} transition-colors`}>
+                      <td className="py-3 px-4 font-sans font-medium text-slate-200 flex items-center gap-1.5 whitespace-nowrap">
                         <span>{row.particulars}</span>
-                        <HelpCircle className="h-3.5 w-3.5 text-slate-400 hover:text-slate-655 cursor-pointer shrink-0" />
                       </td>
                       {row.values[0]?.map((value: any, vIdx: number) => (
-                        <td key={vIdx} className="text-right py-3.5 px-4 pl-4 font-sans font-medium whitespace-nowrap">{value}</td>
+                        <td key={vIdx} className="text-right py-3 px-4 pl-4 font-mono font-medium whitespace-nowrap text-slate-100 tabular-nums">
+                          {value}
+                        </td>
                       ))}
                     </tr>
                   );

@@ -23,80 +23,76 @@ export const MacroRegimeCard: React.FC<MacroRegimeCardProps> = ({ t10y2y, unrate
   const highStress = currentSpread > 5.0;
 
   // Determine Regime
-  let regime = "Expansion";
-  let color = "text-emerald-600";
-  let bg = "bg-emerald-50/90";
-  let border = "border-emerald-200/50";
-  let icon = <TrendingUp className="h-8 w-8 text-emerald-600" />;
-  let description = "Growth is solid, financial stress is low, and the yield curve is normal. Broadly bullish for equities.";
+  let regime = "Expansionary Growth";
+  let color = "text-emerald-400";
+  let bg = "bg-[#0D111A]";
+  let border = "border-emerald-500/30";
+  let icon = <TrendingUp className="h-7 w-7 text-emerald-400" />;
+  let description = "Economic growth is solid, credit stress is low, and the Treasury yield curve is positively sloped. Broadly bullish environment for risk assets.";
 
   if (sahmTriggered && highStress) {
     regime = "Contraction / Recession";
-    color = "text-rose-600";
-    bg = "bg-rose-50/90";
-    border = "border-rose-200/50";
-    icon = <TrendingDown className="h-8 w-8 text-rose-600" />;
-    description = "Unemployment is rising rapidly and credit markets are stressed. Defensive positioning recommended.";
+    color = "text-rose-400";
+    border = "border-rose-500/30";
+    icon = <TrendingDown className="h-7 w-7 text-rose-400" />;
+    description = "Unemployment is rising rapidly and credit markets are stressed. Defensive allocation and capital preservation recommended.";
   } else if (yieldInverted && !sahmTriggered) {
     regime = "Late Cycle / Slowdown Warning";
-    color = "text-amber-600";
-    bg = "bg-amber-50/90";
-    border = "border-amber-200/50";
-    icon = <AlertTriangle className="h-8 w-8 text-amber-600" />;
-    description = "The yield curve is inverted, historically signaling an impending slowdown. Watch employment data closely.";
+    color = "text-amber-400";
+    border = "border-amber-500/30";
+    icon = <AlertTriangle className="h-7 w-7 text-amber-400" />;
+    description = "The Treasury yield curve is inverted, historically signaling an impending slowdown. Monitor labor and credit telemetry closely.";
   } else if (!yieldInverted && sahmTriggered) {
     regime = "Early Recovery";
-    color = "text-blue-600";
-    bg = "bg-blue-50/90";
-    border = "border-blue-200/50";
-    icon = <Activity className="h-8 w-8 text-blue-600" />;
-    description = "The yield curve has un-inverted but unemployment remains loose. Often precedes a new cycle of growth as the Fed cuts rates.";
+    color = "text-sky-400";
+    border = "border-sky-500/30";
+    icon = <Activity className="h-7 w-7 text-sky-400" />;
+    description = "The yield curve has un-inverted while monetary policy transitions. Historically precedes the inception of a new expansion cycle.";
   } else if (highStress && !sahmTriggered) {
-    regime = "Financial Stress / Shock";
-    color = "text-orange-600";
-    bg = "bg-orange-50/90";
-    border = "border-orange-200/50";
-    icon = <AlertTriangle className="h-8 w-8 text-orange-600" />;
-    description = "Credit spreads are blowing out despite a stable labor market. High risk of market volatility.";
+    regime = "Financial Stress / Volatility Shock";
+    color = "text-amber-400";
+    border = "border-amber-500/30";
+    icon = <AlertTriangle className="h-7 w-7 text-amber-400" />;
+    description = "High-yield credit spreads are elevated despite steady employment. Elevated macro volatility expected.";
   }
 
   return (
-    <div className={`p-6 rounded-3xl border ${bg} ${border} mb-8 flex flex-col md:flex-row gap-6 items-start md:items-center shadow-xl shadow-blue-500/5 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/15 hover:-translate-y-1`}>
-      <div className={`p-4 rounded-2xl bg-white shadow-sm border ${border} shrink-0`}>
+    <div className={`p-6 rounded-2xl border ${bg} ${border} mb-8 flex flex-col md:flex-row gap-6 items-start md:items-center shadow-xl`}>
+      <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 shrink-0">
         {icon}
       </div>
       <div className="flex-1">
-        <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+        <h3 className="text-xs font-bold font-mono text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-2">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-gray-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
           AI Macro Regime Identifier
         </h3>
-        <h2 className={`text-2xl font-black ${color} mb-2`}>
+        <h2 className={`text-xl sm:text-2xl font-black font-sans ${color} mb-1.5`}>
           Current Phase: {regime}
         </h2>
-        <p className="text-gray-800 font-medium text-sm leading-relaxed">
+        <p className="text-slate-300 font-medium text-xs sm:text-sm leading-relaxed">
           {description}
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 w-full md:w-[260px] bg-white/60 p-4 rounded-xl border border-white/50 backdrop-blur-sm">
-        <div className="flex justify-between items-center">
-          <span className="text-xs font-bold text-gray-600">Yield Curve (10Y-2Y)</span>
-          <span className={`text-sm font-black font-mono ${yieldInverted ? 'text-rose-600' : 'text-emerald-600'}`}>
+      <div className="flex flex-col gap-2.5 w-full md:w-[260px] bg-[#080B11] p-4 rounded-xl border border-slate-800 font-mono">
+        <div className="flex justify-between items-center text-xs">
+          <span className="text-slate-400">Yield Curve (10Y-2Y)</span>
+          <span className={`font-bold tabular-nums ${yieldInverted ? 'text-rose-400' : 'text-emerald-400'}`}>
             {currentYieldSpread > 0 ? '+' : ''}{currentYieldSpread.toFixed(2)}%
           </span>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-xs font-bold text-gray-600">Sahm Rule Risk (6M Δ)</span>
-          <span className={`text-sm font-black font-mono ${sahmTriggered ? 'text-rose-600' : 'text-emerald-600'}`}>
+        <div className="flex justify-between items-center text-xs">
+          <span className="text-slate-400">Sahm Rule (6M Δ)</span>
+          <span className={`font-bold tabular-nums ${sahmTriggered ? 'text-rose-400' : 'text-emerald-400'}`}>
             {((currentUnemployment - unrate6moAgo) > 0 ? '+' : '')}{(currentUnemployment - unrate6moAgo).toFixed(2)}%
           </span>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-xs font-bold text-gray-600">Credit Stress</span>
-          <span className={`text-sm font-black font-mono ${highStress ? 'text-rose-600' : 'text-emerald-600'}`}>
+        <div className="flex justify-between items-center text-xs">
+          <span className="text-slate-400">Credit Spread</span>
+          <span className={`font-bold tabular-nums ${highStress ? 'text-rose-400' : 'text-emerald-400'}`}>
             {currentSpread.toFixed(2)}%
           </span>
         </div>

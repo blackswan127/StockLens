@@ -7,14 +7,14 @@ interface SkeletonProps {
 
 export const Skeleton: React.FC<SkeletonProps> = ({ className = 'h-4 w-full', style }) => {
   return (
-    <div className={`animate-pulse rounded bg-gray-200/90 ${className}`} style={style} />
+    <div className={`animate-pulse rounded-lg bg-slate-800/70 ${className}`} style={style} />
   );
 };
 
 // Layout Specific Shimmer Grids for Stock Card
 export const CardSkeleton: React.FC = () => {
   return (
-    <div className="border border-gray-150 rounded-xl p-5 bg-white space-y-4">
+    <div className="border border-slate-800 rounded-2xl p-5 bg-[#0D111A] space-y-4 shadow-xl">
       <div className="flex justify-between items-start">
         <div className="space-y-2">
           <Skeleton className="h-5 w-20" />
@@ -22,7 +22,7 @@ export const CardSkeleton: React.FC = () => {
         </div>
         <Skeleton className="h-8 w-24" />
       </div>
-      <div className="pt-2 border-t border-gray-50 flex items-center justify-between">
+      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
         <Skeleton className="h-4 w-12" />
         <Skeleton className="h-4 w-20" />
       </div>
@@ -33,7 +33,7 @@ export const CardSkeleton: React.FC = () => {
 // Shimmer lines for tables
 export const TableRowSkeleton: React.FC<{ columns?: number }> = ({ columns = 5 }) => {
   return (
-    <tr className="border-b border-gray-100 last:border-0">
+    <tr className="border-b border-slate-800/60 last:border-0">
       {Array.from({ length: columns }).map((_, cIdx) => (
         <td key={cIdx} className="px-4 py-4 whitespace-nowrap">
           <Skeleton className={`h-4 ${cIdx === 0 ? 'w-24' : 'w-16 ml-auto'}`} />
@@ -46,7 +46,7 @@ export const TableRowSkeleton: React.FC<{ columns?: number }> = ({ columns = 5 }
 // Shimmer layouts for charts
 export const ChartSkeleton: React.FC = () => {
   return (
-    <div className="border border-gray-150 rounded-xl p-5 bg-white space-y-4">
+    <div className="border border-slate-800 rounded-2xl p-5 bg-[#0D111A] space-y-4 shadow-xl">
       <div className="flex justify-between items-center">
         <Skeleton className="h-6 w-36" />
         <div className="flex gap-1">
@@ -59,7 +59,7 @@ export const ChartSkeleton: React.FC = () => {
         {Array.from({ length: 24 }).map((_, i) => (
           <Skeleton 
             key={i} 
-            className="w-full bg-gray-100" 
+            className="w-full bg-slate-800" 
             style={{ height: `${20 + Math.sin(i)*40 + Math.cos(i)*20}%` }} 
           />
         ))}
@@ -82,10 +82,10 @@ export const CompanyPageSkeleton: React.FC = () => {
       </div>
 
       {/* 2. Primary Ticker Summary Box Skeleton */}
-      <div className="border border-gray-150 bg-white rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div className="border border-slate-800 bg-[#0D111A] rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-xl">
         <div className="space-y-3 w-full md:w-auto">
           <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-10 rounded-lg shrink-0" />
+            <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
             <Skeleton className="h-8 w-60" />
           </div>
           <div className="flex items-center gap-2 flex-wrap">

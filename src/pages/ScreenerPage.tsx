@@ -899,13 +899,13 @@ export const ScreenerPage: React.FC = () => {
             src={getCountryFlagUrl(row.exchange)}
             alt="Flag"
             referrerPolicy="no-referrer"
-            className="h-3 w-4 rounded-sm object-cover shrink-0 shadow-3xs"
+            className="h-3 w-4 rounded-sm object-cover shrink-0 shadow-sm opacity-90"
           />
           <div className="flex flex-col">
-            <span className="font-mono font-bold text-gray-955 group-hover:text-emerald-600 transition-colors">
+            <span className="font-mono font-bold text-slate-100 group-hover:text-emerald-400 transition-colors">
               {row.symbol}
             </span>
-            <span className="text-[10px] font-mono text-gray-400 font-semibold uppercase -mt-0.5">
+            <span className="text-[10px] font-mono text-slate-500 font-semibold uppercase -mt-0.5">
               {getExchangeBadge(row.exchange)}
             </span>
           </div>
@@ -917,7 +917,7 @@ export const ScreenerPage: React.FC = () => {
       label: 'Company Name',
       sortable: true,
       render: (row) => (
-        <div className="font-sans font-semibold text-gray-950 max-w-[150px] sm:max-w-xs truncate">
+        <div className="font-sans font-medium text-slate-200 max-w-[150px] sm:max-w-xs truncate">
           {row.name}
         </div>
       )
@@ -927,7 +927,7 @@ export const ScreenerPage: React.FC = () => {
       label: 'Sector Category',
       sortable: true,
       render: (row) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-50 text-gray-650 border border-gray-150">
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-slate-800/80 text-slate-300 border border-slate-700/80">
           {row.sector}
         </span>
       )
@@ -938,7 +938,7 @@ export const ScreenerPage: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row) => (
-        <span className="font-mono font-bold text-gray-955">
+        <span className="font-mono font-bold text-slate-200 tabular-nums">
           {row.peTrailing !== null ? `${row.peTrailing.toFixed(1)}x` : '—'}
         </span>
       )
@@ -949,7 +949,7 @@ export const ScreenerPage: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row) => (
-        <span className="font-mono font-bold text-gray-955">
+        <span className="font-mono font-bold text-slate-200 tabular-nums">
           {row.roe !== null ? `${row.roe.toFixed(1)}%` : '—'}
         </span>
       )
@@ -960,7 +960,7 @@ export const ScreenerPage: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row) => (
-        <span className="font-mono font-bold text-gray-955">
+        <span className="font-mono font-bold text-slate-200 tabular-nums">
           {row.debt_equity !== null ? `${row.debt_equity.toFixed(2)}x` : '—'}
         </span>
       )
@@ -971,7 +971,7 @@ export const ScreenerPage: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row) => (
-        <span className="font-mono font-bold text-gray-950">
+        <span className="font-mono font-bold text-slate-100 tabular-nums">
           {formatPrice(row.price, row.exchange)}
         </span>
       )
@@ -984,8 +984,8 @@ export const ScreenerPage: React.FC = () => {
       render: (row) => {
         const isUp = (row.change_pct ?? 0) >= 0;
         return (
-          <span className={`inline-flex items-center gap-0.5 font-mono text-xs font-bold px-1.5 py-0.5 rounded ${
-            isUp ? 'text-emerald-700 bg-emerald-50 border border-emerald-150' : 'text-rose-700 bg-rose-50 border border-rose-150'
+          <span className={`inline-flex items-center gap-0.5 font-mono text-xs font-bold px-1.5 py-0.5 rounded border tabular-nums ${
+            isUp ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
           }`}>
             {formatPercentChange(row.change_pct)}
           </span>
@@ -998,7 +998,7 @@ export const ScreenerPage: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row) => (
-        <span className="font-mono text-xs text-gray-650 font-bold">
+        <span className="font-mono text-xs text-slate-200 font-bold tabular-nums">
           {formatMarketCap(row.market_cap, row.exchange)}
         </span>
       )
@@ -1034,17 +1034,17 @@ export const ScreenerPage: React.FC = () => {
             <span>{showAdvancedFilters ? 'Hide Advanced Filters' : 'Show Advanced Filters'}</span>
           </button>
         </div>
-        <p className="font-sans text-xs sm:text-sm text-gray-500 max-w-2xl">
-          Instantly filter through our seeded S&P 500 and popular global equities.
+        <p className="font-mono text-xs text-slate-400 max-w-2xl">
+          Instantly filter through institutional multi-factor data for S&P 500 and global equities.
         </p>
       </div>
 
       {/* 1. Sector Heatmap Widget Grid (Actions Toggle) - PRESERVED */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-          <h3 className="font-sans text-sm font-bold text-gray-955 flex items-center gap-1.5">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+          <h3 className="font-sans text-sm font-bold text-slate-200 flex items-center gap-1.5">
             <span>Market Sector Heatmap</span>
-            <span className="text-[10px] font-mono text-gray-400 font-semibold normal-case">
+            <span className="text-[10px] font-mono text-slate-500 font-semibold normal-case">
               (Tap card to filter stock table)
             </span>
           </h3>
@@ -1053,7 +1053,7 @@ export const ScreenerPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {isSectorPending ? (
             Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="h-24 rounded-2xl bg-gray-100 animate-pulse" />
+              <div key={i} className="h-24 rounded-2xl bg-slate-800/60 animate-pulse border border-slate-800" />
             ))
           ) : (
             sectorSummary?.map((s) => {
@@ -1063,21 +1063,21 @@ export const ScreenerPage: React.FC = () => {
                 <button
                   key={s.name}
                   onClick={() => handleSectorCardClick(s.name)}
-                  className={`p-5 rounded-3xl text-left transition-all duration-300 transform ${
+                  className={`p-4 rounded-2xl text-left transition-all duration-200 cursor-pointer border ${
                     isSelected 
-                      ? 'bg-white shadow-2xl ring-2 ring-indigo-500/50 scale-[1.02] shadow-indigo-500/20' 
-                      : 'bg-white/95 shadow-xl shadow-blue-500/5 border border-white hover:bg-white hover:shadow-2xl hover:shadow-indigo-500/15 hover:-translate-y-2'
+                      ? 'bg-[#141A26] border-emerald-500/60 shadow-lg shadow-emerald-500/10' 
+                      : 'bg-[#0D111A] border-slate-800 hover:border-slate-700 hover:bg-[#141A26]'
                   }`}
                 >
-                  <div className="font-sans font-bold text-base sm:text-lg text-gray-800 truncate tracking-tight">
+                  <div className="font-sans font-bold text-sm sm:text-base text-slate-100 truncate tracking-tight">
                     {s.name}
                   </div>
                   <div className="flex items-baseline gap-2 mt-3">
-                    <span className="font-sans text-xs font-bold text-gray-400 bg-gray-100/80 px-2 py-0.5 rounded-md">
+                    <span className="font-mono text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
                       {s.proxy}
                     </span>
-                    <span className={`font-mono text-sm font-black ml-auto px-2 py-0.5 rounded-md ${
-                      isUp ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+                    <span className={`font-mono text-xs font-bold ml-auto px-2 py-0.5 rounded border tabular-nums ${
+                      isUp ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                     }`}>
                       {isUp ? '+' : ''}{s.performance.toFixed(2)}%
                     </span>
@@ -1091,27 +1091,27 @@ export const ScreenerPage: React.FC = () => {
 
       {/* 1.5. Stock Activity Widget */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-          <h3 className="font-sans text-sm font-bold text-gray-955 flex items-center gap-1.5">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+          <h3 className="font-sans text-sm font-bold text-slate-200 flex items-center gap-1.5">
             <span>Stock Activity</span>
-            <span className="text-[10px] font-mono text-gray-400 font-semibold normal-case">
+            <span className="text-[10px] font-mono text-slate-500 font-semibold normal-case">
               (Top market dynamics and breakouts)
             </span>
           </h3>
         </div>
 
         {/* Tab switcher bar */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1.5 border-b border-gray-100 scrollbar-none">
+        <div className="flex items-center gap-1 overflow-x-auto pb-1.5 border-b border-slate-800/80 scrollbar-none">
           {ACTIVITY_TABS.map((tab) => {
             const isActive = activeActivityTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveActivityTab(tab.id)}
-                className={`whitespace-nowrap px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+                className={`whitespace-nowrap px-3.5 py-1.5 text-xs font-mono font-bold rounded-lg transition-all duration-150 cursor-pointer ${
                   isActive
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50 shadow-3xs'
-                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
                 }`}
               >
                 {tab.label}
@@ -1121,32 +1121,32 @@ export const ScreenerPage: React.FC = () => {
         </div>
 
         {/* Table showing stocks for the active tab in a vertical list layout */}
-        <div className="overflow-x-auto rounded-3xl border border-white/50 bg-white/95 backdrop-blur-2xl shadow-2xl shadow-indigo-500/10">
-          <table className="min-w-full divide-y divide-gray-100/50 border-collapse">
-            <thead className="bg-transparent border-b border-gray-100/60 text-left">
+        <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-[#0D111A] shadow-xl">
+          <table className="min-w-full divide-y divide-slate-800/80 border-collapse">
+            <thead className="bg-[#080B11] border-b border-slate-800 text-left">
               <tr>
-                <th className="w-24 px-4 py-4 text-[11px] font-sans font-bold text-gray-500 uppercase tracking-wider">Symbol</th>
-                <th className="px-4 py-4 text-[11px] font-sans font-bold text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="w-24 px-4 py-4 text-[11px] font-sans font-bold text-gray-500 uppercase tracking-wider text-center">Trend</th>
-                <th className="w-28 px-4 py-4 text-[11px] font-sans font-bold text-gray-500 uppercase tracking-wider text-right">Price</th>
-                <th className="w-28 px-4 py-4 text-[11px] font-sans font-bold text-gray-500 uppercase tracking-wider text-right">Change %</th>
-                <th className="w-32 px-4 py-4 text-[11px] font-sans font-bold text-gray-500 uppercase tracking-wider text-right">Market Cap</th>
-                <th className="w-32 px-4 py-4 text-[11px] font-sans font-bold text-gray-500 uppercase tracking-wider text-right">P/E Ratio</th>
-                <th className="w-36 px-4 py-4 text-[11px] font-sans font-bold text-gray-500 uppercase tracking-wider text-right">52 Wk Change %</th>
+                <th className="w-24 px-4 py-3 text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">Symbol</th>
+                <th className="px-4 py-3 text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">Name</th>
+                <th className="w-24 px-4 py-3 text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider text-center">Trend</th>
+                <th className="w-28 px-4 py-3 text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider text-right">Price</th>
+                <th className="w-28 px-4 py-3 text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider text-right">Change %</th>
+                <th className="w-32 px-4 py-3 text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider text-right">Market Cap</th>
+                <th className="w-32 px-4 py-3 text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider text-right">P/E Ratio</th>
+                <th className="w-36 px-4 py-3 text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider text-right">52 Wk Change %</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100/50 bg-transparent">
+            <tbody className="divide-y divide-slate-800/60 bg-transparent">
               {isMoversPending ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td className="w-24 px-4 py-3 border-r border-gray-150 bg-gray-50/50 h-10" />
-                    <td className="px-4 py-3 bg-white h-10" />
-                    <td className="w-24 px-4 py-3 bg-white h-10" />
-                    <td className="w-28 px-4 py-3 bg-white h-10" />
-                    <td className="w-28 px-4 py-3 bg-white h-10" />
-                    <td className="w-32 px-4 py-3 bg-white h-10" />
-                    <td className="w-32 px-4 py-3 bg-white h-10" />
-                    <td className="w-36 px-4 py-3 bg-white h-10" />
+                    <td className="w-24 px-4 py-3 bg-[#0D111A] h-10" />
+                    <td className="px-4 py-3 bg-[#0D111A] h-10" />
+                    <td className="w-24 px-4 py-3 bg-[#0D111A] h-10" />
+                    <td className="w-28 px-4 py-3 bg-[#0D111A] h-10" />
+                    <td className="w-28 px-4 py-3 bg-[#0D111A] h-10" />
+                    <td className="w-32 px-4 py-3 bg-[#0D111A] h-10" />
+                    <td className="w-32 px-4 py-3 bg-[#0D111A] h-10" />
+                    <td className="w-36 px-4 py-3 bg-[#0D111A] h-10" />
                   </tr>
                 ))
               ) : (
@@ -1155,7 +1155,7 @@ export const ScreenerPage: React.FC = () => {
                   if (list.length === 0) {
                     return (
                       <tr>
-                        <td colSpan={8} className="py-8 text-center text-xs text-gray-405 font-medium">
+                        <td colSpan={8} className="py-8 text-center text-xs font-mono text-slate-500 font-medium">
                           No active stocks found for this category.
                         </td>
                       </tr>
@@ -1169,35 +1169,35 @@ export const ScreenerPage: React.FC = () => {
                         key={stock.symbol}
                         onClick={() => navigate(`/company/${encodeURIComponent(stock.symbol.toUpperCase())}`)}
                         onMouseEnter={() => prefetch(stock.symbol)}
-                        className="hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-transparent hover:scale-[1.01] hover:shadow-lg cursor-pointer transition-all duration-300 group relative z-10"
+                        className="hover:bg-[#141A26] cursor-pointer transition-colors duration-150 group"
                       >
-                        <td className="w-24 px-4 py-4 text-left">
-                          <span className="inline-flex items-center rounded-md bg-gray-100/80 px-2 py-1 text-xs font-bold text-gray-700 ring-1 ring-inset ring-gray-500/10 group-hover:bg-white group-hover:text-blue-600 group-hover:ring-blue-500/20 transition-colors">
+                        <td className="w-24 px-4 py-3.5 text-left">
+                          <span className="inline-flex items-center rounded-md bg-slate-800 px-2 py-0.5 text-xs font-mono font-bold text-slate-200 border border-slate-700 group-hover:border-emerald-500/40 group-hover:text-emerald-400 transition-colors">
                             {stock.symbol}
                           </span>
                         </td>
-                        <td className="px-4 py-4 text-xs sm:text-sm text-gray-600 truncate max-w-[150px] sm:max-w-md font-sans font-medium">
+                        <td className="px-4 py-3.5 text-xs sm:text-sm text-slate-300 truncate max-w-[150px] sm:max-w-md font-sans font-medium">
                           {stock.name}
                         </td>
-                        <td className="w-24 px-4 py-4 text-center">
+                        <td className="w-24 px-4 py-3.5 text-center">
                           {renderSparkline(stock.symbol, isUp)}
                         </td>
-                        <td className="w-28 px-4 py-4 text-right font-mono text-xs sm:text-sm font-bold text-gray-700">
+                        <td className="w-28 px-4 py-3.5 text-right font-mono text-xs sm:text-sm font-bold text-slate-100 tabular-nums">
                           {formatPrice(stock.price, stock.exchange)}
                         </td>
-                        <td className={`w-28 px-4 py-4 text-right font-mono text-xs sm:text-sm font-bold ${
-                          isUp ? 'text-emerald-600' : 'text-rose-600'
+                        <td className={`w-28 px-4 py-3.5 text-right font-mono text-xs sm:text-sm font-bold tabular-nums ${
+                          isUp ? 'text-emerald-400' : 'text-rose-400'
                         }`}>
                           {formatPercentChange(stock.change_pct)}
                         </td>
-                        <td className="w-32 px-4 py-4 text-right font-mono text-xs sm:text-sm font-bold text-gray-700">
+                        <td className="w-32 px-4 py-3.5 text-right font-mono text-xs sm:text-sm font-bold text-slate-300 tabular-nums">
                           {typeof stock.market_cap === 'number' ? formatMarketCap(stock.market_cap, stock.exchange) : '—'}
                         </td>
-                        <td className="w-32 px-4 py-4 text-right font-mono text-xs sm:text-sm font-bold text-gray-700">
+                        <td className="w-32 px-4 py-3.5 text-right font-mono text-xs sm:text-sm font-bold text-slate-300 tabular-nums">
                           {typeof stock.pe_ratio === 'number' ? `${stock.pe_ratio.toFixed(2)}` : '—'}
                         </td>
-                        <td className={`w-36 px-4 py-4 text-right font-mono text-xs sm:text-sm font-bold ${
-                          is52wUp ? 'text-emerald-600' : 'text-rose-600'
+                        <td className={`w-36 px-4 py-3.5 text-right font-mono text-xs sm:text-sm font-bold tabular-nums ${
+                          is52wUp ? 'text-emerald-400' : 'text-rose-400'
                         }`}>
                           {typeof stock.change_52w === 'number' ? `${stock.change_52w >= 0 ? '+' : ''}${stock.change_52w.toFixed(2)}%` : '—'}
                         </td>
@@ -1213,28 +1213,28 @@ export const ScreenerPage: React.FC = () => {
 
       {/* 2. Interactive Multi-Factor Filters Builder Panel */}
       {showAdvancedFilters && (
-        <div className="flex flex-col overflow-hidden rounded-3xl border border-white/50 bg-white/90 backdrop-blur-2xl shadow-2xl shadow-blue-500/10">
+        <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-800 bg-[#0D111A] shadow-2xl">
           {/* Filters Builder Title Header */}
-          <div className="flex items-center justify-between border-b border-gray-100/50 bg-transparent px-5 py-3">
+          <div className="flex items-center justify-between border-b border-slate-800 bg-[#080B11] px-5 py-3.5">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Filter Builder</span>
-              <span className="rounded-full bg-emerald-100/70 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Filter Builder</span>
+              <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-mono font-bold text-emerald-400">
                 20-Factor Curated Screen
               </span>
             </div>
             <div className="flex items-center gap-3">
               <span
-                className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-mono font-bold ${
+                className={`flex h-5 min-w-5 items-center justify-center rounded-full px-2 text-[10px] font-mono font-bold ${
                   activeFilterCount > 0
-                    ? 'bg-emerald-600 text-white animate-bounce'
-                    : 'bg-gray-200 text-gray-500'
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                    : 'bg-slate-800 text-slate-400'
                 }`}
               >
                 {activeFilterCount} Active
               </span>
               <button
                 onClick={resetAllFilters}
-                className="flex items-center gap-1 text-[11px] font-bold text-gray-500 hover:text-emerald-700 transition-colors"
+                className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
               >
                 <RotateCcw className="h-3 w-3" />
                 Clear All
@@ -1244,7 +1244,7 @@ export const ScreenerPage: React.FC = () => {
 
           <div className="flex flex-col md:flex-row h-[480px] overflow-hidden">
             {/* L1: Categories (25%) */}
-            <div className="w-full md:w-1/4 border-r border-gray-100/50 bg-transparent p-3 overflow-y-auto">
+            <div className="w-full md:w-1/4 border-r border-slate-800 bg-[#080B11]/60 p-3 overflow-y-auto">
               <nav className="space-y-1">
                 {CATEGORIES.map((category) => {
                   const Icon = CATEGORY_ICONS[category];
@@ -1256,24 +1256,24 @@ export const ScreenerPage: React.FC = () => {
                     <button
                       key={category}
                       onClick={() => handleSelectCategory(category)}
-                      className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-sm font-bold transition-colors ${
+                      className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-xs font-mono font-bold transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'text-gray-600 hover:bg-gray-100/70'
+                          ? 'bg-[#141A26] text-emerald-400 border border-slate-700 shadow-sm'
+                          : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border border-transparent'
                       }`}
                     >
-                      <span className="flex items-center gap-3">
+                      <span className="flex items-center gap-2.5 truncate">
                         <Icon
-                          className={`h-4 w-4 ${isActive ? 'text-emerald-600' : 'text-gray-400'}`}
+                          className={`h-4 w-4 shrink-0 ${isActive ? 'text-emerald-400' : 'text-slate-500'}`}
                         />
-                        {category}
+                        <span className="truncate">{category}</span>
                       </span>
-                      <span className="flex items-center gap-1.5">
+                      <span className="flex items-center gap-1 shrink-0 ml-1">
                         {countInCategory > 0 && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                         )}
                         <ChevronRight
-                          className={`h-4 w-4 ${isActive ? 'text-emerald-500' : 'text-gray-300'}`}
+                          className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-400' : 'text-slate-600'}`}
                         />
                       </span>
                     </button>
@@ -1283,7 +1283,7 @@ export const ScreenerPage: React.FC = () => {
             </div>
 
             {/* L2: Metrics (35%) */}
-            <div className="w-full md:w-[35%] border-r border-gray-100/50 bg-transparent p-3 overflow-y-auto">
+            <div className="w-full md:w-[35%] border-r border-slate-800 bg-[#0A0E17]/60 p-3 overflow-y-auto">
               <div className="space-y-1">
                 {metricsInCategory.map((metric) => {
                   const isActive = metric.id === activeMetricId;
@@ -1292,27 +1292,29 @@ export const ScreenerPage: React.FC = () => {
                     <button
                       key={metric.id}
                       onClick={() => handleSelectMetric(metric.id)}
-                      className={`flex w-full items-center justify-between gap-2 rounded-lg px-4 py-3 text-left transition-colors ${
-                        isActive ? 'bg-emerald-50/50' : 'hover:bg-gray-50/50'
+                      className={`flex w-full items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-left transition-all cursor-pointer ${
+                        isActive 
+                          ? 'bg-[#141A26] border border-slate-700 shadow-sm' 
+                          : 'hover:bg-slate-800/40 border border-transparent'
                       }`}
                     >
                       <div className="min-w-0">
                         <div
-                          className={`truncate text-sm ${
-                            isActive ? 'font-bold text-emerald-800' : 'font-semibold text-gray-700'
+                          className={`truncate text-xs font-mono ${
+                            isActive ? 'font-bold text-slate-100' : 'font-medium text-slate-300'
                           }`}
                         >
                           {metric.name}
                         </div>
                         {summary && (
-                          <div className="mt-1 truncate text-xs font-mono font-bold text-emerald-600">
+                          <div className="mt-0.5 truncate text-[11px] font-mono font-bold text-emerald-400">
                             {summary}
                           </div>
                         )}
                       </div>
                       <ChevronRight
-                        className={`h-4 w-4 flex-shrink-0 ${
-                          isActive ? 'text-emerald-500' : 'text-gray-300'
+                        className={`h-3.5 w-3.5 flex-shrink-0 ${
+                          isActive ? 'text-emerald-400' : 'text-slate-600'
                         }`}
                       />
                     </button>
@@ -1322,13 +1324,13 @@ export const ScreenerPage: React.FC = () => {
             </div>
 
             {/* L3: Editors (40%) */}
-            <div className="w-full md:w-[40%] bg-transparent p-6 overflow-y-auto flex flex-col justify-between">
+            <div className="w-full md:w-[40%] bg-[#0D111A] p-5 overflow-y-auto flex flex-col justify-between">
               <div>
-                <h4 className="text-base font-bold text-gray-900">{activeMetric.name}</h4>
-                <p className="mt-1 text-sm leading-relaxed text-gray-500 font-medium">
+                <h4 className="text-sm font-bold font-sans text-slate-100">{activeMetric.name}</h4>
+                <p className="mt-1 text-xs leading-relaxed text-slate-400 font-sans">
                   {activeMetric.description}
                 </p>
-                <div className="mt-3">
+                <div className="mt-4">
                   {activeMetric.type === 'categorical' ? (
                     <CategoricalEditor
                       metric={activeMetric}
@@ -1358,18 +1360,18 @@ export const ScreenerPage: React.FC = () => {
       <div className="space-y-4">
         {/* Simple Search bar overlay on results */}
         <div className="relative max-w-md">
-          <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+          <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
             placeholder="Search ticker symbol or company name..."
-            className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-8 text-xs font-semibold placeholder-gray-400 outline-none transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10"
+            className="w-full rounded-xl border border-slate-800 bg-[#0D111A] py-2 pl-9 pr-8 text-xs font-mono font-medium text-slate-100 placeholder-slate-500 outline-none transition-all focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30"
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 cursor-pointer"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -1389,21 +1391,21 @@ export const ScreenerPage: React.FC = () => {
 
         {/* 4. Elegant Pagination Controls & Rows Stats */}
         {!isScreenerPending && total > 0 && (
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-gray-100 pt-4">
-            <span className="font-mono text-xs text-gray-500">
-              Showing <span className="font-bold text-gray-900">{Math.min((page - 1) * itemsPerPage + 1, total)}</span> to <span className="font-bold text-gray-900">{Math.min(page * itemsPerPage, total)}</span> of <span className="font-bold text-gray-900">{total}</span> Equities
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-slate-800/80 pt-4">
+            <span className="font-mono text-xs text-slate-400">
+              Showing <span className="font-bold text-slate-200">{Math.min((page - 1) * itemsPerPage + 1, total)}</span> to <span className="font-bold text-slate-200">{Math.min(page * itemsPerPage, total)}</span> of <span className="font-bold text-slate-200">{total}</span> Equities
             </span>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-                className="p-1.5 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition-colors"
+                className="p-1.5 border border-slate-800 rounded-lg bg-[#0D111A] hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-[#0D111A] transition-colors cursor-pointer"
               >
-                <ChevronLeft className="h-4 w-4 text-gray-700" />
+                <ChevronLeft className="h-4 w-4 text-slate-300" />
               </button>
 
-              <div className="flex items-center gap-1 font-sans text-xs">
+              <div className="flex items-center gap-1 font-mono text-xs">
                 {Array.from({ length: totalPages }).map((_, pIdx) => {
                   const pNum = pIdx + 1;
                   if (pNum === 1 || pNum === totalPages || Math.abs(pNum - page) <= 1) {
@@ -1411,10 +1413,10 @@ export const ScreenerPage: React.FC = () => {
                       <button
                         key={pNum}
                         onClick={() => setPage(pNum)}
-                        className={`h-7 w-7 rounded-md font-semibold transition-colors ${
+                        className={`h-7 w-7 rounded-lg font-bold transition-colors cursor-pointer ${
                           page === pNum
-                            ? 'bg-emerald-600 text-white font-bold'
-                            : 'border border-gray-150 bg-white text-gray-600 hover:bg-gray-50'
+                            ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold'
+                            : 'border border-slate-800 bg-[#0D111A] text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                         }`}
                       >
                         {pNum}
@@ -1422,7 +1424,7 @@ export const ScreenerPage: React.FC = () => {
                     );
                   }
                   if (pNum === 2 || pNum === totalPages - 1) {
-                    return <span key={pNum} className="px-1 text-gray-400">...</span>;
+                    return <span key={pNum} className="px-1 text-slate-600">...</span>;
                   }
                   return null;
                 })}
@@ -1431,9 +1433,9 @@ export const ScreenerPage: React.FC = () => {
               <button
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
-                className="p-1.5 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition-colors"
+                className="p-1.5 border border-slate-800 rounded-lg bg-[#0D111A] hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-[#0D111A] transition-colors cursor-pointer"
               >
-                <ChevronRight className="h-4 w-4 text-gray-700" />
+                <ChevronRight className="h-4 w-4 text-slate-300" />
               </button>
             </div>
           </div>
@@ -1467,40 +1469,40 @@ function CategoricalEditor({
   return (
     <div className="flex flex-col gap-2">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={`Search ${metric.name.toLowerCase()}...`}
-          className="w-full rounded-lg border border-gray-200 py-2.5 pl-9 pr-8 text-sm text-gray-700 placeholder:text-gray-450 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none"
+          className="w-full rounded-xl border border-slate-800 bg-[#080B11] py-2.5 pl-9 pr-8 text-xs font-mono text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 outline-none"
         />
         {search && (
           <button
             onClick={() => onSearchChange('')}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 cursor-pointer"
           >
             <X className="h-3 w-3" />
           </button>
         )}
       </div>
 
-      <div className="max-h-[240px] space-y-1 overflow-y-auto rounded-lg border border-gray-200 p-2">
+      <div className="max-h-[240px] space-y-1 overflow-y-auto rounded-xl border border-slate-800 bg-[#080B11]/50 p-2">
         {filteredOptions.length === 0 && (
-          <p className="px-3 py-4 text-center text-sm text-gray-450">No matches found.</p>
+          <p className="px-3 py-4 text-center text-xs font-mono text-slate-500">No matches found.</p>
         )}
         {filteredOptions.map((option) => {
           const checked = selected.includes(option);
           return (
             <label
               key={option}
-              className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-755 hover:bg-gray-50"
+              className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-xs font-mono font-medium text-slate-300 hover:bg-[#141A26] hover:text-slate-100 transition-colors"
             >
               <input
                 type="checkbox"
                 checked={checked}
                 onChange={() => onToggle(option)}
-                className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-1 focus:ring-emerald-500/30 cursor-pointer"
               />
               {option}
             </label>
@@ -1540,15 +1542,15 @@ function NumericEditor({
             <button
               key={preset.id}
               onClick={() => onPresetToggle(preset.id)}
-              className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-semibold transition-all ${
+              className={`flex items-center justify-between rounded-xl border px-4 py-3 text-xs font-mono font-bold transition-all cursor-pointer ${
                 checked
-                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                  : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50'
+                  ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-400'
+                  : 'border-slate-800 text-slate-300 bg-[#080B11] hover:bg-slate-800/80 hover:text-slate-100'
               }`}
             >
               <span className="truncate">{preset.label}</span>
-              <span className={`h-3 w-3 rounded-full border border-gray-300 shrink-0 ml-1 ${
-                checked ? 'bg-emerald-600 border-emerald-600' : 'bg-white'
+              <span className={`h-3 w-3 rounded-full border border-slate-700 shrink-0 ml-1 ${
+                checked ? 'bg-emerald-500 border-emerald-500' : 'bg-slate-900'
               }`} />
             </button>
           );
@@ -1556,33 +1558,33 @@ function NumericEditor({
       </div>
 
       {/* Custom toggle */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <div className="overflow-hidden rounded-xl border border-slate-800 bg-[#080B11]">
         <button
           onClick={() => onCustomOpenChange(!customOpen)}
-          className={`flex w-full items-center justify-between px-4 py-3 text-sm font-bold transition-all ${
-            customOpen ? 'bg-gray-50 text-gray-800' : 'text-gray-750 hover:bg-gray-50'
+          className={`flex w-full items-center justify-between px-4 py-3 text-xs font-mono font-bold transition-all cursor-pointer ${
+            customOpen ? 'bg-slate-800/80 text-slate-100' : 'text-slate-300 hover:bg-slate-800/50 hover:text-slate-100'
           }`}
         >
-          <span>Custom Value</span>
+          <span>Custom Numeric Bounds</span>
           <ChevronRight
-            className={`h-4 w-4 text-gray-400 transition-transform ${
+            className={`h-4 w-4 text-slate-400 transition-transform ${
               customOpen ? 'rotate-90' : ''
             }`}
           />
         </button>
 
         {customOpen && (
-          <div className="space-y-3 border-t border-gray-100 bg-gray-50/40 p-3">
+          <div className="space-y-3 border-t border-slate-800/80 bg-[#0D111A]/80 p-3">
             {/* Operator button group */}
-            <div className="grid grid-cols-4 gap-1 rounded-lg bg-gray-200/50 p-1">
+            <div className="grid grid-cols-4 gap-1 rounded-xl bg-[#080B11] p-1 border border-slate-800">
               {OPERATORS.map((op) => (
                 <button
                   key={op.id}
                   onClick={() => onCustomChange({ operator: op.id })}
-                  className={`rounded px-2 py-2 text-xs font-bold transition-all ${
+                  className={`rounded-lg px-2 py-1.5 text-xs font-mono font-bold transition-all cursor-pointer ${
                     operator === op.id
-                      ? 'bg-white text-emerald-705 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   {op.label}
@@ -1598,15 +1600,15 @@ function NumericEditor({
                   value={value1}
                   onChange={(e) => onCustomChange({ value1: e.target.value })}
                   placeholder={placeholder}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-emerald-400 outline-none"
+                  className="w-full rounded-xl border border-slate-800 bg-[#080B11] px-3 py-2 text-xs font-mono text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 outline-none"
                 />
-                <span className="text-xs text-gray-400 font-bold">and</span>
+                <span className="text-xs text-slate-500 font-mono font-bold">and</span>
                 <input
                   type="text"
                   value={value2}
                   onChange={(e) => onCustomChange({ value2: e.target.value })}
                   placeholder={placeholder}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-emerald-400 outline-none"
+                  className="w-full rounded-xl border border-slate-800 bg-[#080B11] px-3 py-2 text-xs font-mono text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 outline-none"
                 />
               </div>
             ) : (
@@ -1615,7 +1617,7 @@ function NumericEditor({
                 value={value1}
                 onChange={(e) => onCustomChange({ value1: e.target.value })}
                 placeholder={placeholder}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-emerald-400 outline-none"
+                className="w-full rounded-xl border border-slate-800 bg-[#080B11] px-3 py-2 text-xs font-mono text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 outline-none"
               />
             )}
           </div>

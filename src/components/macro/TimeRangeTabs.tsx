@@ -9,17 +9,17 @@ interface TimeRangeTabsProps {
 
 export const TimeRangeTabs: React.FC<TimeRangeTabsProps> = ({ ranges, activeRange, onChange }) => {
   return (
-    <div className="flex space-x-2">
+    <div className="flex items-center gap-1 bg-[#080B11] p-1 rounded-xl border border-slate-800">
       {ranges.map((range) => {
         const isActive = activeRange === range;
         return (
           <button
             key={range}
             onClick={() => onChange(range)}
-            className={`text-xs font-medium px-2 py-1 rounded transition-colors ${
+            className={`text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
               isActive
-                ? "text-emerald-700 font-bold border-b-2 border-emerald-500"
-                : "text-gray-500 hover:text-gray-900"
+                ? "text-emerald-400 bg-[#141A26] border border-slate-700 shadow-sm"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
             }`}
           >
             {range}
