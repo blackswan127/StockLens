@@ -49,15 +49,16 @@ Instructions:
 Do not use markdown headers or bullet points. Output only the 3 paragraphs.
 `;
 
-  // Priority list starting with Gemini Flash Lite
+  // Priority list starting with Gemini 3.5 Flash Lite
   const envModel = process.env.GEMINI_MODEL;
   const modelsToTry = Array.from(new Set([
     ...(envModel ? [envModel] : []),
-    'gemini-2.0-flash-lite',
+    'gemini-3.5-flash-lite',
+    'gemini-3.5-flash',
     'gemini-2.5-flash-lite',
+    'gemini-2.0-flash-lite',
     'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-2.5-flash'
+    'gemini-1.5-flash'
   ]));
   
   for (let i = 0; i < geminiKeyManager.getKeyCount(); i++) {
