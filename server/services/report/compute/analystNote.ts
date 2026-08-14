@@ -50,8 +50,7 @@ Do not use markdown headers or bullet points. Output only the 3 paragraphs.
 `;
 
   // Exclusively using Gemini 3.5 Flash Lite
-  const envModel = process.env.GEMINI_MODEL;
-  const modelsToTry = [envModel || 'gemini-3.5-flash-lite'];
+  const modelsToTry = ['gemini-3.5-flash-lite'];
   
   for (let i = 0; i < geminiKeyManager.getKeyCount(); i++) {
     const currentKey = i === 0 ? apiKey : geminiKeyManager.getNextKey();
