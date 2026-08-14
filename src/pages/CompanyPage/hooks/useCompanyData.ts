@@ -179,8 +179,8 @@ export const useCompanyData = ({
     isUSSymbol(upperSymbol)
   ) : isUSSymbol(upperSymbol);
 
-  // SEC EDGAR Query Hooks - these are lazy loaded
-  const { data: edgarFinancials, isPending: isEdgarFinancialsPending, isError: isEdgarFinancialsError } = useQuery({
+  // SEC EDGAR Query Hooks - parallel prefetching for instant tab transitions
+  const { data: edgarFinancials, isLoading: isEdgarFinancialsPending, isError: isEdgarFinancialsError } = useQuery({
     queryKey: ['edgarFinancials', upperSymbol],
     queryFn: async () => {
       const resp = await edgarApiClient.get(`/edgar/financials/${upperSymbol}`);
@@ -209,7 +209,7 @@ export const useCompanyData = ({
     }
   });
 
-  const { data: edgarInsiders, isPending: isEdgarInsidersPending, isError: isEdgarInsidersError } = useQuery({
+  const { data: edgarInsiders, isLoading: isEdgarInsidersPending, isError: isEdgarInsidersError } = useQuery({
     queryKey: ['edgarInsiders', upperSymbol],
     queryFn: async () => {
       const resp = await edgarApiClient.get(`/edgar/insiders/${upperSymbol}`);
@@ -223,13 +223,13 @@ export const useCompanyData = ({
     }
   });
 
-  const { data: edgarHoldings, isPending: isEdgarHoldingsPending, isError: isEdgarHoldingsError } = useQuery({
+  const { data: edgarHoldings, isLoading: isEdgarHoldingsPending, isError: isEdgarHoldingsError } = useQuery({
     queryKey: ['edgarHoldings', holdingsQuery],
     queryFn: async () => {
       const resp = await edgarApiClient.get(`/edgar/holdings/${holdingsQuery}`);
       return resp.data;
     },
-    enabled: isUSStock && !!holdingsQuery && activePrimaryTab === 'sec' && activeSecSubTab === 'holdings',
+    enabled: isUSStock && !!holdingsQuery,
     staleTime: 24 * 60 * 60 * 1000,
     retry: (failureCount, error: any) => {
       if (error?.response?.status === 404) return false;
@@ -237,13 +237,13 @@ export const useCompanyData = ({
     }
   });
 
-  const { data: edgarSection1, isPending: isSection1Pending, isError: isSection1Error } = useQuery({
+  const { data: edgarSection1, isLoading: isSection1Pending, isError: isSection1Error } = useQuery({
     queryKey: ['edgarSection1_v2', upperSymbol],
     queryFn: async () => {
       const resp = await edgarApiClient.get(`/edgar/section/${upperSymbol}/1`);
       return resp.data;
     },
-    enabled: isUSStock && activePrimaryTab === 'sec',
+    enabled: isUSStock,
     staleTime: 24 * 60 * 60 * 1000, // 24h — 10-K text is not intraday data
     gcTime: 24 * 60 * 60 * 1000,
     retry: (failureCount, error: any) => {
@@ -252,13 +252,13 @@ export const useCompanyData = ({
     }
   });
 
-  const { data: edgarSection1A, isPending: isSection1APending, isError: isSection1AError } = useQuery({
+  const { data: edgarSection1A, isLoading: isSection1APending, isError: isSection1AError } = useQuery({
     queryKey: ['edgarSection1A_v2', upperSymbol],
     queryFn: async () => {
       const resp = await edgarApiClient.get(`/edgar/section/${upperSymbol}/1A`);
       return resp.data;
     },
-    enabled: isUSStock && activePrimaryTab === 'sec',
+    enabled: isUSStock,
     staleTime: 24 * 60 * 60 * 1000, // 24h — 10-K text is not intraday data
     gcTime: 24 * 60 * 60 * 1000,
     retry: (failureCount, error: any) => {
@@ -267,13 +267,13 @@ export const useCompanyData = ({
     }
   });
 
-  const { data: edgarSection7, isPending: isSection7Pending, isError: isSection7Error } = useQuery({
+  const { data: edgarSection7, isLoading: isSection7Pending, isError: isSection7Error } = useQuery({
     queryKey: ['edgarSection7_v2', upperSymbol],
     queryFn: async () => {
       const resp = await edgarApiClient.get(`/edgar/section/${upperSymbol}/7`);
       return resp.data;
     },
-    enabled: isUSStock && activePrimaryTab === 'sec',
+    enabled: isUSStock,
     staleTime: 24 * 60 * 60 * 1000, // 24h — 10-K text is not intraday data
     gcTime: 24 * 60 * 60 * 1000,
     retry: (failureCount, error: any) => {
@@ -282,7 +282,7 @@ export const useCompanyData = ({
     }
   });
 
-  const { data: edgarRiskDiff, isPending: isRiskDiffPending, isError: isRiskDiffError } = useQuery({
+  const { data: edgarRiskDiff, isLoading: isRiskDiffPending, isError: isRiskDiffError } = useQuery({
     queryKey: ['edgarRiskDiff_v2', upperSymbol],
     queryFn: async () => {
       const resp = await edgarApiClient.get(`/edgar/risk-diff/${upperSymbol}`);
@@ -297,13 +297,13 @@ export const useCompanyData = ({
     }
   });
 
-  const { data: edgarProxy, isPending: isEdgarProxyPending, isError: isEdgarProxyError } = useQuery({
+  const { data: edgarProxy, isLoading: isEdgarProxyPending, isError: isEdgarProxyError } = useQuery({
     queryKey: ['edgarProxy', upperSymbol],
     queryFn: async () => {
       const resp = await edgarApiClient.get(`/edgar/proxy/${upperSymbol}`);
       return resp.data;
     },
-    enabled: isUSStock && activePrimaryTab === 'sec' && activeSecSubTab === 'proxy',
+    enabled: isUSStock,
     staleTime: 24 * 60 * 60 * 1000, // cache 24h
     retry: (failureCount, error: any) => {
       if (error?.response?.status === 404) return false;
@@ -311,13 +311,13 @@ export const useCompanyData = ({
     }
   });
 
-  const { data: edgarPayVersusPerformance, isPending: isEdgarPayVersusPerformancePending, isError: isEdgarPayVersusPerformanceError } = useQuery({
+  const { data: edgarPayVersusPerformance, isLoading: isEdgarPayVersusPerformancePending, isError: isEdgarPayVersusPerformanceError } = useQuery({
     queryKey: ['edgarPayVersusPerformance', upperSymbol],
     queryFn: async () => {
       const resp = await edgarApiClient.get(`/edgar/pay-vs-performance/${upperSymbol}`);
       return resp.data;
     },
-    enabled: isUSStock && activePrimaryTab === 'sec' && activeSecSubTab === 'proxy',
+    enabled: isUSStock,
     staleTime: 24 * 60 * 60 * 1000, // cache 24h
     retry: (failureCount, error: any) => {
       if (error?.response?.status === 404) return false;
