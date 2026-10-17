@@ -2,9 +2,8 @@
 
 **A full-stack equities research workbench** — quotes and charts, deep company
 financials, an interactive DCF valuation model, AI-written research reports,
-a 7-agent "hedge fund" stock evaluator, side-by-side comparisons, a
-multi-factor screener, SEC filing tools, congressional trading disclosures,
-and macro indicators, all in one self-hosted app.
+side-by-side comparisons, a multi-factor screener, SEC filing tools,
+congressional trading disclosures, and macro indicators, all in one self-hosted app.
 
 StockLens is built with **React, Express, TypeScript, and SQLite**. It
 prefers real data over guesses: it caches aggressively to stay fast and
@@ -35,7 +34,6 @@ https://github.com/user-attachments/assets/e24211e6-14e7-448b-b961-9e379e529121
   - [Company Research Pages](#company-research-pages)
   - [DCF Intrinsic Value Calculator](#dcf-intrinsic-value-calculator)
   - [AI Equity Research Reports](#ai-equity-research-reports)
-  - [Hedge Fund — Multi-Agent Stock Evaluator](#hedge-fund--multi-agent-stock-evaluator)
   - [Stock Comparison](#stock-comparison)
   - [Stock Screener](#stock-screener)
   - [Market Dashboard](#market-dashboard)
@@ -93,27 +91,6 @@ downloadable, analyst-style research report:
 * Generates an **AI-written analyst note** (Gemini) summarizing the thesis
 * Renders a price chart and exports the whole thing as a formatted **PDF or Word document**
 * `type=snapshot` returns an executive-summary-only version (chart, valuation, peers, FinStar); `type=full` adds income statement, balance sheet, cash flow, business description, and risk factors
-
-### Hedge Fund — Multi-Agent Stock Evaluator
-
-`/hedge-fund` runs up to 10 tickers through **seven legendary-investor-style
-agents**, each independently scoring the stock from its own philosophy:
-
-| Agent | Style |
-|---|---|
-| Warren Buffett | Quality + moat at a fair price |
-| Charlie Munger | Mental-models, business quality, simplicity |
-| Benjamin Graham | Deep value, margin of safety |
-| Bill Ackman | Concentrated activist/quality bets |
-| Cathie Wood | Disruptive growth |
-| Phil Fisher | Growth-at-scale, management quality |
-| Stanley Druckenmiller | Macro-aware momentum |
-
-Each agent returns a `bullish / bearish / neutral` signal, a confidence
-score, and plain-English reasoning. A portfolio manager then combines all
-seven views — plus an optional starting cash amount (default $100,000) —
-into a final **BUY / SELL / HOLD** decision with a suggested allocation per
-ticker.
 
 ### Stock Comparison
 
@@ -226,15 +203,14 @@ gracefully instead of cascading failures across the app.
 ```text
 /server
   /routes      API routes: quotes, charts, screener, market, news, search,
-               watchlist, edgar, macro, dcf, hedgefund, report, fundamentals
+               watchlist, edgar, macro, dcf, report, fundamentals
   /services    Data fetching (Yahoo, FRED, EDGAR), report generation
-               (PDF/Word, AI notes, peer comps), the hedge-fund agent
-               engine, caching, database helpers, cron jobs
+               (PDF/Word, AI notes, peer comps), caching, database helpers, cron jobs
   /middleware  Rate limiting and error handling
 
 /src
   /pages       Main app pages (Watchlist, Screener, Market, Macro,
-               Hedge Fund, Compare, CompanyPage/*)
+               Compare, CompanyPage/*)
   /components  Shared UI components
   /hooks       React Query data hooks
   /utils       Formatters and helpers
@@ -307,8 +283,8 @@ Notes:
 
 * The app runs with **no API keys at all** — FRED-powered pages, congressional
   trading, and AI analyst notes will show unavailable states, but quotes,
-  charts, financials, the screener, the DCF calculator, and the hedge-fund
-  evaluator all work off Yahoo Finance and SEC EDGAR alone.
+  charts, financials, the screener, and the DCF calculator
+  all work off Yahoo Finance and SEC EDGAR alone.
 * `SQLITE_DB_PATH` is optional and defaults to a local database file.
 * In production, `CLIENT_URL` must be set or CORS fails closed by design.
 * `.env.example` only seeds `APP_URL` and `FRED_API_KEY` as a minimal

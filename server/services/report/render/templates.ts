@@ -2,7 +2,6 @@ import { YFData } from '../data/yahooFinanceService.js';
 import { SecData } from '../data/secEdgarService.js';
 import { FredData } from '../data/fredService.js';
 import { ComputedMetrics } from '../compute/ratios.js';
-import { HedgeFundResult } from '../../hedgeFundEngine.js';
 import { PeerMetric } from '../data/peerService.js';
 
 export interface TableData {
@@ -63,7 +62,6 @@ export interface ReportContent {
   riskDiff: any;
 
   macroContext: string;
-  hedgeFundResult: HedgeFundResult | null;
   bullBearSummary: string;
   dataFreshness: Record<string, string>;
 }
@@ -239,7 +237,7 @@ export function generateReportContent(
   metrics: ComputedMetrics,
   chartUrl: string,
   peers: PeerMetric[],
-  hfResult: HedgeFundResult | null,
+  hfResult?: any,
   analystNote?: string
 ): ReportContent {
   const fmt = (num: number | null | undefined, suffix: string = '') => (num !== null && num !== undefined && !isNaN(num)) ? `${num.toFixed(2)}${suffix}` : 'N/A';
@@ -282,82 +280,37 @@ export function generateReportContent(
     }
   });
 
-  // Derive FinStar Rating & Bull/Bear Synthesis from Hedge Fund Agents
+  // Derive FinStar Rating & Bull/Bear Synthesis from Fundamental Metrics
   let finstarRating = 'NEUTRAL';
-  let bullishCount = 0;
-  let bearishCount = 0;
-  let bullPoints: string[] = [];
-  let bearPoints: string[] = [];
-
-  const personaDisplayNames: Record<string, string> = {
-    warrenBuffett: 'Warren Buffett',
-    billAckman: 'Bill Ackman',
-    benGraham: 'Ben Graham',
-    charlieMunger: 'Charlie Munger',
-    cathieWood: 'Cathie Wood',
-    philFisher: 'Phil Fisher',
-    stanDruckenmiller: 'Stanley Druckenmiller'
-  };
-
-  if (hfResult && hfResult.evaluations && hfResult.evaluations[ticker]) {
-    const agents = hfResult.evaluations[ticker].agents;
-    Object.entries(agents).forEach(([agentKey, agent]: [string, any]) => {
-      const persona = personaDisplayNames[agentKey] || agentKey.replace(/([A-Z])/g, ' $1').trim().replace('Agent', '');
-      
-      if (agent.signal === 'bullish') {
-        bullishCount++;
-      } else if (agent.signal === 'bearish') {
-        bearishCount++;
-      }
-
-      // Collect specific persona reasons
-      if (agent.reasoning && Array.isArray(agent.reasoning)) {
-        agent.reasoning.forEach((reason: string) => {
-          const cleanReason = reason.replace(/^[✅❌⚠️•*-]\s*/, '').trim();
-          if (reason.includes('✅') || agent.signal === 'bullish') {
-            bullPoints.push(`[Bull Catalyst - ${persona}] ${cleanReason}`);
-          } else if (reason.includes('❌') || reason.includes('⚠️') || agent.signal === 'bearish') {
-            bearPoints.push(`[Bear Risk - ${persona}] ${cleanReason}`);
-          }
-        });
-      }
-    });
-    
-    const netScore = bullishCount - bearishCount;
-    if (netScore >= 1) finstarRating = 'BULLISH';
-    else if (netScore <= -1) finstarRating = 'BEARISH';
-    else finstarRating = 'NEUTRAL';
-  }
-
-  // Deduplicate and assemble balanced Bull / Bear synthesis
-  const uniqueBull = Array.from(new Set(bullPoints));
-  const uniqueBear = Array.from(new Set(bearPoints));
-
   const balancedPoints: string[] = [];
-  if (uniqueBull.length > 0) {
-    balancedPoints.push(...uniqueBull.slice(0, 3));
-  }
-  if (uniqueBear.length > 0) {
-    balancedPoints.push(...uniqueBear.slice(0, 3));
+
+  const roe = metrics.returnOnEquity ?? 0;
+  const gm = metrics.grossMargin ?? 0;
+  const de = metrics.debtToEquity ?? 1.0;
+  const om = metrics.operatingMargin ?? 0;
+
+  if (roe > 15 && gm > 30 && de < 1.5) {
+    finstarRating = 'BULLISH';
+  } else if (roe < 5 || om < 0 || de > 2.5) {
+    finstarRating = 'BEARISH';
+  } else {
+    finstarRating = 'NEUTRAL';
   }
 
-  // Fallback if no hedge fund evaluation is present
-  if (balancedPoints.length === 0) {
-    if (metrics.grossMargin !== null && metrics.grossMargin > 30) {
-      balancedPoints.push(`[Bull Catalyst - Moat] Strong gross margin of ${fmt(metrics.grossMargin, '%')} demonstrates pricing power and structural unit economics.`);
-    } else {
-      balancedPoints.push(`[Bull Catalyst - Operational] Defensible market presence within the ${industry} landscape.`);
-    }
-    if (metrics.returnOnEquity !== null && metrics.returnOnEquity > 15) {
-      balancedPoints.push(`[Bull Catalyst - Capital Efficiency] High ROE of ${fmt(metrics.returnOnEquity, '%')} supports compounding intrinsic book value.`);
-    }
-    if (metrics.debtToEquity !== null && metrics.debtToEquity > 1.0) {
-      balancedPoints.push(`[Bear Risk - Leverage] Debt-to-Equity ratio of ${fmt(metrics.debtToEquity, 'x')} presents balance sheet sensitivity in higher-rate environments.`);
-    } else {
-      balancedPoints.push(`[Bear Risk - Valuation] Multiple compression risk if macroeconomic growth decelerates.`);
-    }
-    balancedPoints.push(`[Bear Risk - Macro] Sector rotation volatility and supply chain/input cost uncertainties.`);
+  if (gm > 30) {
+    balancedPoints.push(`[Bull Catalyst - Moat] Strong gross margin of ${fmt(metrics.grossMargin, '%')} demonstrates pricing power and structural unit economics.`);
+  } else {
+    balancedPoints.push(`[Bull Catalyst - Operational] Defensible market presence within the ${industry} landscape.`);
   }
+  if (roe > 15) {
+    balancedPoints.push(`[Bull Catalyst - Capital Efficiency] High ROE of ${fmt(metrics.returnOnEquity, '%')} supports compounding intrinsic book value.`);
+  }
+  if (de > 1.0) {
+    balancedPoints.push(`[Bear Risk - Leverage] Debt-to-Equity ratio of ${fmt(metrics.debtToEquity, 'x')} presents balance sheet sensitivity in higher-rate environments.`);
+  } else {
+    balancedPoints.push(`[Bear Risk - Valuation] Multiple compression risk if macroeconomic growth decelerates.`);
+  }
+  balancedPoints.push(`[Bear Risk - Macro] Sector rotation volatility and supply chain/input cost uncertainties.`);
 
   const bullBearSummary = balancedPoints.join('\n');
 
@@ -438,7 +391,7 @@ export function generateReportContent(
       `3. 12-MONTH CATALYSTS & BEAR/BULL ASYMMETRY\n` +
       `Over the forward 12-month horizon, operational triggers include market share consolidation, accelerating new product adoption, and operating leverage inflection. Under our Bull Case (${bullImpliedReturn} target at $${bullTargetPrice.toFixed(2)}), ${catalysts.bull.toLowerCase()}, whereas our Bear Case (${bearImpliedReturn} downside at $${bearTargetPrice.toFixed(2)}) factors in ${catalysts.bear.toLowerCase()}.\n\n` +
       `4. SEC 10-K RISK FACTOR SYNTHESIS\n` +
-      `Forensic examination of SEC EDGAR disclosures and 7-persona quantitative hedge fund consensus identifies key sensitivities surrounding supply chain concentration, foreign currency headwinds, and sector rotation dynamics.`;
+      `Forensic examination of SEC EDGAR disclosures identifies key sensitivities surrounding supply chain concentration, foreign currency headwinds, and sector rotation dynamics.`;
 
   const valuation = {
     pe: fmt(summaryDetail.trailingPE || summaryDetail.forwardPE || quote.trailingPE || quote.forwardPE),
@@ -542,7 +495,6 @@ export function generateReportContent(
     riskDiff: secData.riskDiff || null,
 
     macroContext,
-    hedgeFundResult: hfResult,
     bullBearSummary,
     dataFreshness
   };

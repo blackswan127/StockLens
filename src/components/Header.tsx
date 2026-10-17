@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { SearchBar } from './SearchBar.jsx';
-import { TrendingUp, Layers, LineChart, Star, Globe, Scale, Bot, Activity } from 'lucide-react';
+import { TrendingUp, Layers, LineChart, Star, Globe, Scale, Activity } from 'lucide-react';
 import { TelemetryBadge } from './ui/TelemetryBadge.js';
 
 export const Header: React.FC = () => {
@@ -18,7 +18,6 @@ export const Header: React.FC = () => {
     { path: '/', label: 'Watchlist', icon: <Star className="h-4 w-4" /> },
     { path: '/screener', label: 'Screener', icon: <Layers className="h-4 w-4" /> },
     { path: '/compare', label: 'Compare', icon: <Scale className="h-4 w-4" /> },
-    { path: '/hedge-fund', label: 'Hedge Fund', icon: <Bot className="h-4 w-4" /> },
     { path: '/macro', label: 'Macro', icon: <Globe className="h-4 w-4" /> },
   ];
 

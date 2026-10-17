@@ -263,7 +263,7 @@ export function extractSecRiskInsights(riskFactors: string, companyName: string,
   };
 }
 
-export function synthesizeHedgeFundSignals(signals: string[], ticker: string): {
+export function synthesizeCatalystSignals(signals: string[], ticker: string): {
   bullishCount: number;
   bearishCount: number;
   neutralCount: number;
@@ -294,11 +294,11 @@ export function synthesizeHedgeFundSignals(signals: string[], ticker: string): {
   let consensusNarrative = '';
 
   if (bullishCount > bearishCount && bullishCount >= 3) {
-    consensusNarrative = `Quantitative consensus across our 7-persona hedge fund framework reflects high conviction (Bullish skew: ${bullishCount}/${total || 7} agents), driven by superior return on capital and resilient pricing power.`;
+    consensusNarrative = `Quantitative fundamental consensus reflects high conviction (Bullish catalyst skew: ${bullishCount}/${total || 3} factors), driven by superior return on capital and resilient pricing power.`;
   } else if (bearishCount > bullishCount && bearishCount >= 3) {
-    consensusNarrative = `Quantitative hedge fund multi-agent consensus reflects a defensive/bearish bias (${bearishCount}/${total || 7} agents), highlighting valuation multiple friction, balance sheet leverage, or slowing momentum.`;
+    consensusNarrative = `Quantitative multi-factor consensus reflects a defensive/bearish bias (${bearishCount}/${total || 3} factors), highlighting valuation multiple friction, balance sheet leverage, or slowing momentum.`;
   } else {
-    consensusNarrative = `Quantitative hedge fund multi-agent consensus indicates a balanced risk/reward profile (${bullishCount} Bullish, ${bearishCount} Bearish, ${neutralCount} Neutral), requiring selective positioning around catalytic milestones.`;
+    consensusNarrative = `Quantitative multi-factor consensus indicates a balanced risk/reward profile (${bullishCount} Bullish, ${bearishCount} Bearish, ${neutralCount} Neutral), requiring selective positioning around catalytic milestones.`;
   }
 
   return {
@@ -311,6 +311,8 @@ export function synthesizeHedgeFundSignals(signals: string[], ticker: string): {
   };
 }
 
+export const synthesizeHedgeFundSignals = synthesizeCatalystSignals;
+
 export function generateInstitutionalFallbackNote(
   ticker: string,
   companyName: string,
@@ -318,7 +320,7 @@ export function generateInstitutionalFallbackNote(
   industry: string,
   metrics: ComputedMetrics,
   riskFactors: string,
-  hedgeFundSignals: string[]
+  catalystSignals: string[] = []
 ): string {
   const marginTier = classifyMargin(metrics.grossMargin, metrics.operatingMargin, metrics.netMargin);
   const growthRegime = classifyGrowth(metrics.revenueGrowth);
@@ -327,7 +329,7 @@ export function generateInstitutionalFallbackNote(
 
   const archetype = getSectorArchetype(sector, industry);
   const secRiskData = extractSecRiskInsights(riskFactors, companyName, ticker, industry);
-  const hfData = synthesizeHedgeFundSignals(hedgeFundSignals, ticker);
+  const hfData = synthesizeCatalystSignals(catalystSignals, ticker);
 
   // 1. Format numbers
   const gmStr = metrics.grossMargin !== null && !isNaN(metrics.grossMargin) ? `${metrics.grossMargin.toFixed(1)}%` : null;
@@ -405,7 +407,7 @@ Over the forward 12-month horizon, ${companyName}'s risk/reward skew will be det
   }
 
   const section4 = `4. SEC 10-K RISK FACTOR SYNTHESIS
-A forensic examination of ${companyName}'s SEC EDGAR Item 1A risk disclosures identifies key structural and regulatory vulnerabilities across ${secRiskData.themes.slice(0, 3).join(', ')}. ${sec4FilingsText} In addition, our multi-agent quantitative screen emphasizes continuous monitoring of ${archetype.secRiskFocus} to mitigate downside tail-risk around critical earnings and filing milestones.`;
+A forensic examination of ${companyName}'s SEC EDGAR Item 1A risk disclosures identifies key structural and regulatory vulnerabilities across ${secRiskData.themes.slice(0, 3).join(', ')}. ${sec4FilingsText} In addition, our multi-factor fundamental screen emphasizes continuous monitoring of ${archetype.secRiskFocus} to mitigate downside tail-risk around critical earnings and filing milestones.`;
 
   return `${section1}\n\n${section2}\n\n${section3}\n\n${section4}`;
 }
@@ -417,7 +419,7 @@ export async function generateAnalystNote(
   industry: string,
   metrics: ComputedMetrics,
   riskFactors: string,
-  hedgeFundSignals: string[]
+  catalystSignals: string[] = []
 ): Promise<string> {
   const marginTier = classifyMargin(metrics.grossMargin, metrics.operatingMargin, metrics.netMargin);
   const growthRegime = classifyGrowth(metrics.revenueGrowth);
@@ -445,8 +447,8 @@ Financial Snapshot & Core Quantitative Ratios:
 - Current Liquidity Ratio: ${metrics.currentRatio !== null && !isNaN(metrics.currentRatio) ? metrics.currentRatio.toFixed(2) + 'x' : 'N/A'}
 ${metrics.dupont ? `- DuPont Breakdown: Net Margin ${(metrics.dupont.netMargin ? (metrics.dupont.netMargin * 100).toFixed(1) + '%' : 'N/A')}, Asset Turnover ${(metrics.dupont.assetTurnover ? metrics.dupont.assetTurnover.toFixed(2) + 'x' : 'N/A')}, Equity Multiplier ${(metrics.dupont.equityMultiplier ? metrics.dupont.equityMultiplier.toFixed(2) + 'x' : 'N/A')}` : ''}
 
-Quantitative Agent Signals (7-Persona Hedge Fund Multi-Agent Consensus):
-${hedgeFundSignals.length > 0 ? hedgeFundSignals.join('\n') : 'Quantitative agent consensus indicates balanced risk/reward profile across value, growth, and quality factors.'}
+Quantitative Catalyst Signals:
+${catalystSignals.length > 0 ? catalystSignals.join('\n') : 'Quantitative fundamental catalyst consensus indicates balanced risk/reward profile across value, growth, and quality factors.'}
 
 SEC EDGAR 10-K Item 1A Risk Filings Excerpt:
 ${riskFactors && riskFactors.length > 1500 ? riskFactors.substring(0, 1500) + '...' : riskFactors || 'Operational, regulatory, and competitive market disclosures from annual 10-K filing.'}
@@ -460,7 +462,7 @@ Analyze the durability of ${companyName}'s competitive advantage, switching cost
 Evaluate management's reinvestment runway, ROIC vs WACC economic spread, leverage profile (Debt/Equity: ${metrics.debtToEquity !== null ? metrics.debtToEquity.toFixed(2) + 'x' : 'N/A'}), and balance sheet resilience for strategic CapEx, R&D, programmatic buybacks, or dividend sustainability.
 
 3. 12-MONTH CATALYSTS & BEAR/BULL ASYMMETRY
-Outline the primary operational, product, and macroeconomic catalysts over the forward 12 months (e.g. revenue growth cadence of ${metrics.revenueGrowth !== null ? metrics.revenueGrowth.toFixed(1) + '%' : 'N/A'}, product cycles, enterprise adoption) and detail the asymmetric risk/reward skew between bull and bear scenarios incorporating the 7-persona hedge fund signals.
+Outline the primary operational, product, and macroeconomic catalysts over the forward 12 months (e.g. revenue growth cadence of ${metrics.revenueGrowth !== null ? metrics.revenueGrowth.toFixed(1) + '%' : 'N/A'}, product cycles, enterprise adoption) and detail the asymmetric risk/reward skew between bull and bear scenarios incorporating key fundamental catalysts.
 
 4. SEC 10-K RISK FACTOR SYNTHESIS
 Synthesize the specific regulatory, antitrust, supply chain, cybersecurity, geopolitical, or customer concentration risk vectors disclosed in the SEC EDGAR 10-K Item 1A filing excerpt above. Directly reference the real risks disclosed by management.
@@ -522,5 +524,5 @@ Formatting Rules:
   }
 
   // Institutional Multi-Variable Dynamic Synthesis Engine Fallback
-  return generateInstitutionalFallbackNote(ticker, companyName, sector, industry, metrics, riskFactors, hedgeFundSignals);
+  return generateInstitutionalFallbackNote(ticker, companyName, sector, industry, metrics, riskFactors, catalystSignals);
 }

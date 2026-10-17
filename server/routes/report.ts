@@ -3,7 +3,6 @@ import { fetchYahooData } from '../services/report/data/yahooFinanceService.js';
 import { fetchSecData } from '../services/report/data/secEdgarService.js';
 import { fetchFredData } from '../services/report/data/fredService.js';
 import { fetchPeersForReport } from '../services/report/data/peerService.js';
-import { runHedgeFundForReport } from '../services/report/data/hedgeFundService.js';
 import { computeRatios } from '../services/report/compute/ratios.js';
 import { generateAnalystNote } from '../services/report/compute/analystNote.js';
 import { generatePriceChartUrl } from '../services/report/compute/charts.js';
@@ -27,8 +26,6 @@ router.get('/:ticker', async (req, res) => {
       fetchPeersForReport(ticker)
     ]);
 
-    const hfResult = runHedgeFundForReport(ticker, yfData);
-
     // 2. Compute Layer
     // Using fundamentals[0] for current ratios if available, else fallback
     const fundamentals = yfData.fundamentals || [];
@@ -47,24 +44,15 @@ router.get('/:ticker', async (req, res) => {
     const sector = profile.sector || 'Unknown';
     const industry = profile.industry || 'Unknown';
 
-    let summaryReasons: string[] = [];
-    if (hfResult && hfResult.evaluations && hfResult.evaluations[ticker]) {
-      const agents = hfResult.evaluations[ticker].agents;
-      const personaLabels: Record<string, string> = {
-        warrenBuffett: 'Warren Buffett (Moat & Capital Compounding)',
-        charlieMunger: 'Charlie Munger (Quality & Reinvestment Moat)',
-        benGraham: 'Benjamin Graham (Margin of Safety & Value)',
-        billAckman: 'Bill Ackman (Free Cash Flow & Operational Leverage)',
-        cathieWood: 'Cathie Wood (Disruptive Innovation & Scalability)',
-        stanDruckenmiller: 'Stanley Druckenmiller (Macro Liquidity & Trend)',
-        philFisher: 'Philip Fisher (R&D Pipeline & Organic Growth Runway)'
-      };
-      
-      Object.entries(agents).forEach(([key, agent]: [string, any]) => {
-        const label = personaLabels[key] || key;
-        const reasons = agent.reasoning && agent.reasoning.length > 0 ? agent.reasoning.join('; ') : 'Balanced risk/reward.';
-        summaryReasons.push(`${label} [${(agent.signal || 'neutral').toUpperCase()} - ${agent.confidence || 50}% confidence]: ${reasons}`);
-      });
+    const summaryReasons: string[] = [];
+    if (metrics.grossMargin !== null && metrics.grossMargin > 30) {
+      summaryReasons.push(`Pricing Power: Strong gross margin of ${metrics.grossMargin.toFixed(1)}% supports operational unit economics.`);
+    }
+    if (metrics.returnOnEquity !== null && metrics.returnOnEquity > 15) {
+      summaryReasons.push(`Capital Efficiency: Return on Equity of ${metrics.returnOnEquity.toFixed(1)}% reflects disciplined capital allocation.`);
+    }
+    if (metrics.debtToEquity !== null && metrics.debtToEquity > 1.5) {
+      summaryReasons.push(`Solvency Sensitivity: Debt-to-Equity of ${metrics.debtToEquity.toFixed(2)}x warrants interest coverage monitoring.`);
     }
 
     const analystNote = await generateAnalystNote(
@@ -78,7 +66,7 @@ router.get('/:ticker', async (req, res) => {
     );
 
     // 3. Render Layer
-    const content = generateReportContent(ticker, yfData, secData, fredData, metrics, chartUrl, peers, hfResult, analystNote);
+    const content = generateReportContent(ticker, yfData, secData, fredData, metrics, chartUrl, peers, undefined, analystNote);
 
     // Apply snapshot filtering if requested
     if (type === 'snapshot') {

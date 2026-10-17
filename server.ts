@@ -29,7 +29,6 @@ import marketRouter from './server/routes/market.js';
 import watchlistRouter from './server/routes/watchlist.js';
 import edgarRouter from './server/routes/edgar.js';
 import macroRouter from './server/routes/macro.js';
-import hedgefundRouter from './server/routes/hedgefund.js';
 import reportRouter from './server/routes/report.js';
 import db from './server/services/db.js';
 
@@ -117,7 +116,6 @@ async function startServer() {
   app.use('/api/market', marketRouter);
   app.use('/api/watchlist', watchlistRouter);
   app.use('/api/macro', macroRouter);
-  app.use('/api/hedge-fund', hedgefundRouter);
   app.use('/api/report', reportRouter);
 
   // Only init cron in worker 1 (or standalone)

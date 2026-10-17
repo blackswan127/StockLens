@@ -104,7 +104,7 @@ export const WatchlistPage: React.FC = () => {
           </h1>
           
           <p className="font-sans text-xs sm:text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
-            Direct real-time monitoring across 200+ global equities with CAPM DCF valuations, 7-persona hedge fund radar ratings, and SEC EDGAR automated XBRL ingestion.
+            Direct real-time monitoring across 200+ global equities with CAPM DCF valuations and SEC EDGAR automated XBRL ingestion.
           </p>
 
           <div className="w-full max-w-xl mx-auto pt-2">

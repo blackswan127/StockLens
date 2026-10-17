@@ -261,27 +261,8 @@ export async function generatePdf(content: ReportContent): Promise<Buffer> {
       };
       cy = drawTable(doc, valTable, MARGIN, cy + 2);
 
-      // ── 7-persona hedge fund table ──
-      doc.y = cy + 2;
-      sectionHead(doc, '7-Persona Quantitative Hedge Fund Consensus', 'Multi-factor investor persona conviction radar');
-
-      if (content.hedgeFundResult?.evaluations?.[content.ticker]) {
-        const agents = content.hedgeFundResult.evaluations[content.ticker].agents;
-        const hfH = ['Investor Persona', 'Strategy Focus', 'Conviction', 'Confidence'];
-        const hfR = Object.entries(agents).map(([k, r]: [string, any]) => {
-          const name = { warrenBuffett:'Warren Buffett', billAckman:'Bill Ackman', benGraham:'Benjamin Graham',
-            charlieMunger:'Charlie Munger', cathieWood:'Cathie Wood', philFisher:'Philip Fisher',
-            stanDruckenmiller:'Stanley Druckenmiller' }[k] || k.replace(/([A-Z])/g,' $1').trim();
-          const focus = { warrenBuffett:'Moat & ROIC', billAckman:'Oper. Margin & FCF', benGraham:'Net-Net Value',
-            charlieMunger:'Quality Compounding', cathieWood:'Disruptive TAM', philFisher:'Growth & Efficiency',
-            stanDruckenmiller:'Earnings Momentum' }[k] || 'Risk & Allocation';
-          return [name, focus, r.signal?.toUpperCase() || 'NEUTRAL', `${Math.round(r.confidence || 75)}%`];
-        });
-        cy = drawTable(doc, { headers: hfH, rows: hfR }, MARGIN, doc.y, [140, 135, 110, 110]);
-      }
-
       // ── scenario matrix ──
-      doc.y = cy + 2;
+      doc.y = cy + 6;
       sectionHead(doc, '12-Month Scenario Price Target Matrix');
       if (content.scenarios) {
         cy = drawTable(doc, content.scenarios, MARGIN, doc.y, [80, 65, 80, 85, 185]);

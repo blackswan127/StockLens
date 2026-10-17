@@ -5,7 +5,7 @@ import {
   classifyLeverage,
   classifyRoe,
   extractSecRiskInsights,
-  synthesizeHedgeFundSignals,
+  synthesizeCatalystSignals,
   generateInstitutionalFallbackNote,
   generateAnalystNote
 } from '../report/compute/analystNote.js';

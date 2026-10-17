@@ -9,7 +9,6 @@ import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 const WatchlistPage = React.lazy(() => import('./pages/WatchlistPage.jsx').then(m => ({ default: m.WatchlistPage })));
 const ScreenerPage = React.lazy(() => import('./pages/ScreenerPage.jsx').then(m => ({ default: m.ScreenerPage })));
 const ComparePage = React.lazy(() => import('./pages/ComparePage.jsx').then(m => ({ default: m.ComparePage })));
-const HedgeFundPage = React.lazy(() => import('./pages/HedgeFundPage.jsx').then(m => ({ default: m.HedgeFundPage })));
 const CompanyPage = React.lazy(() => import('./pages/CompanyPage/index.jsx').then(m => ({ default: m.CompanyPage })));
 const MacroIndicatorsPage = React.lazy(() => import('./pages/MacroIndicatorsPage.jsx').then(m => ({ default: m.MacroIndicatorsPage })));
 
@@ -64,7 +63,7 @@ export default function App() {
                 <Routes>
                   <Route path="/" element={<WatchlistPage />} />
                   <Route path="/screener" element={<ScreenerPage />} />
-                  <Route path="/hedge-fund" element={<HedgeFundPage />} />
+                  <Route path="/hedge-fund" element={<Navigate to="/" replace />} />
                   <Route path="/compare" element={<ComparePage />} />
                   <Route path="/market" element={<Navigate to="/" replace />} />
                   <Route path="/macro" element={<MacroIndicatorsPage />} />

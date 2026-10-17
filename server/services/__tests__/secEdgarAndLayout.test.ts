@@ -164,24 +164,7 @@ describe('SEC Forensics, Peer Extraction & Layout Alignment', () => {
       riskFactors: 'Global semiconductor supply chain concentration and foundry reliance remain key operational considerations.',
       riskDiff: null,
       macroContext: 'Federal Funds Rate target range is at 5.25% - 5.50% with sustained economic expansion.',
-      hedgeFundResult: {
-        evaluations: {
-          NVDA: {
-            score: 85,
-            agents: {
-              warrenBuffett: { signal: 'bullish', confidence: 90, reasoning: ['Unrivaled software ecosystem (CUDA) creating immense pricing power'] },
-              charlieMunger: { signal: 'bullish', confidence: 92, reasoning: ['High capital velocity and compound earnings growth'] },
-              benGraham: { signal: 'neutral', confidence: 60, reasoning: ['Valuation multiples elevated relative to historical book value'] },
-              billAckman: { signal: 'bullish', confidence: 88, reasoning: ['Cash conversion cycle and free cash flow margin exceeds 50%'] },
-              stanDruckenmiller: { signal: 'bullish', confidence: 95, reasoning: ['AI computing architectural inflection and demand tailwind'] },
-              philFisher: { signal: 'bullish', confidence: 94, reasoning: ['Outstanding R&D efficiency and visionary engineering leadership'] },
-              cathieWood: { signal: 'bullish', confidence: 98, reasoning: ['Exponential TAM expansion across accelerated computing and autonomous systems'] }
-            }
-          }
-        },
-        portfolio: { NVDA: 1000000 }
-      } as any,
-      bullBearSummary: '• [Bull Catalyst - Warren Buffett] Unrivaled software ecosystem (CUDA) creating immense pricing power\n• [Bear Risk - Ben Graham] Valuation multiples elevated relative to historical book value',
+      bullBearSummary: '• [Bull Catalyst - Moat] Unrivaled software ecosystem (CUDA) creating immense pricing power\n• [Bear Risk - Valuation] Valuation multiples elevated relative to historical book value',
       dataFreshness: {
         'Quotes & Pricing': new Date().toISOString(),
         'Valuation & Financials': new Date().toISOString(),

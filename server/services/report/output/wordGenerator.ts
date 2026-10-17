@@ -165,38 +165,6 @@ export async function generateWord(content: ReportContent): Promise<Buffer> {
   sections.push(new Paragraph({ text: 'Key Valuation Multiples', heading: HeadingLevel.HEADING_3, spacing: { before: 150, after: 50 } }));
   sections.push(createDocxTable(valTable, [16, 14, 14, 14, 14, 14, 14]));
 
-  // 7-Persona Consensus Table
-  sections.push(new Paragraph({ text: '7-Persona Quantitative Hedge Fund Consensus', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 80 } }));
-  if (content.hedgeFundResult && content.hedgeFundResult.evaluations && content.hedgeFundResult.evaluations[content.ticker]) {
-    const agents = content.hedgeFundResult.evaluations[content.ticker].agents;
-    const hfHeaders = ['Investor Persona', 'Strategy Focus', 'Conviction Signal', 'Confidence'];
-    const hfRows = Object.entries(agents).map(([agentKey, result]: [string, any]) => {
-      const personaName = agentKey === 'warrenBuffett' ? 'Warren Buffett' :
-                          agentKey === 'billAckman' ? 'Bill Ackman' :
-                          agentKey === 'benGraham' ? 'Benjamin Graham' :
-                          agentKey === 'charlieMunger' ? 'Charlie Munger' :
-                          agentKey === 'cathieWood' ? 'Cathie Wood' :
-                          agentKey === 'philFisher' ? 'Philip Fisher' :
-                          agentKey === 'stanDruckenmiller' ? 'Stanley Druckenmiller' :
-                          agentKey.replace(/([A-Z])/g, ' $1').trim().replace('Agent', '');
-      const focus = agentKey === 'warrenBuffett' ? 'Moat & ROIC' :
-                    agentKey === 'billAckman' ? 'Operating Margin & FCF' :
-                    agentKey === 'benGraham' ? 'Deep Net-Net Value' :
-                    agentKey === 'charlieMunger' ? 'Quality Compounding' :
-                    agentKey === 'cathieWood' ? 'Disruptive TAM' :
-                    agentKey === 'philFisher' ? 'Growth & Efficiency' :
-                    agentKey === 'stanDruckenmiller' ? 'Earnings Momentum' :
-                    'Risk & Capital Allocation';
-      return [
-        personaName.toUpperCase(),
-        focus,
-        result.signal ? result.signal.toUpperCase() : 'NEUTRAL',
-        `${Math.round(result.confidence || 75)}%`
-      ];
-    });
-    sections.push(createDocxTable({ headers: hfHeaders, rows: hfRows }, [28, 30, 22, 20]));
-  }
-
   // 12-Month Scenario Table
   sections.push(new Paragraph({ text: '12-Month Bull / Base / Bear Scenario Price Target Matrix', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 80 } }));
   if (content.scenarios) {

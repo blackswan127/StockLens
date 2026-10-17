@@ -75,26 +75,6 @@ describe('generateReportContent dynamic scenarios and catalysts', () => {
       ]
     };
 
-    const mockHfResult: any = {
-      decisions: {},
-      evaluations: {
-        TECH: {
-          symbol: 'TECH',
-          price: 200,
-          agents: {
-            warrenBuffett: { signal: 'bullish', confidence: 85, reasoning: ['✅ High ROE of 32% indicating strong capital allocation'] },
-            cathieWood: { signal: 'bullish', confidence: 90, reasoning: ['✅ Hyper-growth: Revenue up 25% YoY'] },
-            benGraham: { signal: 'bearish', confidence: 30, reasoning: ['❌ P/E ratio is high (> 15)'] },
-            billAckman: { signal: 'bullish', confidence: 80, reasoning: ['✅ Very strong operating margin at 28%'] },
-            charlieMunger: { signal: 'bullish', confidence: 85, reasoning: ['✅ Strong Gross Margin of 65% indicating pricing power'] },
-            philFisher: { signal: 'bullish', confidence: 80, reasoning: ['✅ Excellent operational efficiency'] },
-            stanDruckenmiller: { signal: 'bullish', confidence: 80, reasoning: ['✅ Earnings momentum is accelerating'] }
-          }
-        }
-      },
-      summary: []
-    };
-
     const content = generateReportContent(
       'TECH',
       mockYfData as any,
@@ -102,8 +82,7 @@ describe('generateReportContent dynamic scenarios and catalysts', () => {
       dummyFredData as any,
       dummyMetrics,
       'http://localhost:5000/chart.png',
-      [],
-      mockHfResult
+      []
     );
 
     expect(content.scenarios).toBeDefined();
@@ -130,10 +109,10 @@ describe('generateReportContent dynamic scenarios and catalysts', () => {
     expect(bearPrice).toBeLessThan(200);
     expect(String(bearRow[4])).toContain('multiples compression');
 
-    // Check Bull/Bear summary uses the actual agent reasons
-    expect(content.bullBearSummary).toContain('Warren Buffett');
-    expect(content.bullBearSummary).toContain('High ROE of 32%');
-    expect(content.bullBearSummary).toContain('Ben Graham');
+    // Check Bull/Bear summary uses the fundamental metrics and risks
+    expect(content.bullBearSummary).toContain('[Bull Catalyst - Moat]');
+    expect(content.bullBearSummary).toContain('High ROE of 32.00%');
+    expect(content.bullBearSummary).toContain('[Bear Risk - Valuation]');
   });
 
   it('customizes sector catalysts for Financials and Healthcare appropriately', () => {
