@@ -137,4 +137,19 @@ if (count === 0) {
   console.log(`[DB] Stocks table already has ${count} records. Skipping seeding.`);
 }
 
+// Seed fred_cache with baseline macroeconomic series if empty (and not running unit tests)
+if (process.env.NODE_ENV !== 'test') {
+  try {
+    const fredCountStmt = db.prepare('SELECT COUNT(*) as count FROM fred_cache');
+    const fredRow = fredCountStmt.get() as { count: number } | undefined;
+    if (fredRow && fredRow.count === 0) {
+      console.log('[DB] Seeding baseline macroeconomic telemetry into fred_cache...');
+      const { seedFredCache } = await import('./seedMacroCache.js');
+      seedFredCache();
+    }
+  } catch (err: any) {
+    console.warn('[DB] Macro seed check skipped:', err?.message ?? err);
+  }
+}
+
 export default db;
