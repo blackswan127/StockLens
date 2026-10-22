@@ -46,6 +46,7 @@ async function startServer() {
   app.set('trust proxy', 1);
   app.use(helmet({
     contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+    strictTransportSecurity: false,
   }));
 
   let allowedOrigins: boolean | string[] = true;
