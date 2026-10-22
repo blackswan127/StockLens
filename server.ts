@@ -45,7 +45,7 @@ async function startServer() {
 
   app.set('trust proxy', 1);
   app.use(helmet({
-    contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+    contentSecurityPolicy: false,
     strictTransportSecurity: false,
   }));
 
@@ -55,7 +55,7 @@ async function startServer() {
       console.warn('[SECURITY] No CLIENT_URL provided in production. CORS is heavily restricted.');
       allowedOrigins = [];
     } else {
-      allowedOrigins = [process.env.CLIENT_URL];
+      allowedOrigins = [process.env.CLIENT_URL, 'http://stockalphai.duckdns.org', 'http://129.213.134.206', 'http://localhost:3000'];
     }
   }
   app.use(cors({ origin: allowedOrigins }));
