@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { fetchYahooData } from '../services/report/data/yahooFinanceService.js';
 import { fetchSecData } from '../services/report/data/secEdgarService.js';
 import { fetchFredData } from '../services/report/data/fredService.js';
@@ -9,13 +10,57 @@ import { generatePriceChartUrl } from '../services/report/compute/charts.js';
 import { generateReportContent } from '../services/report/render/templates.js';
 import { generatePdf } from '../services/report/output/pdfGenerator.js';
 import { generateWord } from '../services/report/output/wordGenerator.js';
+import {
+  MAX_CONCURRENT_REPORTS,
+  releaseReportSlot,
+  reportLimiter,
+  tryAcquireReportSlot
+} from '../middleware/reportLimiter.js';
 
 const router = Router();
 
-router.get('/:ticker', async (req, res) => {
-  const ticker = req.params.ticker.toUpperCase();
-  const format = (req.query.format as string)?.toLowerCase() || 'pdf'; // 'pdf' or 'word'
-  const type = (req.query.type as string)?.toLowerCase() || 'full'; // 'snapshot' or 'full'
+const ReportParamsSchema = z.object({
+  ticker: z
+    .string()
+    .regex(/^[A-Z0-9.-]{1,10}$/i, 'Ticker must be 1-10 characters and contain only letters, numbers, dots, or hyphens.')
+    .transform((ticker) => ticker.toUpperCase()),
+  format: z.preprocess(
+    (value) => (typeof value === 'string' ? value.toLowerCase() : value),
+    z.enum(['pdf', 'word']).default('pdf')
+  ),
+  type: z.preprocess(
+    (value) => (typeof value === 'string' ? value.toLowerCase() : value),
+    z.enum(['snapshot', 'full']).default('full')
+  )
+});
+
+router.get('/:ticker', reportLimiter, async (req, res) => {
+  const parsed = ReportParamsSchema.safeParse({
+    ticker: req.params.ticker,
+    format: req.query.format,
+    type: req.query.type
+  });
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: 'Invalid report parameters',
+      message: parsed.error.issues[0]?.message ?? 'Invalid report parameters',
+      issues: parsed.error.issues.map((issue) => ({
+        path: issue.path.join('.'),
+        message: issue.message
+      }))
+    });
+  }
+
+  const { ticker, format, type } = parsed.data;
+
+  if (!tryAcquireReportSlot()) {
+    return res.status(429).json({
+      error: 'Report generation capacity reached',
+      message: `At most ${MAX_CONCURRENT_REPORTS} reports can be generated at the same time.`,
+      hint: 'Please retry in a few seconds.'
+    });
+  }
 
   try {
     // 1. Data Layer
@@ -92,8 +137,14 @@ router.get('/:ticker', async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Error generating report:', error);
+    if (req.log) {
+      req.log.error({ err: error, ticker, format, type }, 'Error generating report');
+    } else {
+      console.error('Error generating report:', error);
+    }
     res.status(500).json({ error: 'Failed to generate report' });
+  } finally {
+    releaseReportSlot();
   }
 });
 

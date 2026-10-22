@@ -77,7 +77,7 @@ describe('DCF Route API', () => {
     });
 
     // Mock time series statements with real-world AMAT payload snapshot
-    vi.mocked(yahooService.getFundamentalsTimeSeries).mockImplementation(async (sym, p1, p2, type) => {
+    vi.mocked(yahooService.getFundamentalsTimeSeries).mockImplementation(async (_sym, _p1, _p2, type) => {
       if (type === 'quarterly') {
         return [
           { "date": "2024-10-27T00:00:00.000Z", "freeCashFlow": 1000000000, "totalRevenue": 5000000000 },
@@ -246,7 +246,7 @@ describe('DCF Route API', () => {
     vi.mocked(yahooService.getQuote).mockResolvedValue({ price: 100 });
     
     // Yahoo data: 2024 FCF = 1B, 2024 Revenue = 5B
-    vi.mocked(yahooService.getFundamentalsTimeSeries).mockImplementation(async (sym, p1, p2, type) => {
+    vi.mocked(yahooService.getFundamentalsTimeSeries).mockImplementation(async (_sym, _p1, _p2, type) => {
       if (type === 'annual') {
         return [{
           date: "2024-12-31T00:00:00.000Z",

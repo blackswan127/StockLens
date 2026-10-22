@@ -76,7 +76,7 @@ router.get('/', apiLimiter, (req, res, next) => {
     const params = parsed.data;
     console.log('[SCREENER] Parsed query params:', params);
 
-    let exchangeFilter: string[] = [];
+    const exchangeFilter: string[] = [];
     if (params.exchange && params.exchange !== 'ALL') {
       const parts = params.exchange.split(',').map(s => s.trim()).filter(Boolean);
       for (const ex of parts) {
@@ -85,7 +85,7 @@ router.get('/', apiLimiter, (req, res, next) => {
       }
     }
 
-    let sectorFilter: string[] = [];
+    const sectorFilter: string[] = [];
     if (params.sector && params.sector !== 'ALL') {
       const parts = params.sector.split(',').map(s => s.trim()).filter(Boolean);
       for (const sec of parts) {
@@ -263,7 +263,7 @@ router.get('/', apiLimiter, (req, res, next) => {
 });
 
 // GET /api/screener/cache-status -> Diagnostic
-router.get('/cache-status', apiLimiter, (req, res, next) => {
+router.get('/cache-status', apiLimiter, (_req, res, next) => {
   try {
     const totalStocks = (db.prepare('SELECT COUNT(*) as c FROM stocks').get() as { c: number }).c;
     const totalRatios = (db.prepare('SELECT COUNT(*) as c FROM ratios_cache').get() as { c: number }).c;
@@ -297,7 +297,7 @@ router.get('/cache-status', apiLimiter, (req, res, next) => {
 });
 
 // POST /api/screener/warm-cache -> Manually trigger the full-universe ratios
-router.post('/warm-cache', apiLimiter, async (req, res, next) => {
+router.post('/warm-cache', apiLimiter, async (_req, res, next) => {
   try {
     warmAllRatios().catch((err) => console.error('[MANUAL WARM TRIGGER ERROR]', err));
     res.json({

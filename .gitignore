@@ -19,3 +19,4 @@ coverage/
 # Ad-hoc test scripts and reports
 scratch/
 test_report.*
+.agents/

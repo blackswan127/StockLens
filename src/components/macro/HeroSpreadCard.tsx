@@ -27,7 +27,7 @@ export const HeroSpreadCard: React.FC<HeroSpreadCardProps> = ({ spreadData }) =>
       <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
         <div>
           <h2 className="text-lg font-bold font-sans text-slate-100">Yield Curve Spread (10Y − 2Y)</h2>
-          <div className="flex items-center gap-3 mt-2">
+          <div aria-live="off" className="flex items-center gap-3 mt-2">
             <span className="text-3xl sm:text-4xl font-black font-mono text-slate-100 tracking-tight tabular-nums">
               {formatSpreadValue(latestValue)}
             </span>
@@ -36,7 +36,15 @@ export const HeroSpreadCard: React.FC<HeroSpreadCardProps> = ({ spreadData }) =>
                 isNormal ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-rose-500/15 text-rose-400 border-rose-500/30"
               }`}
             >
-              {isNormal ? "● Normal Slope" : "⚠ Inverted — Recession Watch"}
+              {isNormal ? (
+                <>
+                  <span aria-hidden="true">●</span> Normal Slope
+                </>
+              ) : (
+                <>
+                  <span aria-hidden="true">⚠</span> Inverted — Recession Watch
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -46,17 +54,22 @@ export const HeroSpreadCard: React.FC<HeroSpreadCardProps> = ({ spreadData }) =>
             ranges={["1M", "6M", "1Y", "5Y", "10Y", "Max"]}
             activeRange={activeRange}
             onChange={setActiveRange}
+            label="Yield curve spread time range"
           />
         </div>
       </div>
 
-      <div className="h-[160px] w-full -mx-2">
+      <div
+        role="img"
+        aria-label={`Yield curve spread chart. Latest value ${formatSpreadValue(latestValue)}.`}
+        className="h-[160px] w-full -mx-2"
+      >
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={filteredData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
             <Tooltip
               contentStyle={{ backgroundColor: "#0D111A", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", color: "#F8FAFC", fontFamily: "JetBrains Mono" }}
               labelFormatter={(label) => new Date(label).toLocaleDateString()}
-              formatter={(val: any) => [formatSpreadValue(Number(val)), "Spread"]}
+              formatter={(val) => [formatSpreadValue(Number(val)), "Spread"]}
             />
             <Area
               type="monotone"

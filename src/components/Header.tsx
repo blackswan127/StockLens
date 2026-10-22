@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { SearchBar } from './SearchBar.jsx';
-import { TrendingUp, Layers, LineChart, Star, Globe, Scale, Activity } from 'lucide-react';
+import { TrendingUp, Layers, Star, Globe, Scale } from 'lucide-react';
 import { TelemetryBadge } from './ui/TelemetryBadge.js';
 
 export const Header: React.FC = () => {
@@ -15,10 +15,10 @@ export const Header: React.FC = () => {
   };
 
   const navItems = [
-    { path: '/', label: 'Watchlist', icon: <Star className="h-4 w-4" /> },
-    { path: '/screener', label: 'Screener', icon: <Layers className="h-4 w-4" /> },
-    { path: '/compare', label: 'Compare', icon: <Scale className="h-4 w-4" /> },
-    { path: '/macro', label: 'Macro', icon: <Globe className="h-4 w-4" /> },
+    { path: '/', label: 'Watchlist', icon: <Star aria-hidden="true" className="h-4 w-4" /> },
+    { path: '/screener', label: 'Screener', icon: <Layers aria-hidden="true" className="h-4 w-4" /> },
+    { path: '/compare', label: 'Compare', icon: <Scale aria-hidden="true" className="h-4 w-4" /> },
+    { path: '/macro', label: 'Macro', icon: <Globe aria-hidden="true" className="h-4 w-4" /> },
   ];
 
   return (
@@ -29,7 +29,7 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-3 group">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-lg shadow-emerald-500/20 transition-all duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/30">
-              <TrendingUp className="h-5 w-5" />
+              <TrendingUp aria-hidden="true" className="h-5 w-5" />
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
@@ -47,13 +47,14 @@ export const Header: React.FC = () => {
           </Link>
 
           {/* Navigation links for desktops */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800/60">
+          <nav aria-label="Primary" className="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800/60">
             {navItems.map((item) => {
               const active = isLinkActive(item.path);
               return (
                 <Link
                   key={item.path}
                   to={item.path}
+                  aria-current={active ? 'page' : undefined}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-sans text-xs font-semibold transition-all duration-200 ${
                     active
                       ? 'bg-[#141A26] text-emerald-400 border border-slate-700/80 shadow-sm'
@@ -79,13 +80,14 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Sub-header Mobile Nav bar */}
-      <div className="flex md:hidden border-t border-slate-800/80 bg-[#090D15]/95 backdrop-blur-2xl items-center justify-around py-2 px-2">
+      <nav aria-label="Primary mobile" className="flex md:hidden border-t border-slate-800/80 bg-[#090D15]/95 backdrop-blur-2xl items-center justify-around py-2 px-2">
         {navItems.map((item) => {
           const active = isLinkActive(item.path);
           return (
             <Link
               key={item.path}
               to={item.path}
+              aria-current={active ? 'page' : undefined}
               className={`flex flex-col items-center gap-0.5 font-sans text-[11px] font-semibold px-2 py-1 rounded-md transition-colors ${
                 active ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-400'
               }`}
@@ -95,7 +97,7 @@ export const Header: React.FC = () => {
             </Link>
           );
         })}
-      </div>
+      </nav>
     </header>
   );
 };

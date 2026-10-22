@@ -1,11 +1,11 @@
 import cron from 'node-cron';
 import { yahooService } from './yahoo.js';
-import db from './db.js';
 import { warmAllRatios } from './ratiosWarmer.js';
 import pLimit from 'p-limit';
 import { SEED_STOCKS } from './seeds.js';
 import { warmAllEdgarFinancials } from './edgarWarmer.js';
 import { fredService, ALLOWED_SERIES } from './fred.js';
+import { flushCacheLog, pruneCacheLog } from './cache.js';
 
 // ESM/CJS interop compatibility resolver for bundlers (e.g. esbuild/webpack)
 let pLimitFn: any = pLimit;
@@ -18,6 +18,23 @@ const WARM_TICKERS = ['AAPL', 'MSFT', 'GOOGL', 'RELIANCE.NS', 'BP.L', 'SAP.DE', 
 export const initCronJobs = () => {
   // Pre-schedule warmers to execute daily at 9:00 AM local time
   console.log('[CRON] Initializing scheduled cache warming service (9:00AM daily schedule)...');
+
+  // Flush aggregated cache hits to SQLite every 60 seconds.
+  cron.schedule('* * * * *', () => {
+    const { inserted, hits } = flushCacheLog();
+    if (inserted > 0) {
+      console.log(`[CRON] Flushed ${hits} cache hits across ${inserted} keys.`);
+    }
+  });
+
+  // Daily 3:15AM: flush and prune cache_log rows older than 7 days.
+  cron.schedule('15 3 * * *', () => {
+    flushCacheLog();
+    const deleted = pruneCacheLog(7);
+    if (deleted > 0) {
+      console.log(`[CRON] Pruned ${deleted} cache_log rows older than 7 days.`);
+    }
+  });
   
   cron.schedule('0 9 * * *', async () => {
     console.log('[CRON] Starting daily 9AM hot-cache prewarmer loop...');

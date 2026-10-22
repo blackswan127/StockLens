@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ExternalLink, AlertCircle } from 'lucide-react';
 
 interface EdgarPvPFactValue {
@@ -28,21 +28,59 @@ interface EdgarPayVsPerformance {
 }
 
 interface PayVersusPerformancePanelProps {
-  data: EdgarPayVsPerformance | null;
+  data: EdgarPayVsPerformance | null | undefined;
   isPending: boolean;
   isError: boolean;
   upperSymbol: string;
 }
 
-export const PayVersusPerformancePanel: React.FC<PayVersusPerformancePanelProps> = ({
+const formatValue = (value: number | null, unit: string): string => {
+  if (value === null || value === undefined) return '—';
+  if (unit === 'USD') {
+    return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  }
+  if (unit === 'pure') {
+    return value.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  }
+  return `${value.toLocaleString()} (${unit})`;
+};
+
+const getConceptValues = (concept: EdgarPvPConcept): EdgarPvPFactValue[] =>
+  Array.isArray(concept.values) ? concept.values : [];
+
+const getValueForYear = (concept: EdgarPvPConcept, year: number): number | null => {
+  const matches = getConceptValues(concept).filter((value) => value.fy === year);
+  if (matches.length === 0) return null;
+  const annualReportMatch = matches.find((value) => value.form === 'DEF 14A');
+  return (annualReportMatch ?? matches[0]).val;
+};
+
+export const PayVersusPerformancePanel = React.memo(function PayVersusPerformancePanel({
   data,
   isPending,
   isError,
   upperSymbol,
-}) => {
+}: PayVersusPerformancePanelProps) {
+  const { years, activeConcepts } = useMemo(() => {
+    if (!data || !data.available || !Array.isArray(data.concepts)) {
+      return { years: [] as number[], activeConcepts: [] as EdgarPvPConcept[] };
+    }
+    const yearSet = new Set<number>();
+    data.concepts.forEach((concept) => {
+      getConceptValues(concept).forEach((value) => {
+        if (typeof value.fy === 'number') yearSet.add(value.fy);
+      });
+    });
+    const fiscalYears = Array.from(yearSet).sort((a, b) => b - a);
+    const concepts = data.concepts.filter((concept) =>
+      fiscalYears.some((year) => getValueForYear(concept, year) !== null)
+    );
+    return { years: fiscalYears, activeConcepts: concepts };
+  }, [data]);
+
   if (isPending) {
     return (
-      <div className="space-y-3 animate-pulse">
+      <div className="space-y-3 animate-pulse" role="status" aria-live="polite">
         <div className="h-10 bg-slate-800/50 rounded-xl border border-slate-800 w-full" />
         <div className="h-36 bg-slate-800/40 rounded-xl border border-slate-800 w-full" />
       </div>
@@ -51,7 +89,10 @@ export const PayVersusPerformancePanel: React.FC<PayVersusPerformancePanelProps>
 
   if (isError || !data) {
     return (
-      <div className="p-4 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-400 text-xs flex items-center gap-2 font-mono">
+      <div
+        className="p-4 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-400 text-xs flex items-center gap-2 font-mono"
+        aria-live="polite"
+      >
         <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
         <span>Could not load structured Pay versus Performance data for {upperSymbol}.</span>
       </div>
@@ -66,7 +107,8 @@ export const PayVersusPerformancePanel: React.FC<PayVersusPerformancePanelProps>
           <span className="font-bold">No structured PvP disclosure available</span>
         </div>
         <p className="text-[11px] leading-relaxed max-w-xl text-slate-400">
-          {data.reason || `No 'ecd' taxonomy facts found. This company might be exempt (e.g. Foreign Private Issuer or Emerging Growth Company).`}
+          {data.reason ||
+            `No 'ecd' taxonomy facts found. This company might be exempt (e.g. Foreign Private Issuer or Emerging Growth Company).`}
         </p>
         {data.sourceUrl && (
           <div className="pt-1">
@@ -85,46 +127,12 @@ export const PayVersusPerformancePanel: React.FC<PayVersusPerformancePanelProps>
     );
   }
 
-  // 1. Gather all unique years from all concepts, sorted descending
-  const yearsSet = new Set<number>();
-  data.concepts.forEach((concept) => {
-    concept.values.forEach((v) => {
-      if (typeof v.fy === 'number') {
-        yearsSet.add(v.fy);
-      }
-    });
-  });
-  const years = Array.from(yearsSet).sort((a, b) => b - a);
-
-  // 2. Format function depending on concept unit
-  const formatVal = (val: number | null, unit: string) => {
-    if (val === null || val === undefined) return '—';
-    if (unit === 'USD') {
-      return `$${val.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-    }
-    if (unit === 'pure') {
-      return val.toLocaleString(undefined, { maximumFractionDigits: 4 });
-    }
-    return `${val.toLocaleString()} (${unit})`;
-  };
-
-  // Helper to extract value for a concept and year
-  const getValueForYear = (concept: EdgarPvPConcept, year: number) => {
-    const matches = concept.values.filter((v) => v.fy === year);
-    if (matches.length === 0) return null;
-    const def14aMatch = matches.find((v) => v.form === 'DEF 14A');
-    const match = def14aMatch || matches[0];
-    return match.val;
-  };
-
-  // 3. Remove concepts that have no values at all for our years list
-  const activeConcepts = data.concepts.filter((concept) => {
-    return years.some((yr) => getValueForYear(concept, yr) !== null);
-  });
-
   if (activeConcepts.length === 0) {
     return (
-      <div className="p-4 bg-[#111827]/70 border border-slate-800 rounded-xl text-xs text-slate-400 text-center font-mono">
+      <div
+        className="p-4 bg-[#111827]/70 border border-slate-800 rounded-xl text-xs text-slate-400 text-center font-mono"
+        aria-live="polite"
+      >
         Filer has ecd taxonomy data, but no entries could be aligned to a fiscal year.
       </div>
     );
@@ -136,39 +144,48 @@ export const PayVersusPerformancePanel: React.FC<PayVersusPerformancePanelProps>
         <table className="min-w-full divide-y divide-slate-800 text-[13px] font-sans">
           <thead>
             <tr className="bg-[#0D111A] text-emerald-400 border-b border-slate-800 text-left text-[11px] font-bold uppercase tracking-wider font-mono">
-              <th className="py-3 px-4 font-bold whitespace-nowrap">SEC Tagged Concept</th>
+              <th scope="col" className="py-3 px-4 font-bold whitespace-nowrap">
+                SEC Tagged Concept
+              </th>
               {years.map((year) => (
-                <th key={year} className="py-3 px-4 text-right font-bold whitespace-nowrap">
+                <th key={year} scope="col" className="py-3 px-4 text-right font-bold whitespace-nowrap">
                   FY {year}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60 text-slate-300">
-            {activeConcepts.map((concept, idx) => {
+            {activeConcepts.map((concept, index) => {
               const isHighlight =
                 concept.tag.toLowerCase().includes('peo') ||
                 concept.tag.toLowerCase().includes('nonpeo');
 
               return (
                 <tr
-                  key={concept.tag}
+                  key={`${concept.tag}-${concept.unit}`}
                   className={`hover:bg-slate-800/30 transition ${
-                    isHighlight ? 'bg-emerald-500/10 font-medium' : idx % 2 === 1 ? 'bg-[#111827]/40' : 'bg-[#0D111A]'
+                    isHighlight
+                      ? 'bg-emerald-500/10 font-medium'
+                      : index % 2 === 1
+                        ? 'bg-[#111827]/40'
+                        : 'bg-[#0D111A]'
                   }`}
                 >
-                  <td className="py-3 px-4 text-slate-200 whitespace-nowrap max-w-sm truncate" title={concept.label}>
+                  <td
+                    className="py-3 px-4 text-slate-200 whitespace-nowrap max-w-sm truncate"
+                    title={concept.label}
+                  >
                     <div className="font-semibold text-slate-100 leading-snug">{concept.label}</div>
                     <div className="text-[10px] text-slate-500 font-mono mt-0.5">{concept.tag}</div>
                   </td>
-                  {years.map((year) => {
-                    const rawVal = getValueForYear(concept, year);
-                    return (
-                      <td key={year} className="py-3 px-4 text-right font-mono font-semibold text-slate-200 whitespace-nowrap">
-                        {formatVal(rawVal, concept.unit)}
-                      </td>
-                    );
-                  })}
+                  {years.map((year) => (
+                    <td
+                      key={year}
+                      className="py-3 px-4 text-right font-mono font-semibold text-slate-200 whitespace-nowrap"
+                    >
+                      {formatValue(getValueForYear(concept, year), concept.unit)}
+                    </td>
+                  ))}
                 </tr>
               );
             })}
@@ -177,4 +194,4 @@ export const PayVersusPerformancePanel: React.FC<PayVersusPerformancePanelProps>
       </div>
     </div>
   );
-};
+});

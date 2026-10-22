@@ -4,8 +4,58 @@ import { apiLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 
+export interface IndexQuoteResult {
+  name: string;
+  symbol: string;
+  price: number | null;
+  change: number | null;
+  change_pct: number | null;
+  unavailable: boolean;
+}
+
+export interface MarketSummaryStock {
+  symbol: string;
+  name: string;
+  price: number | null;
+  change: number | null;
+  change_pct: number | null;
+  high_52w: number | null;
+  low_52w: number | null;
+  exchange: string | null;
+  market_cap: number | null;
+  pe_ratio: number | null;
+  change_52w: number | null;
+}
+
+export interface MarketMoversResponse {
+  most_active: MarketSummaryStock[];
+  trending: MarketSummaryStock[];
+  gainers: MarketSummaryStock[];
+  losers: MarketSummaryStock[];
+  highs_52w: MarketSummaryStock[];
+  lows_52w: MarketSummaryStock[];
+}
+
+export interface SectorQuote {
+  price?: number | null;
+  change?: number | null;
+  change_pct?: number | null;
+  high?: number | null;
+  low?: number | null;
+  open?: number | null;
+  prev_close?: number | null;
+  high_52w?: number | null;
+  low_52w?: number | null;
+}
+
+export interface SectorPerformance {
+  name: string;
+  proxy: string;
+  performance: number;
+}
+
 // 1. GET /api/market/indices -> retrieve main global indices
-router.get('/indices', apiLimiter, async (req, res, next) => {
+router.get('/indices', apiLimiter, async (_req, res, next) => {
   const indexSymbols = {
     'S&P 500': '^GSPC',
     'NASDAQ': '^IXIC',
@@ -66,7 +116,7 @@ router.get('/indices', apiLimiter, async (req, res, next) => {
 });
 
 // 2. GET /api/market/movers -> Top gainers / losers / active / trending / breakouts using Yahoo Finance Native Playlists
-router.get('/movers', apiLimiter, async (req, res, next) => {
+router.get('/movers', apiLimiter, async (_req, res, next) => {
   try {
     const [
       trending,
@@ -84,21 +134,23 @@ router.get('/movers', apiLimiter, async (req, res, next) => {
       yahooService.getMarketPlaylist('undervalued_growth_stocks')
     ]);
 
-    res.json({
+    const response: MarketMoversResponse = {
       most_active: mostActive.slice(0, 20),
       trending: trending.slice(0, 20),
       gainers: gainers.slice(0, 20),
       losers: losers.slice(0, 20),
       highs_52w: highs52w.slice(0, 20),
       lows_52w: lows52w.slice(0, 20)
-    });
+    };
+
+    res.json(response);
   } catch (error) {
     next(error);
   }
 });
 
 // 3. GET /api/market/sectors -> Heatmap Sector Performance (fetched dynamically from ETFs)
-router.get('/sectors', apiLimiter, async (req, res, next) => {
+router.get('/sectors', apiLimiter, async (_req, res, next) => {
   const sectors = [
     { name: 'Technology', proxy: 'XLK' },
     { name: 'Financials', proxy: 'XLF' },
@@ -115,18 +167,19 @@ router.get('/sectors', apiLimiter, async (req, res, next) => {
   ];
 
   try {
-    const results = await Promise.all(
+    const results: SectorPerformance[] = await Promise.all(
       sectors.map(async (sec) => {
-        let quote: any = null;
+        let quote: SectorQuote | null = null;
         try {
-          quote = await yahooService.getQuote(sec.proxy);
-        } catch (e: any) {
-          console.warn(`[SECTORS ROUTE] Failed to get quote for sector proxy ${sec.proxy}:`, e.message);
+          quote = (await yahooService.getQuote(sec.proxy)) as SectorQuote | null;
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.warn(`[SECTORS ROUTE] Failed to get quote for sector proxy ${sec.proxy}:`, msg);
         }
         return {
           name: sec.name,
           proxy: sec.proxy,
-          performance: quote && quote.change_pct !== undefined ? Number(quote.change_pct.toFixed(2)) : 0
+          performance: quote && quote.change_pct !== undefined && quote.change_pct !== null ? Number(quote.change_pct.toFixed(2)) : 0
         };
       })
     );

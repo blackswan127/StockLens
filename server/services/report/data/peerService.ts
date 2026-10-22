@@ -13,6 +13,24 @@ export interface PeerMetric {
   exchange: string | null;
 }
 
+export interface PeerBasicFinancials {
+  metric?: {
+    peTrailing?: number | null;
+    peAnnual?: number | null;
+    peForward?: number | null;
+    evEbitda?: number | null;
+    grossMargins?: number | null;
+    revenueGrowth?: number | null;
+    marketCapitalization?: number | null;
+    [key: string]: unknown;
+  };
+}
+
+interface StockProfileRow {
+  name: string;
+  exchange: string;
+}
+
 const KNOWN_COMPETITOR_MAP: Record<string, string[]> = {
   'AAPL': ['MSFT', 'GOOGL', 'AMZN', 'META', 'DELL', 'HPQ'],
   'MSFT': ['AAPL', 'GOOGL', 'AMZN', 'ORCL', 'CRM', 'META'],
@@ -132,12 +150,14 @@ export async function fetchPeersForReport(symbol: string): Promise<PeerMetric[]>
       let name = `${peerSymbol} Corp`;
       let exchange = 'NYSE';
       try {
-        const profileStmt = db.prepare('SELECT name, exchange FROM stocks WHERE symbol = ? OR symbol = ?').get(peerSymbol, peerSymbol.replace('.', '-')) as any;
+        const profileStmt = db.prepare('SELECT name, exchange FROM stocks WHERE symbol = ? OR symbol = ?').get(peerSymbol, peerSymbol.replace('.', '-')) as StockProfileRow | undefined;
         if (profileStmt) {
           name = profileStmt.name;
           exchange = profileStmt.exchange;
         }
-      } catch (e) {}
+      } catch {
+        /* intentionally ignored */
+      }
 
       let price: number | null = null;
       try {
@@ -149,18 +169,22 @@ export async function fetchPeersForReport(symbol: string): Promise<PeerMetric[]>
         if (q?.exchange) {
           exchange = q.exchange;
         }
-      } catch (e) {}
+      } catch {
+        /* intentionally ignored */
+      }
 
-      let cachedRatios: any = null;
+      let cachedRatios: PeerBasicFinancials | null = null;
       try {
-        cachedRatios = await yahooService.getBasicFinancials(peerSymbol);
-      } catch (e) {}
+        cachedRatios = await yahooService.getBasicFinancials(peerSymbol) as PeerBasicFinancials;
+      } catch {
+        /* intentionally ignored */
+      }
 
       const peVal = cachedRatios?.metric?.peTrailing ?? cachedRatios?.metric?.peAnnual ?? cachedRatios?.metric?.peForward ?? null;
       const evEbitdaVal = cachedRatios?.metric?.evEbitda ?? null;
       const grossMarginRaw = cachedRatios?.metric?.grossMargins ?? null;
       const revGrowthRaw = cachedRatios?.metric?.revenueGrowth ?? null;
-      const mcap = cachedRatios?.metric?.marketCapitalization ? cachedRatios.metric.marketCapitalization * 1000000 : null;
+      const mcap = cachedRatios?.metric?.marketCapitalization ? Number(cachedRatios.metric.marketCapitalization) * 1000000 : null;
 
       const formatPercent = (val: number | null | undefined): string | null => {
         if (val === null || val === undefined || isNaN(val)) return null;
@@ -189,4 +213,3 @@ export async function fetchPeersForReport(symbol: string): Promise<PeerMetric[]>
 
   return peersMetrics;
 }
-

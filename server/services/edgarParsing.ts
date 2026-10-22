@@ -33,6 +33,7 @@ export const cleanSecContent = (raw: string): string => {
   // Strip XML / HTML tags (e.g. <ix:nonNumeric>, <span>, <div>, etc.)
   cleaned = cleaned.replace(/<[^>]+>/g, ' ');
   // Remove zero-width spaces and control characters
+  // eslint-disable-next-line no-control-regex -- intentionally strips control characters from SEC HTML
   cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
   // Remove markdown or table-of-contents separator artifacts
   cleaned = cleaned.replace(/_{3,}/g, '');
@@ -52,7 +53,7 @@ export const cleanText = (txt: string): string => {
 export const parseMoney = (val: string): number | null => {
   if (!val) return null;
   const isNegative = val.trim().startsWith('-') || val.includes('(');
-  const cleaned = val.replace(/[$,\(\)\s—\-]/g, '').trim();
+  const cleaned = val.replace(/[$,()\s—-]/g, '').trim();
   if (!cleaned || isNaN(Number(cleaned))) return null;
   const num = parseFloat(cleaned);
   return isNegative ? -num : num;
@@ -61,6 +62,6 @@ export const parseMoney = (val: string): number | null => {
 export const isFootnote = (txt: string): boolean => {
   const cleaned = cleanText(txt);
   if (!cleaned) return false;
-  return /^\s*[\*†‡§#]x?\s*$/i.test(cleaned) || /^\s*\(\s*\d+\s*\)(?:\s*\(\s*\d+\s*\))*\s*$/.test(cleaned);
+  return /^\s*[*†‡§#]x?\s*$/i.test(cleaned) || /^\s*\(\s*\d+\s*\)(?:\s*\(\s*\d+\s*\))*\s*$/.test(cleaned);
 };
 

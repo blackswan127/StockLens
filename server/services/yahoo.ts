@@ -1,8 +1,484 @@
 import YahooFinance from 'yahoo-finance2';
-import { cacheService, CACHE_TTLS } from './cache.js';
+import { cacheService, CACHE_TTLS, type SaveQuoteBackupInput } from './cache.js';
 import { z } from 'zod';
 import CircuitBreaker from 'opossum';
 import { alphaVantageService } from './alphaVantage.js';
+
+// --- Type Definitions for Yahoo Finance Responses & Service Outputs ---
+
+export interface MarketPlaylistItem {
+  symbol: string;
+  name: string;
+  price: number | null;
+  change: number | null;
+  change_pct: number | null;
+  high_52w: number | null;
+  low_52w: number | null;
+  exchange: string | null;
+  market_cap: number | null;
+  pe_ratio: number | null;
+  change_52w: number | null;
+}
+
+export interface YahooScreenerQuote {
+  symbol: string;
+  displayName?: string | null;
+  longName?: string | null;
+  shortName?: string | null;
+  regularMarketPrice?: number | null;
+  regularMarketChange?: number | null;
+  regularMarketChangePercent?: number | null;
+  fiftyTwoWeekHigh?: number | null;
+  fiftyTwoWeekLow?: number | null;
+  fullExchangeName?: string | null;
+  exchange?: string | null;
+  marketCap?: number | null;
+  trailingPE?: number | null;
+  fiftyTwoWeekChangePercent?: number | null;
+}
+
+export interface YahooScreenerResponse {
+  quotes?: YahooScreenerQuote[];
+}
+
+export interface YahooTrendingSymbolsResponse {
+  quotes?: Array<{ symbol: string }>;
+}
+
+export interface YahooFinancialRatios {
+  recommendationKey?: string;
+  targetMeanPrice?: number | null;
+  profitMargins?: number | null;
+  operatingMargins?: number | null;
+  returnOnAssets?: number | null;
+  returnOnEquity?: number | null;
+  debtToEquity?: number | null;
+  currentRatio?: number | null;
+  dividendYield?: number | null;
+  pegRatio?: number | null;
+  priceToBook?: number | null;
+  enterpriseToEquity?: number | null;
+}
+
+export interface StandardizedFinancials {
+  incomeStatement?: Record<string, unknown>[] | unknown[];
+  incomeStatementQuarterly?: Record<string, unknown>[] | unknown[];
+  balanceSheet?: Record<string, unknown>[] | unknown[];
+  balanceSheetQuarterly?: Record<string, unknown>[] | unknown[];
+  cashFlow?: Record<string, unknown>[] | unknown[];
+  cashFlowQuarterly?: Record<string, unknown>[] | unknown[];
+  ratios?: Partial<YahooFinancialRatios> | Record<string, unknown>;
+}
+
+export interface YahooFinancialsQuoteSummary {
+  incomeStatementHistory?: { incomeStatementHistory?: Record<string, unknown>[] };
+  incomeStatementHistoryQuarterly?: { incomeStatementHistory?: Record<string, unknown>[] };
+  balanceSheetHistory?: { balanceSheetStatements?: Record<string, unknown>[] };
+  balanceSheetHistoryQuarterly?: { balanceSheetStatements?: Record<string, unknown>[] };
+  cashflowStatementHistory?: { cashflowStatements?: Record<string, unknown>[] };
+  cashflowStatementHistoryQuarterly?: { cashflowStatements?: Record<string, unknown>[] };
+  financialData?: {
+    recommendationKey?: string | null;
+    targetMeanPrice?: number | null;
+    profitMargins?: number | null;
+    operatingMargins?: number | null;
+    returnOnAssets?: number | null;
+    returnOnEquity?: number | null;
+    debtToEquity?: number | null;
+    currentRatio?: number | null;
+  };
+  defaultKeyStatistics?: {
+    dividendYield?: number | null;
+    pegRatio?: number | null;
+    priceToBook?: number | null;
+    enterpriseToRevenue?: number | null;
+  };
+}
+
+export interface IndexQuote {
+  price?: number | null;
+  change?: number | null;
+  change_pct?: number | null;
+  high?: number | null;
+  low?: number | null;
+  prev_close?: number | null;
+}
+
+export interface RealtimeQuote {
+  price?: number | null;
+  change?: number | null;
+  change_pct?: number | null;
+  high?: number | null;
+  low?: number | null;
+  open?: number | null;
+  prev_close?: number | null;
+  high_52w?: number | null;
+  low_52w?: number | null;
+  volume?: number | null;
+  avg_volume?: number | null;
+  source?: string;
+  name?: string | null;
+  exchange?: string | null;
+  epsTrailingTwelveMonths?: number | null;
+  epsForward?: number | null;
+  marketCap?: number | null;
+  pe?: number | null;
+  pb?: number | null;
+  roe?: number | string | null;
+}
+
+export interface YahooQuoteRaw {
+  regularMarketPrice?: number | null;
+  regularMarketChange?: number | null;
+  regularMarketChangePercent?: number | null;
+  regularMarketDayHigh?: number | null;
+  regularMarketDayLow?: number | null;
+  regularMarketOpen?: number | null;
+  regularMarketPreviousClose?: number | null;
+  fiftyTwoWeekHigh?: number | null;
+  fiftyTwoWeekLow?: number | null;
+  regularMarketVolume?: number | null;
+  averageDailyVolume3Month?: number | null;
+  shortName?: string | null;
+  longName?: string | null;
+  exchange?: string | null;
+  epsTrailingTwelveMonths?: number | null;
+  epsForward?: number | null;
+  marketCap?: number | null;
+}
+
+export interface CompanyOfficer {
+  name?: string | null;
+  title?: string | null;
+}
+
+export interface YahooProfileQuoteSummary {
+  assetProfile?: {
+    website?: string | null;
+    industry?: string | null;
+    country?: string | null;
+    longBusinessSummary?: string | null;
+    companyOfficers?: CompanyOfficer[];
+  };
+  price?: {
+    longName?: string | null;
+    shortName?: string | null;
+    exchangeName?: string | null;
+    exchange?: string | null;
+  };
+}
+
+export interface CompanyProfile {
+  name?: string;
+  logo?: string;
+  finnhubIndustry?: string;
+  exchange?: string;
+  country?: string;
+  weburl?: string;
+  ipo?: string;
+  ceo?: string;
+  description?: string;
+}
+
+export interface YahooFinancialData {
+  returnOnEquity?: number | null;
+  returnOnAssets?: number | null;
+  debtToEquity?: number | null;
+  currentRatio?: number | null;
+  revenueGrowth?: number | null;
+  earningsGrowth?: number | null;
+  grossMargins?: number | null;
+  operatingMargins?: number | null;
+  profitMargins?: number | null;
+  freeCashflow?: number | null;
+  totalDebt?: number | null;
+  totalCash?: number | null;
+}
+
+export interface YahooDefaultKeyStatistics {
+  trailingPE?: number | null;
+  forwardPE?: number | null;
+  pegRatio?: number | null;
+  priceToBook?: number | null;
+  dividendYield?: number | null;
+  marketCap?: number | null;
+  enterpriseValue?: number | null;
+  trailingEps?: number | null;
+  forwardEps?: number | null;
+  enterpriseToRevenue?: number | null;
+  enterpriseToEbitda?: number | null;
+  sharesOutstanding?: number | null;
+  bookValue?: number | null;
+  beta?: number | null;
+}
+
+export interface YahooSummaryDetail {
+  trailingPE?: number | null;
+  forwardPE?: number | null;
+  priceToSalesTrailing12Months?: number | null;
+  dividendYield?: number | null;
+}
+
+export interface YahooBasicSummaryResult {
+  financialData?: YahooFinancialData;
+  defaultKeyStatistics?: YahooDefaultKeyStatistics;
+  summaryDetail?: YahooSummaryDetail;
+}
+
+export interface BasicFinancialMetrics {
+  peTrailing?: number | null;
+  peForward?: number | null;
+  pegRatio?: number | null;
+  priceToBook?: number | null;
+  priceToSales?: number | null;
+  dividendYield?: number | null;
+  roeTTM?: number | null;
+  roaTTM?: number | null;
+  debtEquityAnnual?: number | null;
+  currentRatio?: number | null;
+  revenueGrowth?: number | null;
+  earningsGrowth?: number | null;
+  grossMargins?: number | null;
+  operatingMargins?: number | null;
+  profitMargins?: number | null;
+  freeCashflow?: number | null;
+  totalDebt?: number | null;
+  marketCapitalization?: number | null;
+  peAnnual?: number | null;
+  pbAnnual?: number | null;
+  roicTTM?: number | null;
+  epsBasicExclExtraItemsTTM?: number | null;
+  dividendYieldIndicated?: number | null;
+  enterpriseValue?: number | null;
+  evEbitda?: number | null;
+  sharesOutstanding?: number | null;
+  bookValue?: number | null;
+  totalCash?: number | null;
+  beta?: number | null;
+}
+
+export interface BasicFinancials {
+  metric?: BasicFinancialMetrics;
+  source?: string;
+}
+
+export interface YahooRecommendationItem {
+  symbol?: string;
+}
+
+export interface YahooRecommendationsResult {
+  recommendedSymbols?: YahooRecommendationItem[];
+}
+
+export interface NewsItem {
+  id: string;
+  headline: string;
+  summary: string;
+  source: string;
+  datetime: number;
+  url: string;
+}
+
+export interface YahooNewsItem {
+  uuid?: string | null;
+  title?: string | null;
+  summary?: string | null;
+  publisher?: string | null;
+  providerPublishTime?: string | number | Date | null;
+  link?: string | null;
+}
+
+export interface YahooSearchQuoteItem {
+  symbol?: string;
+  longname?: string | null;
+  shortname?: string | null;
+  quoteType?: string | null;
+  exchange?: string | null;
+}
+
+export interface YahooSearchResult {
+  news?: YahooNewsItem[];
+  quotes?: YahooSearchQuoteItem[];
+}
+
+export interface SearchSymbolItem {
+  symbol: string;
+  description: string;
+  displaySymbol: string;
+  type: string;
+  exchange: string;
+}
+
+export interface SearchSymbolResponse {
+  result: SearchSymbolItem[];
+}
+
+export type ChartInterval =
+  | '1m'
+  | '2m'
+  | '5m'
+  | '15m'
+  | '30m'
+  | '60m'
+  | '90m'
+  | '1h'
+  | '1d'
+  | '5d'
+  | '1wk'
+  | '1mo'
+  | '3mo';
+
+export interface ChartOptions {
+  period1: Date | string | number;
+  period2?: Date | string | number;
+  useYfid?: boolean;
+  interval?: ChartInterval;
+  includePrePost?: boolean;
+  events?: string;
+  lang?: string;
+  return?: 'array' | 'object';
+}
+
+export interface YahooChartQuote {
+  date: string | number | Date;
+  open?: number | null;
+  high?: number | null;
+  low?: number | null;
+  close?: number | null;
+  volume?: number | null;
+}
+
+export interface YahooChartResult {
+  quotes?: YahooChartQuote[];
+}
+
+export interface CandlesResponse {
+  s: 'ok' | 'no_data';
+  t?: number[];
+  c?: number[];
+  o?: number[];
+  h?: number[];
+  l?: number[];
+  v?: number[];
+  source?: string;
+}
+
+export interface MajorHoldersBreakdownData {
+  insidersPercentHeld?: number | null;
+  institutionsPercentHeld?: number | null;
+  institutionsFloatPercentHeld?: number | null;
+  institutionsCount?: number | null;
+}
+
+export interface OwnershipHolder {
+  organization: string;
+  position: number | null;
+  reportDate: string | Date | null;
+  pctHeld: number | null;
+  value: number | null;
+}
+
+export interface YahooOwnershipItem {
+  organization?: string | null;
+  position?: number | null;
+  reportDate?: string | Date | null;
+  pctHeld?: number | null;
+  value?: number | null;
+}
+
+export interface YahooShareholdingQuoteSummary {
+  majorHoldersBreakdown?: {
+    insidersPercentHeld?: number | null;
+    institutionsPercentHeld?: number | null;
+    institutionsFloatPercentHeld?: number | null;
+    institutionsCount?: number | null;
+  };
+  institutionOwnership?: {
+    ownershipList?: YahooOwnershipItem[];
+  };
+  fundOwnership?: {
+    ownershipList?: YahooOwnershipItem[];
+  };
+}
+
+export interface ShareholdingResult {
+  majorHolders?: Partial<MajorHoldersBreakdownData> | Record<string, unknown>;
+  institutionalHolders?: OwnershipHolder[] | unknown[];
+  mutualFundHolders?: OwnershipHolder[] | unknown[];
+}
+
+export interface FundamentalsTimeSeriesOptions {
+  period1: Date | number | string;
+  period2?: Date | number | string;
+  type?: 'annual' | 'quarterly' | 'trailing' | string;
+  merge?: boolean;
+  padTimeSeries?: boolean;
+  lang?: string;
+  region?: string;
+  module: string;
+}
+
+export interface YahooEarningsTrendItem {
+  period?: string;
+  growth?: number | null;
+}
+
+export interface YahooGrowthQuoteSummary {
+  earningsTrend?: {
+    trend?: YahooEarningsTrendItem[];
+  };
+}
+
+export interface GrowthEstimatesResult {
+  growthEstimate5yr: number | null;
+}
+
+export type QuoteSummaryModule =
+  | 'assetProfile'
+  | 'balanceSheetHistory'
+  | 'balanceSheetHistoryQuarterly'
+  | 'calendarEvents'
+  | 'cashflowStatementHistory'
+  | 'cashflowStatementHistoryQuarterly'
+  | 'defaultKeyStatistics'
+  | 'earnings'
+  | 'earningsHistory'
+  | 'earningsTrend'
+  | 'financialData'
+  | 'fundOwnership'
+  | 'fundPerformance'
+  | 'fundProfile'
+  | 'incomeStatementHistory'
+  | 'incomeStatementHistoryQuarterly'
+  | 'indexTrend'
+  | 'industryTrend'
+  | 'insiderHolders'
+  | 'insiderTransactions'
+  | 'institutionOwnership'
+  | 'majorDirectHolders'
+  | 'majorHoldersBreakdown'
+  | 'netSharePurchaseActivity'
+  | 'price'
+  | 'quoteType'
+  | 'recommendationTrend'
+  | 'secFilings'
+  | 'sectorTrend'
+  | 'summaryDetail'
+  | 'summaryProfile'
+  | 'topHoldings'
+  | 'upgradeDowngradeHistory';
+
+export interface QuoteSummaryOptions {
+  formatted?: boolean;
+  modules?: QuoteSummaryModule[] | 'all';
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+}
 
 /**
  * Best-effort Alpha Vantage fallback wrapper. Yahoo Finance is always tried
@@ -17,20 +493,26 @@ async function tryAlphaVantage<T>(label: string, fn: () => Promise<T>): Promise<
     const result = await fn();
     console.log(`[FALLBACK] Alpha Vantage succeeded for ${label}`);
     return result;
-  } catch (avErr: any) {
-    console.error(`[FALLBACK] Alpha Vantage also failed for ${label}:`, avErr.message);
+  } catch (avErr) {
+    console.error(`[FALLBACK] Alpha Vantage also failed for ${label}:`, getErrorMessage(avErr));
     return null;
   }
 }
 
 // ESM/CJS interop compatibility resolver for bundlers (e.g. esbuild/webpack)
-let YahooFinanceClass: any = YahooFinance;
-if (YahooFinanceClass && typeof YahooFinanceClass.default === 'function') {
-  YahooFinanceClass = YahooFinanceClass.default;
+type YahooFinanceClient = InstanceType<typeof YahooFinance>;
+type YahooFinanceConstructor = new (options?: { queue?: { concurrency?: number } }) => YahooFinanceClient;
+
+let YahooFinanceClass: YahooFinanceConstructor = YahooFinance as unknown as YahooFinanceConstructor;
+if (
+  YahooFinanceClass &&
+  typeof (YahooFinanceClass as unknown as { default?: YahooFinanceConstructor }).default === 'function'
+) {
+  YahooFinanceClass = (YahooFinanceClass as unknown as { default: YahooFinanceConstructor }).default;
 }
 
 // Caps concurrency globally at client level to avoid rate limits
-let yahooFinance = new YahooFinanceClass({
+let yahooFinance: YahooFinanceClient = new YahooFinanceClass({
   queue: { concurrency: 4 }
 });
 
@@ -48,14 +530,14 @@ export function resetYahooSession(): void {
 }
 
 // Request Coalescing Map and Helper
-const inFlight = new Map<string, Promise<any>>();
+const inFlight = new Map<string, Promise<unknown>>();
 
 async function dedupedFetch<T>(key: string, fn: () => Promise<T>): Promise<T> {
   if (inFlight.has(key)) {
-    return inFlight.get(key)!;
+    return inFlight.get(key) as Promise<T>;
   }
   const promise = fn().finally(() => inFlight.delete(key));
-  inFlight.set(key, promise);
+  inFlight.set(key, promise as Promise<unknown>);
   return promise;
 }
 
@@ -74,18 +556,53 @@ const breakerOptions = {
   volumeThreshold: 10
 };
 
-const quoteBreaker = new CircuitBreaker((sym: string) => yahooFinance.quote(sym), breakerOptions);
-const quoteSummaryBreaker = new CircuitBreaker((sym: string, options: any) => yahooFinance.quoteSummary(sym, options), breakerOptions);
-const recommendationsBreaker = new CircuitBreaker((sym: string) => yahooFinance.recommendationsBySymbol(sym), breakerOptions);
-const searchBreaker = new CircuitBreaker((query: string) => yahooFinance.search(query), breakerOptions);
-const chartBreaker = new CircuitBreaker((sym: string, options: any) => yahooFinance.chart(sym, options), breakerOptions);
-const fundamentalsTimeSeriesBreaker = new CircuitBreaker((sym: string, options: any) => yahooFinance.fundamentalsTimeSeries(sym, options), breakerOptions);
+const quoteBreaker = new CircuitBreaker(
+  (sym: string) => yahooFinance.quote(sym),
+  breakerOptions
+);
+
+const quoteSummaryBreaker = new CircuitBreaker(
+  (sym: string, options?: QuoteSummaryOptions) =>
+    yahooFinance.quoteSummary(
+      sym,
+      options as Parameters<YahooFinanceClient['quoteSummary']>[1]
+    ),
+  breakerOptions
+);
+
+const recommendationsBreaker = new CircuitBreaker(
+  (sym: string) => yahooFinance.recommendationsBySymbol(sym),
+  breakerOptions
+);
+
+const searchBreaker = new CircuitBreaker(
+  (query: string) => yahooFinance.search(query),
+  breakerOptions
+);
+
+const chartBreaker = new CircuitBreaker(
+  (sym: string, options?: ChartOptions) =>
+    yahooFinance.chart(
+      sym,
+      options as Parameters<YahooFinanceClient['chart']>[1]
+    ),
+  breakerOptions
+);
+
+const fundamentalsTimeSeriesBreaker = new CircuitBreaker(
+  (sym: string, options: FundamentalsTimeSeriesOptions) =>
+    yahooFinance.fundamentalsTimeSeries(
+      sym,
+      options as Parameters<YahooFinanceClient['fundamentalsTimeSeries']>[1]
+    ),
+  breakerOptions
+);
 
 export const yahooService = {
   // Predefined playlists from Yahoo Finance native global screener
-  getMarketPlaylist: async (scrId: string) => {
+  getMarketPlaylist: async (scrId: string): Promise<MarketPlaylistItem[]> => {
     const cacheKey = `yahoo:playlist:${scrId}`;
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<MarketPlaylistItem[]>(cacheKey);
     if (cached) {
       cacheService.logHit('playlist', scrId, 'MEMCACHE_PLAYLIST');
       return cached;
@@ -93,10 +610,15 @@ export const yahooService = {
 
     try {
       console.log(`[YAHOO] Fetching native playlist for: ${scrId}`);
-      const result: any = await dedupedFetch(cacheKey, async () => {
-        const raw = await yahooFinance.screener({ scrIds: scrId, count: 25 }, {}, { validateResult: false });
+      const result: MarketPlaylistItem[] = await dedupedFetch(cacheKey, async (): Promise<MarketPlaylistItem[]> => {
+        const screenerFn = yahooFinance.screener as (...args: unknown[]) => Promise<YahooScreenerResponse>;
+        const raw = await screenerFn(
+          { scrIds: scrId, count: 25 },
+          {},
+          { validateResult: false }
+        );
         const quotes = raw.quotes || [];
-        return quotes.map((q: any) => ({
+        return quotes.map((q: YahooScreenerQuote): MarketPlaylistItem => ({
           symbol: q.symbol,
           name: q.displayName || q.longName || q.shortName || q.symbol,
           price: q.regularMarketPrice ?? null,
@@ -113,16 +635,16 @@ export const yahooService = {
 
       await cacheService.set(cacheKey, result, 600); // 10 min TTL
       return result;
-    } catch (error: any) {
-      console.error(`[YAHOO PLAYLIST ERROR] Failed to fetch playlist ${scrId}:`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO PLAYLIST ERROR] Failed to fetch playlist ${scrId}:`, getErrorMessage(error));
       return [];
     }
   },
 
   // Trending symbols from Yahoo Finance
-  getTrendingSymbols: async (country: string) => {
+  getTrendingSymbols: async (country: string): Promise<MarketPlaylistItem[]> => {
     const cacheKey = `yahoo:trending:${country}`;
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<MarketPlaylistItem[]>(cacheKey);
     if (cached) {
       cacheService.logHit('trending', country, 'MEMCACHE_TRENDING');
       return cached;
@@ -130,16 +652,16 @@ export const yahooService = {
 
     try {
       console.log(`[YAHOO] Fetching native trending symbols for: ${country}`);
-      const result: any = await dedupedFetch(cacheKey, async () => {
-        const raw = await yahooFinance.trendingSymbols(country);
+      const result: MarketPlaylistItem[] = await dedupedFetch(cacheKey, async (): Promise<MarketPlaylistItem[]> => {
+        const raw = (await yahooFinance.trendingSymbols(country)) as YahooTrendingSymbolsResponse;
         const quotes = raw.quotes || [];
-        const symbols = quotes.map((q: any) => q.symbol).filter(Boolean);
+        const symbols = quotes.map((q) => q.symbol).filter(Boolean);
         
         if (symbols.length === 0) return [];
         
         // Fetch detailed quotes for these symbols to normalize them
-        const detailedQuotes = await yahooFinance.quote(symbols);
-        return detailedQuotes.map((q: any) => ({
+        const detailedQuotes = (await yahooFinance.quote(symbols)) as YahooScreenerQuote[];
+        return detailedQuotes.map((q: YahooScreenerQuote): MarketPlaylistItem => ({
           symbol: q.symbol,
           name: q.displayName || q.longName || q.shortName || q.symbol,
           price: q.regularMarketPrice ?? null,
@@ -156,19 +678,19 @@ export const yahooService = {
 
       await cacheService.set(cacheKey, result, 600); // 10 min TTL
       return result;
-    } catch (error: any) {
-      console.error(`[YAHOO TRENDING ERROR] Failed to fetch trending symbols for ${country}:`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO TRENDING ERROR] Failed to fetch trending symbols for ${country}:`, getErrorMessage(error));
       return [];
     }
   },
 
   // Fetch historical financial data (5 years of Annual statements)
-  getFinancials: async (symbol: string) => {
+  getFinancials: async (symbol: string): Promise<StandardizedFinancials> => {
     const rawSymbol = symbol.toUpperCase();
     const cacheKey = `yahoo:financials:${rawSymbol}`;
 
     // Try cache first
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<StandardizedFinancials>(cacheKey);
     if (cached) {
       cacheService.logHit('financials', rawSymbol, 'MEMCACHE_YAHOO');
       return cached;
@@ -176,8 +698,8 @@ export const yahooService = {
 
     console.log(`[YAHOO] Fetching quoteSummary for: ${rawSymbol}`);
     try {
-      const financialsObj = await dedupedFetch(cacheKey, async () => {
-        const result: any = await quoteSummaryBreaker.fire(rawSymbol, {
+      const financialsObj = await dedupedFetch(cacheKey, async (): Promise<StandardizedFinancials> => {
+        const result = (await quoteSummaryBreaker.fire(rawSymbol, {
           modules: [
             'incomeStatementHistory',
             'balanceSheetHistory',
@@ -188,14 +710,14 @@ export const yahooService = {
             'financialData',
             'defaultKeyStatistics'
           ]
-        });
+        })) as YahooFinancialsQuoteSummary | null;
 
         if (!result) {
           throw new Error('No quoteSummary results found');
         }
 
         // Extract and map into standardized schema
-        const mapped = {
+        const mapped: StandardizedFinancials = {
           incomeStatement: result.incomeStatementHistory?.incomeStatementHistory || [],
           incomeStatementQuarterly: result.incomeStatementHistoryQuarterly?.incomeStatementHistory || [],
           balanceSheet: result.balanceSheetHistory?.balanceSheetStatements || [],
@@ -226,46 +748,47 @@ export const yahooService = {
       });
 
       return financialsObj;
-    } catch (error: any) {
-      console.error(`[YAHOO ERROR] Failed to fetch financials for ${rawSymbol}`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO ERROR] Failed to fetch financials for ${rawSymbol}`, getErrorMessage(error));
 
       // Fallback Layer: Alpha Vantage
       const avData = await tryAlphaVantage(`financials ${rawSymbol}`, () => alphaVantageService.getFinancials(rawSymbol));
       if (avData) {
-        await cacheService.set(cacheKey, avData, CACHE_TTLS.FUNDAMENTALS);
-        cacheService.saveFundamentalsBackup(rawSymbol, avData, 'ALPHAVANTAGE');
-        return avData;
+        const mappedAvData = avData as unknown as StandardizedFinancials;
+        await cacheService.set(cacheKey, mappedAvData, CACHE_TTLS.FUNDAMENTALS);
+        cacheService.saveFundamentalsBackup(rawSymbol, mappedAvData, 'ALPHAVANTAGE');
+        return mappedAvData;
       }
 
       // Fallback to SQLite check
       const backup = cacheService.getFundamentalsBackup(rawSymbol);
-      if (backup) {
+      if (backup && backup.data) {
         console.log(`[YAHOO FALLBACK] Returned SQLite fundamental data backup for ${rawSymbol}`);
-        return backup.data;
+        return backup.data as unknown as StandardizedFinancials;
       }
       throw error;
     }
   },
 
   // Index quotes fallback (^GSPC, ^IXIC, ^DJI, ^FTSE, ^N225, ^BSESN)
-  getIndexQuote: async (symbol: string) => {
+  getIndexQuote: async (symbol: string): Promise<IndexQuote | null> => {
     const rawSymbol = symbol.toUpperCase();
     const cacheKey = `yahoo:index:${rawSymbol}`;
 
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<IndexQuote>(cacheKey);
     if (cached) {
       return cached;
     }
 
     try {
       console.log(`[YAHOO] Fetching web-scraped quote for Index: ${rawSymbol}`);
-      const mapped = await dedupedFetch(cacheKey, async () => {
-        const result: any = await quoteBreaker.fire(rawSymbol);
-        if (result) {
-          const quoteObj = {
+      const mapped = await dedupedFetch(cacheKey, async (): Promise<IndexQuote> => {
+        const result = (await quoteBreaker.fire(rawSymbol)) as YahooQuoteRaw | null;
+        if (result && typeof result.regularMarketPrice === 'number') {
+          const quoteObj: IndexQuote = {
             price: result.regularMarketPrice,
-            change: result.regularMarketChange,
-            change_pct: result.regularMarketChangePercent,
+            change: result.regularMarketChange ?? 0,
+            change_pct: result.regularMarketChangePercent ?? 0,
             high: result.regularMarketDayHigh || result.regularMarketPrice,
             low: result.regularMarketDayLow || result.regularMarketPrice,
             prev_close: result.regularMarketPreviousClose || result.regularMarketPrice
@@ -276,19 +799,19 @@ export const yahooService = {
         throw new Error('No index quote result found');
       });
       return mapped;
-    } catch (error: any) {
-      console.error(`[YAHOO INDEX ERROR] Failed index fetch for ${rawSymbol}`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO INDEX ERROR] Failed index fetch for ${rawSymbol}`, getErrorMessage(error));
     }
     return null;
   },
 
   // Real-time quote
-  getQuote: async (symbol: string) => {
+  getQuote: async (symbol: string): Promise<RealtimeQuote> => {
     const rawSymbol = symbol.toUpperCase();
     const cacheKey = `yahoo:quote:${rawSymbol}`;
 
     // Try cache first
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<RealtimeQuote>(cacheKey);
     if (cached) {
       cacheService.logHit('quote', rawSymbol, 'MEMCACHE_YAHOO_QUOTE');
       return cached;
@@ -296,10 +819,10 @@ export const yahooService = {
 
     try {
       console.log(`[YAHOO] Fetching real-time quote for: ${rawSymbol}`);
-      const mapped = await dedupedFetch(cacheKey, async () => {
-        const result: any = await quoteBreaker.fire(rawSymbol);
-        if (result) {
-          const quoteObj = {
+      const mapped = await dedupedFetch(cacheKey, async (): Promise<RealtimeQuote> => {
+        const result = (await quoteBreaker.fire(rawSymbol)) as YahooQuoteRaw | null;
+        if (result && typeof result.regularMarketPrice === 'number') {
+          const quoteObj: RealtimeQuote = {
             price: result.regularMarketPrice,
             change: result.regularMarketChange ?? 0,
             change_pct: result.regularMarketChangePercent ?? 0,
@@ -310,7 +833,12 @@ export const yahooService = {
             high_52w: result.fiftyTwoWeekHigh || null,
             low_52w: result.fiftyTwoWeekLow || null,
             volume: result.regularMarketVolume || null,
-            avg_volume: result.averageDailyVolume3Month || null
+            avg_volume: result.averageDailyVolume3Month || null,
+            name: result.shortName || result.longName || null,
+            exchange: result.exchange || null,
+            epsTrailingTwelveMonths: result.epsTrailingTwelveMonths || null,
+            epsForward: result.epsForward || null,
+            marketCap: result.marketCap || null
           };
 
           // Zod validation before caching/SQLite write
@@ -320,44 +848,44 @@ export const yahooService = {
             const backup = cacheService.getQuoteBackup(rawSymbol);
             if (backup) {
               console.log(`[YAHOO VALIDATION FALLBACK] Using backup quote for ${rawSymbol}`);
-              return backup;
+              return backup as unknown as RealtimeQuote;
             }
             throw new Error('Quote failed validation and no backup available');
           }
 
           await cacheService.set(cacheKey, quoteObj, CACHE_TTLS.QUOTE);
-          cacheService.saveQuoteBackup(rawSymbol, quoteObj);
+          cacheService.saveQuoteBackup(rawSymbol, quoteObj as SaveQuoteBackupInput);
           return quoteObj;
         }
         throw new Error('No quote results found');
       });
       return mapped;
-    } catch (error: any) {
-      console.error(`[YAHOO QUOTE ERROR] Failed to fetch quote for ${rawSymbol}`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO QUOTE ERROR] Failed to fetch quote for ${rawSymbol}`, getErrorMessage(error));
 
       // Fallback Layer: Alpha Vantage
       const avQuote = await tryAlphaVantage(`quote ${rawSymbol}`, () => alphaVantageService.getQuote(rawSymbol));
       if (avQuote && avQuote.price !== null) {
         await cacheService.set(cacheKey, avQuote, CACHE_TTLS.QUOTE);
-        cacheService.saveQuoteBackup(rawSymbol, avQuote);
+        cacheService.saveQuoteBackup(rawSymbol, avQuote as SaveQuoteBackupInput);
         return avQuote;
       }
 
       const backup = cacheService.getQuoteBackup(rawSymbol);
       if (backup) {
         console.log(`[YAHOO QUOTE FALLBACK] Returned SQLite quote backup for ${rawSymbol}`);
-        return backup;
+        return backup as unknown as RealtimeQuote;
       }
       throw error;
     }
   },
 
   // Company profile
-  getProfile: async (symbol: string) => {
+  getProfile: async (symbol: string): Promise<CompanyProfile> => {
     const rawSymbol = symbol.toUpperCase();
     const cacheKey = `yahoo:profile:${rawSymbol}`;
 
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<CompanyProfile>(cacheKey);
     if (cached) {
       cacheService.logHit('profile', rawSymbol, 'MEMCACHE_YAHOO_PROFILE');
       return cached;
@@ -365,10 +893,10 @@ export const yahooService = {
 
     try {
       console.log(`[YAHOO] Fetching profile for: ${rawSymbol}`);
-      const profileObj = await dedupedFetch(cacheKey, async () => {
-        const result: any = await quoteSummaryBreaker.fire(rawSymbol, {
+      const profileObj = await dedupedFetch(cacheKey, async (): Promise<CompanyProfile> => {
+        const result = (await quoteSummaryBreaker.fire(rawSymbol, {
           modules: ['assetProfile', 'price']
-        });
+        })) as YahooProfileQuoteSummary | null;
 
         if (!result) {
           throw new Error('No quoteSummary results found for profile');
@@ -380,10 +908,12 @@ export const yahooService = {
           try {
             const urlObj = new URL(website);
             logoUrl = `https://logo.clearbit.com/${urlObj.hostname}`;
-          } catch (_) {}
+          } catch (_) {
+            /* intentionally ignored */
+          }
         }
 
-        const mapped = {
+        const mapped: CompanyProfile = {
           name: result.price?.longName || result.price?.shortName || rawSymbol,
           logo: logoUrl,
           finnhubIndustry: result.assetProfile?.industry || 'Miscellaneous Industries',
@@ -391,10 +921,11 @@ export const yahooService = {
           country: result.assetProfile?.country || 'US',
           weburl: website,
           ipo: '—',
-          ceo: result.assetProfile?.companyOfficers?.find((o: any) => 
-            o.title?.toLowerCase().includes('ceo') || 
-            o.title?.toLowerCase().includes('chief executive officer')
-          )?.name || '—',
+          ceo:
+            result.assetProfile?.companyOfficers?.find((o: CompanyOfficer) => {
+              const title = o.title?.toLowerCase() || '';
+              return title.includes('ceo') || title.includes('chief executive officer');
+            })?.name || '—',
           description: result.assetProfile?.longBusinessSummary || `${rawSymbol} is a leading global enterprise.`
         };
 
@@ -403,8 +934,8 @@ export const yahooService = {
       });
 
       return profileObj;
-    } catch (error: any) {
-      console.error(`[YAHOO PROFILE ERROR] Failed to fetch profile for ${rawSymbol}`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO PROFILE ERROR] Failed to fetch profile for ${rawSymbol}`, getErrorMessage(error));
 
       // Fallback Layer: Alpha Vantage
       const avProfile = await tryAlphaVantage(`profile ${rawSymbol}`, () => alphaVantageService.getProfile(rawSymbol));
@@ -416,16 +947,17 @@ export const yahooService = {
       // Fallback to SQLite DB backup if available
       const backup = cacheService.getFundamentalsBackup(rawSymbol);
       if (backup && backup.data) {
+        const data = backup.data as Record<string, string | undefined>;
         return {
-          name: backup.data.name || rawSymbol,
-          logo: backup.data.logo || '',
-          finnhubIndustry: backup.data.industry || 'Miscellaneous Industries',
-          exchange: backup.data.exchange || 'OTC Market',
-          country: backup.data.country || 'US',
-          weburl: backup.data.weburl || '',
-          ipo: backup.data.ipo || '—',
+          name: data.name || rawSymbol,
+          logo: data.logo || '',
+          finnhubIndustry: data.industry || data.finnhubIndustry || 'Miscellaneous Industries',
+          exchange: data.exchange || 'OTC Market',
+          country: data.country || 'US',
+          weburl: data.weburl || '',
+          ipo: data.ipo || '—',
           ceo: '—',
-          description: backup.data.description || `${rawSymbol} is a leading global enterprise.`
+          description: data.description || `${rawSymbol} is a leading global enterprise.`
         };
       }
       throw error;
@@ -433,11 +965,11 @@ export const yahooService = {
   },
 
   // Basic financials (metrics)
-  getBasicFinancials: async (symbol: string) => {
+  getBasicFinancials: async (symbol: string): Promise<BasicFinancials> => {
     const rawSymbol = symbol.toUpperCase();
     const cacheKey = `yahoo:basic:${rawSymbol}`;
 
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<BasicFinancials>(cacheKey);
     if (cached) {
       cacheService.logHit('basic_financials', rawSymbol, 'MEMCACHE_YAHOO_BASIC');
       return cached;
@@ -447,22 +979,23 @@ export const yahooService = {
     const backup = cacheService.getRatiosBackup(rawSymbol);
     if (backup && (Date.now() - backup.updated_at < CACHE_TTLS.FUNDAMENTALS * 1000)) {
       console.log(`[YAHOO] Found fresh SQLite ratios backup for: ${rawSymbol}`);
-      await cacheService.set(cacheKey, backup.data, CACHE_TTLS.FUNDAMENTALS);
-      return backup.data;
+      const data = backup.data as unknown as BasicFinancials;
+      await cacheService.set(cacheKey, data, CACHE_TTLS.FUNDAMENTALS);
+      return data;
     }
 
     try {
       console.log(`[YAHOO] Fetching basic financials for: ${rawSymbol}`);
-      const basicObj = await dedupedFetch(cacheKey, async () => {
-        const summary: any = await quoteSummaryBreaker.fire(rawSymbol, {
+      const basicObj = await dedupedFetch(cacheKey, async (): Promise<BasicFinancials> => {
+        const summary = (await quoteSummaryBreaker.fire(rawSymbol, {
           modules: ['financialData', 'defaultKeyStatistics', 'summaryDetail']
-        });
+        })) as YahooBasicSummaryResult | null;
 
-        const fd = (summary?.financialData || {}) as any;
-        const ks = (summary?.defaultKeyStatistics || {}) as any;
-        const sd = (summary?.summaryDetail || {}) as any;
+        const fd: YahooFinancialData = summary?.financialData || {};
+        const ks: YahooDefaultKeyStatistics = summary?.defaultKeyStatistics || {};
+        const sd: YahooSummaryDetail = summary?.summaryDetail || {};
 
-        const mapped = {
+        const mapped: BasicFinancials = {
           metric: {
             // Valuation
             peTrailing: ks.trailingPE || sd.trailingPE || null,
@@ -511,8 +1044,8 @@ export const yahooService = {
       });
 
       return basicObj;
-    } catch (error: any) {
-      console.error(`[YAHOO BASIC ERROR] Failed to fetch basic financials for ${rawSymbol}`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO BASIC ERROR] Failed to fetch basic financials for ${rawSymbol}`, getErrorMessage(error));
 
       // Fallback Layer: Alpha Vantage
       const avBasic = await tryAlphaVantage(`basic financials ${rawSymbol}`, () => alphaVantageService.getBasicFinancials(rawSymbol));
@@ -523,21 +1056,41 @@ export const yahooService = {
       }
 
       // Fallback to SQLite check (even if expired) before giving up
-      if (backup) {
+      if (backup && backup.data) {
         console.log(`[YAHOO BASIC FALLBACK] Returned stale SQLite ratios backup for ${rawSymbol}`);
-        return backup.data;
+        return backup.data as unknown as BasicFinancials;
       }
 
       return {
         metric: {
+          peTrailing: null,
+          peForward: null,
+          pegRatio: null,
+          priceToBook: null,
+          priceToSales: null,
+          dividendYield: null,
+          roeTTM: null,
+          roaTTM: null,
+          debtEquityAnnual: null,
+          currentRatio: null,
+          revenueGrowth: null,
+          earningsGrowth: null,
+          grossMargins: null,
+          operatingMargins: null,
+          profitMargins: null,
+          freeCashflow: null,
+          totalDebt: null,
           peAnnual: null,
           pbAnnual: null,
-          roeTTM: null,
           roicTTM: null,
-          debtEquityAnnual: null,
           epsBasicExclExtraItemsTTM: null,
           marketCapitalization: null,
           dividendYieldIndicated: null,
+          enterpriseValue: null,
+          evEbitda: null,
+          sharesOutstanding: null,
+          bookValue: null,
+          totalCash: null,
           beta: null
         }
       };
@@ -545,11 +1098,11 @@ export const yahooService = {
   },
 
   // Recommended peers
-  getPeers: async (symbol: string) => {
+  getPeers: async (symbol: string): Promise<string[]> => {
     const rawSymbol = symbol.toUpperCase();
     const cacheKey = `yahoo:peers:${rawSymbol}`;
 
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<string[]>(cacheKey);
     if (cached) {
       cacheService.logHit('peers', rawSymbol, 'MEMCACHE_YAHOO_PEERS');
       return cached;
@@ -557,25 +1110,27 @@ export const yahooService = {
 
     try {
       console.log(`[YAHOO] Fetching peers for: ${rawSymbol}`);
-      const peers = await dedupedFetch(cacheKey, async () => {
-        const recs: any = await recommendationsBreaker.fire(rawSymbol);
-        const mappedPeers = (recs?.recommendedSymbols || []).map((r: any) => r.symbol);
+      const peers = await dedupedFetch(cacheKey, async (): Promise<string[]> => {
+        const recs = (await recommendationsBreaker.fire(rawSymbol)) as YahooRecommendationsResult | null;
+        const mappedPeers = (recs?.recommendedSymbols || [])
+          .map((r: YahooRecommendationItem) => r.symbol)
+          .filter((sym): sym is string => Boolean(sym));
         await cacheService.set(cacheKey, mappedPeers, CACHE_TTLS.PEERS);
         return mappedPeers;
       });
       return peers;
-    } catch (error: any) {
-      console.error(`[YAHOO PEERS ERROR] Failed to fetch peers for ${rawSymbol}`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO PEERS ERROR] Failed to fetch peers for ${rawSymbol}`, getErrorMessage(error));
       return [];
     }
   },
 
   // News
-  getNews: async (symbol: string) => {
+  getNews: async (symbol: string): Promise<NewsItem[]> => {
     const rawSymbol = symbol.toUpperCase();
     const cacheKey = `yahoo:news:${rawSymbol}`;
 
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<NewsItem[]>(cacheKey);
     if (cached) {
       cacheService.logHit('news', rawSymbol, 'MEMCACHE_YAHOO_NEWS');
       return cached;
@@ -583,66 +1138,71 @@ export const yahooService = {
 
     try {
       console.log(`[YAHOO] Fetching news for symbol: ${rawSymbol}`);
-      const mappedNews = await dedupedFetch(cacheKey, async () => {
-        const searchResult: any = await searchBreaker.fire(rawSymbol);
-        const newsArr = (searchResult.news || []).map((item: any) => ({
-          id: item.uuid,
-          headline: item.title,
-          summary: item.summary || item.title,
-          source: item.publisher,
-          datetime: item.providerPublishTime ? Math.floor(Date.parse(item.providerPublishTime) / 1000) : Math.floor(Date.now() / 1000),
-          url: item.link
+      const mappedNews = await dedupedFetch(cacheKey, async (): Promise<NewsItem[]> => {
+        const searchResult = (await searchBreaker.fire(rawSymbol)) as YahooSearchResult | null;
+        const newsArr: NewsItem[] = (searchResult?.news || []).map((item: YahooNewsItem): NewsItem => ({
+          id: item.uuid || '',
+          headline: item.title || '',
+          summary: item.summary || item.title || '',
+          source: item.publisher || 'Yahoo Finance',
+          datetime: item.providerPublishTime
+            ? Math.floor(new Date(item.providerPublishTime).getTime() / 1000)
+            : Math.floor(Date.now() / 1000),
+          url: item.link || ''
         }));
         await cacheService.set(cacheKey, newsArr, CACHE_TTLS.NEWS);
         return newsArr;
       });
       return mappedNews;
-    } catch (error: any) {
-      console.error(`[YAHOO NEWS ERROR] Failed to fetch news for ${rawSymbol}`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO NEWS ERROR] Failed to fetch news for ${rawSymbol}`, getErrorMessage(error));
       return [];
     }
   },
 
   // General Market News
-  getMarketNews: async () => {
+  getMarketNews: async (): Promise<NewsItem[]> => {
     const cacheKey = `yahoo:news:market`;
 
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<NewsItem[]>(cacheKey);
     if (cached) {
       return cached;
     }
 
     try {
       console.log(`[YAHOO] Fetching general market news`);
-      const mappedNews = await dedupedFetch(cacheKey, async () => {
-        const searchResult: any = await searchBreaker.fire('market');
-        const newsArr = (searchResult.news || []).map((item: any) => ({
-          id: item.uuid,
-          headline: item.title,
-          summary: item.summary || item.title,
-          source: item.publisher,
-          datetime: item.providerPublishTime ? Math.floor(Date.parse(item.providerPublishTime) / 1000) : Math.floor(Date.now() / 1000),
-          url: item.link
+      const mappedNews = await dedupedFetch(cacheKey, async (): Promise<NewsItem[]> => {
+        const searchResult = (await searchBreaker.fire('market')) as YahooSearchResult | null;
+        const newsArr: NewsItem[] = (searchResult?.news || []).map((item: YahooNewsItem): NewsItem => ({
+          id: item.uuid || '',
+          headline: item.title || '',
+          summary: item.summary || item.title || '',
+          source: item.publisher || 'Yahoo Finance',
+          datetime: item.providerPublishTime
+            ? Math.floor(new Date(item.providerPublishTime).getTime() / 1000)
+            : Math.floor(Date.now() / 1000),
+          url: item.link || ''
         }));
         await cacheService.set(cacheKey, newsArr, CACHE_TTLS.NEWS);
         return newsArr;
       });
       return mappedNews;
-    } catch (error: any) {
-      console.error(`[YAHOO MARKET NEWS ERROR] Failed to fetch general market news`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO MARKET NEWS ERROR] Failed to fetch general market news`, getErrorMessage(error));
       return [];
     }
   },
 
   // Search Symbol autocomplete
-  searchSymbol: async (query: string) => {
+  searchSymbol: async (query: string): Promise<SearchSymbolResponse> => {
     try {
       console.log(`[YAHOO] Searching for query: ${query}`);
-      const searchResult: any = await searchBreaker.fire(query);
-      const mappedResult = {
-        result: (searchResult.quotes || [])
-          .filter((q: any) => q && q.symbol)
-          .map((q: any) => ({
+      const searchResult = (await searchBreaker.fire(query)) as YahooSearchResult | null;
+      const quotes = searchResult?.quotes || [];
+      const mappedResult: SearchSymbolResponse = {
+        result: quotes
+          .filter((q: YahooSearchQuoteItem): q is YahooSearchQuoteItem & { symbol: string } => Boolean(q && q.symbol))
+          .map((q: YahooSearchQuoteItem & { symbol: string }): SearchSymbolItem => ({
             symbol: q.symbol,
             description: q.longname || q.shortname || q.symbol,
             displaySymbol: q.symbol,
@@ -651,8 +1211,8 @@ export const yahooService = {
           }))
       };
       return mappedResult;
-    } catch (error: any) {
-      console.error(`[YAHOO SEARCH ERROR] Failed search for query ${query}`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO SEARCH ERROR] Failed search for query ${query}`, getErrorMessage(error));
 
       // Fallback Layer: Alpha Vantage
       const avSearch = await tryAlphaVantage(`search ${query}`, () => alphaVantageService.searchSymbol(query));
@@ -664,9 +1224,14 @@ export const yahooService = {
   },
 
   // Candles (Chart data)
-  getCandles: async (symbol: string, resolution: string, from: number, to: number) => {
+  getCandles: async (
+    symbol: string,
+    resolution: string,
+    from: number,
+    to: number
+  ): Promise<CandlesResponse> => {
     const rawSymbol = symbol.toUpperCase();
-    let interval: any = '1d';
+    let interval: ChartInterval = '1d';
     if (resolution === '5') interval = '5m';
     else if (resolution === '15') interval = '15m';
     else if (resolution === 'W') interval = '1wk';
@@ -674,13 +1239,13 @@ export const yahooService = {
 
     try {
       console.log(`[YAHOO] Fetching chart candles for ${rawSymbol} (Interval: ${interval})`);
-      const chartResult: any = await chartBreaker.fire(rawSymbol, {
+      const chartResult = (await chartBreaker.fire(rawSymbol, {
         period1: new Date(from * 1000),
         period2: new Date(to * 1000),
         interval
-      });
+      })) as YahooChartResult | null;
 
-      const quotes = chartResult.quotes || [];
+      const quotes = chartResult?.quotes || [];
       if (quotes.length === 0) {
         return { s: 'no_data' };
       }
@@ -705,10 +1270,15 @@ export const yahooService = {
 
       return {
         s: t.length > 0 ? 'ok' : 'no_data',
-        t, c, o, h, l, v
+        t,
+        c,
+        o,
+        h,
+        l,
+        v
       };
-    } catch (error: any) {
-      console.error(`[YAHOO CANDLES ERROR] Failed to fetch candles for ${rawSymbol}`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO CANDLES ERROR] Failed to fetch candles for ${rawSymbol}`, getErrorMessage(error));
 
       // Fallback Layer: Alpha Vantage
       const avCandles = await tryAlphaVantage(`candles ${rawSymbol}`, () => alphaVantageService.getCandles(rawSymbol, resolution));
@@ -720,12 +1290,12 @@ export const yahooService = {
   },
 
   // Shareholding data (major holders, institutional ownership, mutual fund ownership)
-  getShareholding: async (symbol: string) => {
+  getShareholding: async (symbol: string): Promise<ShareholdingResult> => {
     const rawSymbol = symbol.toUpperCase();
     const cacheKey = `yahoo:shareholding:${rawSymbol}`;
 
     // Try in-memory cache first
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<ShareholdingResult>(cacheKey);
     if (cached) {
       cacheService.logHit('shareholding', rawSymbol, 'MEMCACHE_YAHOO_SHAREHOLDING');
       return cached;
@@ -735,45 +1305,50 @@ export const yahooService = {
     const backup = cacheService.getShareholdingBackup(rawSymbol);
     if (backup && (Date.now() - backup.updated_at < CACHE_TTLS.FUNDAMENTALS * 1000)) {
       console.log(`[YAHOO] Found fresh SQLite shareholding backup for: ${rawSymbol}`);
-      await cacheService.set(cacheKey, backup.data, CACHE_TTLS.FUNDAMENTALS);
-      return backup.data;
+      const data = backup.data as unknown as ShareholdingResult;
+      await cacheService.set(cacheKey, data, CACHE_TTLS.FUNDAMENTALS);
+      return data;
     }
 
     console.log(`[YAHOO] Fetching shareholding quoteSummary for: ${rawSymbol}`);
     try {
-      const payload = await dedupedFetch(cacheKey, async () => {
-        const result: any = await quoteSummaryBreaker.fire(rawSymbol, {
+      const payload = await dedupedFetch(cacheKey, async (): Promise<ShareholdingResult> => {
+        const result = (await quoteSummaryBreaker.fire(rawSymbol, {
           modules: ['majorHoldersBreakdown', 'institutionOwnership', 'fundOwnership']
-        });
+        })) as YahooShareholdingQuoteSummary | null;
 
         if (!result) {
           throw new Error('No quoteSummary results found for shareholding');
         }
 
-        const majorHolders = {
+        const majorHolders: MajorHoldersBreakdownData = {
           insidersPercentHeld: result.majorHoldersBreakdown?.insidersPercentHeld ?? null,
           institutionsPercentHeld: result.majorHoldersBreakdown?.institutionsPercentHeld ?? null,
           institutionsFloatPercentHeld: result.majorHoldersBreakdown?.institutionsFloatPercentHeld ?? null,
           institutionsCount: result.majorHoldersBreakdown?.institutionsCount ?? null
         };
 
-        const institutionalHolders = (result.institutionOwnership?.ownershipList || []).map((item: any) => ({
-          organization: item.organization || '—',
-          position: item.position || null,
-          reportDate: item.reportDate || null,
-          pctHeld: item.pctHeld || null,
-          value: item.value || null
-        }));
+        const institutionalHolders: OwnershipHolder[] = (result.institutionOwnership?.ownershipList || []).map(
+          (item: YahooOwnershipItem): OwnershipHolder => ({
+            organization: item.organization || '—',
+            position: item.position || null,
+            reportDate: item.reportDate || null,
+            pctHeld: item.pctHeld || null,
+            value: item.value || null
+          })
+        );
 
-        const mutualFundHolders = (result.fundOwnership?.ownershipList || []).map((item: any) => ({
-          organization: item.organization || '—',
-          position: item.position || null,
-          reportDate: item.reportDate || null,
-          pctHeld: item.pctHeld || null,
-          value: item.value || null
-        }));
+        const mutualFundHolders: OwnershipHolder[] = (result.fundOwnership?.ownershipList || []).map(
+          (item: YahooOwnershipItem): OwnershipHolder => ({
+            organization: item.organization || '—',
+            position: item.position || null,
+            reportDate: item.reportDate || null,
+            pctHeld: item.pctHeld || null,
+            value: item.value || null
+          })
+        );
 
-        const mappedPayload = {
+        const mappedPayload: ShareholdingResult = {
           majorHolders,
           institutionalHolders,
           mutualFundHolders
@@ -787,23 +1362,28 @@ export const yahooService = {
       });
 
       return payload;
-    } catch (error: any) {
-      console.error(`[YAHOO ERROR] Failed to fetch shareholding for ${rawSymbol}`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO ERROR] Failed to fetch shareholding for ${rawSymbol}`, getErrorMessage(error));
       
       // Fallback to SQLite check (even if expired)
-      if (backup) {
+      if (backup && backup.data) {
         console.log(`[YAHOO FALLBACK] Returned SQLite shareholding data backup for ${rawSymbol}`);
-        return backup.data;
+        return backup.data as unknown as ShareholdingResult;
       }
       throw error;
     }
   },
 
-  getFundamentalsTimeSeries: async (symbol: string, period1: string, period2: string, type: 'annual' | 'quarterly' = 'annual') => {
+  getFundamentalsTimeSeries: async (
+    symbol: string,
+    period1: string,
+    period2: string,
+    type: 'annual' | 'quarterly' = 'annual'
+  ): Promise<unknown> => {
     const rawSymbol = symbol.toUpperCase();
     const cacheKey = `yahoo:timeseries:${type}:${rawSymbol}`;
 
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<unknown>(cacheKey);
     if (cached) {
       cacheService.logHit('timeseries', rawSymbol, 'MEMCACHE_YAHOO_TIMESERIES');
       return cached;
@@ -811,7 +1391,7 @@ export const yahooService = {
 
     try {
       console.log(`[YAHOO] Fetching fundamentalsTimeSeries (${type}) for: ${rawSymbol}`);
-      const payload = await dedupedFetch(cacheKey, async () => {
+      const payload = await dedupedFetch(cacheKey, async (): Promise<unknown> => {
         const result = await fundamentalsTimeSeriesBreaker.fire(rawSymbol, {
           period1,
           period2,
@@ -822,38 +1402,38 @@ export const yahooService = {
         return result;
       });
       return payload;
-    } catch (error: any) {
-      console.error(`[YAHOO TIMESERIES ERROR] Failed for ${rawSymbol}`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO TIMESERIES ERROR] Failed for ${rawSymbol}`, getErrorMessage(error));
       return [];
     }
   },
 
-  getGrowthEstimates: async (symbol: string) => {
+  getGrowthEstimates: async (symbol: string): Promise<GrowthEstimatesResult> => {
     const rawSymbol = symbol.toUpperCase();
     const cacheKey = `yahoo:growth:${rawSymbol}`;
 
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<GrowthEstimatesResult>(cacheKey);
     if (cached) {
       return cached;
     }
 
     try {
       console.log(`[YAHOO] Fetching growth estimates for: ${rawSymbol}`);
-      const payload = await dedupedFetch(cacheKey, async () => {
-        const result: any = await quoteSummaryBreaker.fire(rawSymbol, {
+      const payload = await dedupedFetch(cacheKey, async (): Promise<GrowthEstimatesResult> => {
+        const result = (await quoteSummaryBreaker.fire(rawSymbol, {
           modules: ['earningsTrend']
-        });
+        })) as YahooGrowthQuoteSummary | null;
         const trends = result?.earningsTrend?.trend || [];
-        const fiveYear = trends.find((t: any) => t.period === '+5y');
-        const mapped = {
+        const fiveYear = trends.find((t: YahooEarningsTrendItem) => t.period === '+5y');
+        const mapped: GrowthEstimatesResult = {
           growthEstimate5yr: fiveYear?.growth || null
         };
         await cacheService.set(cacheKey, mapped, CACHE_TTLS.FUNDAMENTALS);
         return mapped;
       });
       return payload;
-    } catch (error: any) {
-      console.error(`[YAHOO GROWTH ERROR] Failed for ${rawSymbol}`, error.message);
+    } catch (error) {
+      console.error(`[YAHOO GROWTH ERROR] Failed for ${rawSymbol}`, getErrorMessage(error));
       return { growthEstimate5yr: null };
     }
   }

@@ -1,6 +1,6 @@
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, ImageRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType } from 'docx';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, ImageRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, AlignmentType } from 'docx';
 import axios from 'axios';
-import { ReportContent, TableData } from '../render/templates.js';
+import { ReportContent, TableData, ReportProposal } from '../render/templates.js';
 
 function createDocxTable(tableData: TableData, customColWidths?: number[]): Table {
   const colCount = tableData.headers.length;
@@ -12,7 +12,7 @@ function createDocxTable(tableData: TableData, customColWidths?: number[]): Tabl
       return new TableCell({
         children: [new Paragraph({ 
           children: [new TextRun({ text: h, bold: true, color: 'ffffff' })],
-          alignment: (i === 0 || i === 1) ? 'left' as any : 'right' as any
+          alignment: (i === 0 || i === 1) ? AlignmentType.LEFT : AlignmentType.RIGHT
         })],
         shading: { fill: '0f172a', type: ShadingType.CLEAR, color: 'auto' },
         width: { size: width, type: WidthType.PERCENTAGE }
@@ -46,7 +46,7 @@ function createDocxTable(tableData: TableData, customColWidths?: number[]): Tabl
         return new TableCell({
           children: [new Paragraph({ 
             children: [new TextRun({ text: cellStr, bold: isBold, color: textColor })],
-            alignment: (i === 0 || i === 1) ? 'left' as any : 'right' as any
+            alignment: (i === 0 || i === 1) ? AlignmentType.LEFT : AlignmentType.RIGHT
           })],
           shading: { fill: bgColor, type: ShadingType.CLEAR, color: 'auto' },
           width: { size: width, type: WidthType.PERCENTAGE }
@@ -86,13 +86,13 @@ export async function generateWord(content: ReportContent): Promise<Buffer> {
     console.error('Failed to fetch chart image for Word', err);
   }
 
-  const sections: any[] = [];
+  const sections: (Paragraph | Table)[] = [];
 
   // ==========================================
   // 1. HEADER & META
   // ==========================================
   sections.push(new Paragraph({ text: 'StockLens Equity Research', heading: HeadingLevel.TITLE }));
-  sections.push(new Paragraph({ text: `Report Date: ${new Date(content.timestamp).toLocaleDateString()}`, alignment: 'right' as any }));
+  sections.push(new Paragraph({ text: `Report Date: ${new Date(content.timestamp).toLocaleDateString()}`, alignment: AlignmentType.RIGHT }));
   
   sections.push(new Paragraph({ text: `${content.companyName} (${content.ticker})`, heading: HeadingLevel.HEADING_1, spacing: { before: 300, after: 80 } }));
   sections.push(new Paragraph({ text: `${content.exchange} | Sector: ${content.sector} | Industry: ${content.industry}`, spacing: { after: 150 } }));
@@ -142,8 +142,9 @@ export async function generateWord(content: ReportContent): Promise<Buffer> {
       children: [
         new ImageRun({
           data: chartImageBuffer,
-          transformation: { width: 500, height: 250 }
-        } as any)
+          transformation: { width: 500, height: 250 },
+          type: 'png'
+        })
       ],
       spacing: { after: 150 }
     }));
@@ -271,7 +272,7 @@ export async function generateWord(content: ReportContent): Promise<Buffer> {
   sections.push(new Paragraph({ text: 'Management & Governance Forensics (DEF 14A Proxy Statement)', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 80 } }));
   if (content.proxyStatement && content.proxyStatement.proposals && content.proxyStatement.proposals.length > 0) {
     const proxyHeaders = ['Ballot Proposal Item', 'Proposal Description', 'Board Recommendation'];
-    const proxyRows = content.proxyStatement.proposals.map((p: any) => [
+    const proxyRows = content.proxyStatement.proposals.map((p: ReportProposal) => [
       p.item || 'Proposal',
       truncateToSentence(p.description || 'Shareholder Ballot Item', 100),
       p.boardRecommendation || 'FOR'

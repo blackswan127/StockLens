@@ -34,11 +34,62 @@ export interface ComputedMetrics {
   dupont: DuPontAnalysis | null;
 }
 
-export function computeRatios(financials: any, balanceSheet: any, latestFund: any = {}): ComputedMetrics {
-  const getVal = (obj: any, key: string) => {
-    if (!obj || obj[key] === undefined || obj[key] === null) return null;
-    if (typeof obj[key] === 'object' && 'raw' in obj[key]) return obj[key].raw;
-    return obj[key];
+export interface FinancialRawNumber {
+  raw?: number | string | null;
+  fmt?: string;
+  [key: string]: unknown;
+}
+
+export type FinancialMetricValue = number | string | FinancialRawNumber | null | undefined;
+
+export interface FinancialDataInput {
+  totalRevenue?: FinancialMetricValue;
+  grossProfit?: FinancialMetricValue;
+  operatingIncome?: FinancialMetricValue;
+  netIncomeToNonControllingInterests?: FinancialMetricValue;
+  netIncome?: FinancialMetricValue;
+  grossMargins?: FinancialMetricValue;
+  operatingMargins?: FinancialMetricValue;
+  profitMargins?: FinancialMetricValue;
+  currentRatio?: FinancialMetricValue;
+  debtToEquity?: FinancialMetricValue;
+  returnOnEquity?: FinancialMetricValue;
+  revenueGrowth?: FinancialMetricValue;
+  operatingExpenses?: FinancialMetricValue;
+  incomeBeforeTax?: FinancialMetricValue;
+  ebt?: FinancialMetricValue;
+  incomeTaxExpense?: FinancialMetricValue;
+  totalAssets?: FinancialMetricValue;
+  totalStockholderEquity?: FinancialMetricValue;
+  stockholdersEquity?: FinancialMetricValue;
+  totalCurrentAssets?: FinancialMetricValue;
+  currentAssets?: FinancialMetricValue;
+  totalCurrentLiabilities?: FinancialMetricValue;
+  currentLiabilities?: FinancialMetricValue;
+  totalDebt?: FinancialMetricValue;
+  shortLongTermDebt?: FinancialMetricValue;
+  longTermDebt?: FinancialMetricValue;
+  [key: string]: unknown;
+}
+
+export function computeRatios(
+  financials: FinancialDataInput | null | undefined,
+  balanceSheet: FinancialDataInput | null | undefined,
+  latestFund: FinancialDataInput | null | undefined = {}
+): ComputedMetrics {
+  const getVal = (obj: FinancialDataInput | null | undefined, key: string): number | null => {
+    if (!obj) return null;
+    const val = obj[key];
+    if (val === undefined || val === null) return null;
+    if (typeof val === 'object' && val !== null && 'raw' in val) {
+      const raw = (val as FinancialRawNumber).raw;
+      if (typeof raw === 'number') return isNaN(raw) ? null : raw;
+      if (typeof raw === 'string' && !isNaN(Number(raw))) return Number(raw);
+      return null;
+    }
+    if (typeof val === 'number') return isNaN(val) ? null : val;
+    if (typeof val === 'string' && !isNaN(Number(val))) return Number(val);
+    return null;
   };
 
   const totalRevenue = getVal(financials, 'totalRevenue') || getVal(latestFund, 'totalRevenue');
@@ -47,7 +98,6 @@ export function computeRatios(financials: any, balanceSheet: any, latestFund: an
   const netIncome = getVal(financials, 'netIncomeToNonControllingInterests') || getVal(financials, 'netIncome') || getVal(latestFund, 'netIncome');
   
   const totalAssets = getVal(balanceSheet, 'totalAssets') || getVal(latestFund, 'totalAssets');
-  const totalLiabilities = getVal(balanceSheet, 'totalLiab') || getVal(balanceSheet, 'totalLiabilitiesNetMinorityInterest') || getVal(latestFund, 'totalLiabilitiesNetMinorityInterest');
   const totalEquity = getVal(balanceSheet, 'totalStockholderEquity') || getVal(balanceSheet, 'stockholdersEquity') || getVal(latestFund, 'stockholdersEquity');
   const currentAssets = getVal(balanceSheet, 'totalCurrentAssets') || getVal(balanceSheet, 'currentAssets') || getVal(latestFund, 'currentAssets');
   const currentLiabilities = getVal(balanceSheet, 'totalCurrentLiabilities') || getVal(balanceSheet, 'currentLiabilities') || getVal(latestFund, 'currentLiabilities');
@@ -60,16 +110,33 @@ export function computeRatios(financials: any, balanceSheet: any, latestFund: an
   }
 
   // Compute margins
-  const grossMargin = totalRevenue && grossProfit ? (grossProfit / totalRevenue) * 100 : (getVal(financials, 'grossMargins') !== null ? (getVal(financials, 'grossMargins') > 1 ? getVal(financials, 'grossMargins') : getVal(financials, 'grossMargins') * 100) : null);
-  const operatingMargin = totalRevenue && operatingIncome ? (operatingIncome / totalRevenue) * 100 : (getVal(financials, 'operatingMargins') !== null ? (getVal(financials, 'operatingMargins') > 1 ? getVal(financials, 'operatingMargins') : getVal(financials, 'operatingMargins') * 100) : null);
-  const netMargin = totalRevenue && netIncome ? (netIncome / totalRevenue) * 100 : (getVal(financials, 'profitMargins') !== null ? (getVal(financials, 'profitMargins') > 1 ? getVal(financials, 'profitMargins') : getVal(financials, 'profitMargins') * 100) : null);
+  const gmVal = getVal(financials, 'grossMargins');
+  const grossMargin = totalRevenue && grossProfit
+    ? (grossProfit / totalRevenue) * 100
+    : (gmVal !== null ? (gmVal > 1 ? gmVal : gmVal * 100) : null);
+
+  const omVal = getVal(financials, 'operatingMargins');
+  const operatingMargin = totalRevenue && operatingIncome
+    ? (operatingIncome / totalRevenue) * 100
+    : (omVal !== null ? (omVal > 1 ? omVal : omVal * 100) : null);
+
+  const pmVal = getVal(financials, 'profitMargins');
+  const netMargin = totalRevenue && netIncome
+    ? (netIncome / totalRevenue) * 100
+    : (pmVal !== null ? (pmVal > 1 ? pmVal : pmVal * 100) : null);
 
   // Compute liquidity/solvency
   const currentRatio = currentAssets && currentLiabilities ? currentAssets / currentLiabilities : (getVal(financials, 'currentRatio') || null);
-  const debtToEquity = totalDebt !== null && totalEquity ? totalDebt / totalEquity : (getVal(financials, 'debtToEquity') !== null ? (getVal(financials, 'debtToEquity') > 10 ? getVal(financials, 'debtToEquity') / 100 : getVal(financials, 'debtToEquity')) : null);
+  const deVal = getVal(financials, 'debtToEquity');
+  const debtToEquity = totalDebt !== null && totalEquity
+    ? totalDebt / totalEquity
+    : (deVal !== null ? (deVal > 10 ? deVal / 100 : deVal) : null);
 
   // Compute return
-  const returnOnEquity = netIncome && totalEquity ? (netIncome / totalEquity) * 100 : (getVal(financials, 'returnOnEquity') !== null ? (getVal(financials, 'returnOnEquity') > 1 ? getVal(financials, 'returnOnEquity') : getVal(financials, 'returnOnEquity') * 100) : null);
+  const roeVal = getVal(financials, 'returnOnEquity');
+  const returnOnEquity = netIncome && totalEquity
+    ? (netIncome / totalEquity) * 100
+    : (roeVal !== null ? (roeVal > 1 ? roeVal : roeVal * 100) : null);
 
   // Compute revenue growth
   let revenueGrowth: number | null = null;
@@ -85,11 +152,13 @@ export function computeRatios(financials: any, balanceSheet: any, latestFund: an
   const dAssets = totalAssets;
   const dEquity = totalEquity;
   const dNetInc = netIncome;
-  const dEbit = operatingIncome || (grossProfit && getVal(financials, 'operatingExpenses') ? grossProfit - getVal(financials, 'operatingExpenses') : null);
+  const opExp = getVal(financials, 'operatingExpenses');
+  const dEbit = operatingIncome || (grossProfit && opExp ? grossProfit - opExp : null);
   
   let dPretax = getVal(financials, 'incomeBeforeTax') || getVal(financials, 'ebt') || getVal(latestFund, 'incomeBeforeTax');
-  if (!dPretax && dNetInc && getVal(financials, 'incomeTaxExpense')) {
-    dPretax = dNetInc + getVal(financials, 'incomeTaxExpense');
+  const taxExp = getVal(financials, 'incomeTaxExpense');
+  if (!dPretax && dNetInc && taxExp) {
+    dPretax = dNetInc + taxExp;
   }
 
   if (dRev && dAssets && dEquity && dNetInc && dRev > 0 && dAssets > 0 && dEquity > 0) {
@@ -154,4 +223,3 @@ export function computeRatios(financials: any, balanceSheet: any, latestFund: an
     dupont
   };
 }
-

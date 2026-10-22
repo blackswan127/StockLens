@@ -1,28 +1,31 @@
-import { edgarService } from '../../edgar.js';
-import { cacheService } from '../../cache.js';
+import {
+  edgarService,
+  EdgarSectionResponse,
+  EdgarRiskDiffResponse,
+  EdgarProxyStatement
+} from '../../edgar.js';
 import { cleanSecContent } from '../../edgarParsing.js';
 
 export interface SecData {
   businessDescription: string;
   riskFactors: string;
-  riskDiff?: any;
-  proxyStatement?: any;
-  congressionalTrades?: any[];
+  riskDiff?: EdgarRiskDiffResponse | null;
+  proxyStatement?: EdgarProxyStatement | null;
+  congressionalTrades?: unknown[];
 }
 
 export async function fetchSecData(ticker: string): Promise<SecData> {
   const sym = ticker.toUpperCase();
   let businessDescription = 'Not available';
   let riskFactors = 'Not available';
-  let riskDiff = null;
-  let proxyStatement = null;
-  let congressionalTrades = [];
+  let riskDiff: EdgarRiskDiffResponse | null = null;
+  let proxyStatement: EdgarProxyStatement | null = null;
 
   try {
     const businessSection = await edgarService.getSection(sym, '1');
     const riskSection = await edgarService.getSection(sym, '1A');
 
-    const formatSection = (data: any) => {
+    const formatSection = (data: EdgarSectionResponse | null | undefined): string => {
       if (!data || !data.paragraphs || data.paragraphs.length === 0) {
         return 'Not available for this ticker.';
       }
@@ -78,39 +81,10 @@ export async function fetchSecData(ticker: string): Promise<SecData> {
     console.error(`[SEC Service] Error fetching SEC Proxy Statement for ${sym}:`, error);
   }
 
-  try {
-    const cacheKey = 'congress_trades_fmp';
-    let data = await cacheService.get<any>(cacheKey);
-    
-    if (!data) {
-      const apiKey = process.env.FMP_API_KEY;
-      if (apiKey) {
-        const response = await fetch(`https://financialmodelingprep.com/stable/senate-latest?apikey=${apiKey}`, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-          }
-        });
-        if (response.ok) {
-          data = await response.json();
-          await cacheService.set(cacheKey, data, 3600 * 6);
-        }
-      }
-    }
-
-    if (data && Array.isArray(data)) {
-      congressionalTrades = data
-        .filter(t => t.symbol && t.symbol.toUpperCase() === sym)
-        .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime());
-    }
-  } catch (error) {
-    console.error(`[SEC Service] Error fetching Congressional Trades for ${sym}:`, error);
-  }
-
   return {
     businessDescription,
     riskFactors,
     riskDiff,
-    proxyStatement,
-    congressionalTrades
+    proxyStatement
   };
 }

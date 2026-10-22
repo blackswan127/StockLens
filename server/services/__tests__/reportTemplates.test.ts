@@ -6,8 +6,7 @@ describe('generateReportContent dynamic scenarios and catalysts', () => {
     businessDescription: 'A technology company specializing in AI solutions.',
     riskFactors: 'Risks include competition and technological disruption.',
     proxyStatement: null,
-    riskDiff: null,
-    congressionalTrades: []
+    riskDiff: null
   };
 
   const dummyFredData = {

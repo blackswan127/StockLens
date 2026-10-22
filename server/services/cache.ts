@@ -24,6 +24,163 @@ export const CACHE_TTLS = {
   PEERS: 604800       // 7 days
 };
 
+export interface PendingCacheLogEntry {
+  endpoint: string;
+  symbol: string;
+  source: string;
+  hits: number;
+  lastHitAt: number;
+}
+
+export interface CacheLogStats {
+  pendingEntries: number;
+  pendingHits: number;
+  evictedEntries: number;
+  maxEntries: number;
+}
+
+export interface CacheLogFlushResult {
+  inserted: number;
+  hits: number;
+}
+
+export interface FundamentalsDbRow {
+  data: string;
+  source: string;
+  updated_at: number;
+}
+
+export interface FundamentalsBackup<T = Record<string, unknown>> {
+  data: T;
+  source: string;
+  updated_at: number;
+}
+
+export interface QuoteBackup {
+  price: number;
+  change: number;
+  change_pct: number;
+  high_52w: number | null;
+  low_52w: number | null;
+  updated_at: number;
+}
+
+export interface SaveQuoteBackupInput {
+  price: number;
+  change: number;
+  change_pct: number;
+  high_52w?: number | null;
+  low_52w?: number | null;
+}
+
+export interface ShareholdingDbRow {
+  data: string;
+  updated_at: number;
+}
+
+export interface ShareholdingBackup<T = Record<string, unknown>> {
+  data: T;
+  updated_at: number;
+}
+
+export interface RatiosDbRow {
+  data: string;
+  updated_at: number;
+}
+
+export interface RatiosBackup<T = Record<string, unknown>> {
+  data: T;
+  updated_at: number;
+}
+
+const MAX_PENDING_CACHE_LOG_ENTRIES = 500;
+const pendingCacheLog = new Map<string, PendingCacheLogEntry>();
+let evictedCacheLogEntries = 0;
+
+const cacheLogKey = (endpoint: string, symbol: string, source: string): string =>
+  `${endpoint}\u0000${symbol}\u0000${source}`;
+
+const evictOldestPendingEntry = (): void => {
+  const oldestKey = pendingCacheLog.keys().next().value;
+  if (oldestKey !== undefined) {
+    pendingCacheLog.delete(oldestKey);
+    evictedCacheLogEntries += 1;
+  }
+};
+
+const restorePendingEntry = (entry: PendingCacheLogEntry): void => {
+  const key = cacheLogKey(entry.endpoint, entry.symbol, entry.source);
+  const existing = pendingCacheLog.get(key);
+  if (existing) {
+    existing.hits += entry.hits;
+    existing.lastHitAt = Math.max(existing.lastHitAt, entry.lastHitAt);
+    return;
+  }
+  if (pendingCacheLog.size >= MAX_PENDING_CACHE_LOG_ENTRIES) {
+    evictOldestPendingEntry();
+  }
+  pendingCacheLog.set(key, entry);
+};
+
+export const getCacheLogStats = (): CacheLogStats => {
+  let pendingHits = 0;
+  for (const entry of pendingCacheLog.values()) {
+    pendingHits += entry.hits;
+  }
+  return {
+    pendingEntries: pendingCacheLog.size,
+    pendingHits,
+    evictedEntries: evictedCacheLogEntries,
+    maxEntries: MAX_PENDING_CACHE_LOG_ENTRIES
+  };
+};
+
+export const flushCacheLog = (): CacheLogFlushResult => {
+  if (pendingCacheLog.size === 0) {
+    return { inserted: 0, hits: 0 };
+  }
+
+  const entries = Array.from(pendingCacheLog.values());
+  pendingCacheLog.clear();
+
+  try {
+    const insert = db.prepare(`
+      INSERT INTO cache_log (endpoint, symbol, source, hit_at)
+      VALUES (?, ?, ?, ?)
+    `);
+
+    let inserted = 0;
+    let hits = 0;
+
+    db.transaction(() => {
+      for (const entry of entries) {
+        insert.run(entry.endpoint, entry.symbol, entry.source, entry.lastHitAt);
+        inserted += 1;
+        hits += entry.hits;
+      }
+    })();
+
+    return { inserted, hits };
+  } catch (error) {
+    console.error('[CACHE LOG FLUSH ERROR]', error);
+    for (const entry of entries) {
+      restorePendingEntry(entry);
+    }
+    return { inserted: 0, hits: 0 };
+  }
+};
+
+export const pruneCacheLog = (maxAgeDays = 7): number => {
+  try {
+    const cutoff = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
+    const result = db.prepare('DELETE FROM cache_log WHERE hit_at < ?').run(cutoff);
+    return result.changes;
+  } catch (error) {
+    console.error('[CACHE LOG PRUNE ERROR]', error);
+    return 0;
+  }
+};
+
 export const cacheService = {
   get: async <T>(key: string): Promise<T | undefined> => {
     // L1: always check in-process cache first
@@ -68,27 +225,46 @@ export const cacheService = {
     return true;
   },
 
-  // Log cached hits in the SQLite db
+  // Aggregate cache hits in memory; flushCacheLog() persists them later.
   logHit: (endpoint: string, symbol: string, source: string): void => {
     try {
-      const stmt = db.prepare(`
-        INSERT INTO cache_log (endpoint, symbol, source, hit_at)
-        VALUES (?, ?, ?, ?)
-      `);
-      stmt.run(endpoint, symbol.toUpperCase(), source, Date.now());
+      const normalizedSymbol = symbol.toUpperCase();
+      const key = cacheLogKey(endpoint, normalizedSymbol, source);
+      const now = Date.now();
+      const existing = pendingCacheLog.get(key);
+
+      if (existing) {
+        existing.hits += 1;
+        existing.lastHitAt = now;
+        pendingCacheLog.delete(key);
+        pendingCacheLog.set(key, existing);
+        return;
+      }
+
+      if (pendingCacheLog.size >= MAX_PENDING_CACHE_LOG_ENTRIES) {
+        evictOldestPendingEntry();
+      }
+
+      pendingCacheLog.set(key, {
+        endpoint,
+        symbol: normalizedSymbol,
+        source,
+        hits: 1,
+        lastHitAt: now
+      });
     } catch (error) {
       console.error('[CACHE LOG ERROR]', error);
     }
   },
 
   // Retrieve cached fundamentals from SQLite as durable fallback backup
-  getFundamentalsBackup: (symbol: string): any | null => {
+  getFundamentalsBackup: <T = Record<string, unknown>>(symbol: string): FundamentalsBackup<T> | null => {
     try {
       const stmt = db.prepare('SELECT data, source, updated_at FROM fundamentals WHERE symbol = ?');
-      const row = stmt.get(symbol.toUpperCase()) as { data: string, source: string, updated_at: number } | undefined;
+      const row = stmt.get(symbol.toUpperCase()) as FundamentalsDbRow | undefined;
       if (row) {
         return {
-          data: JSON.parse(row.data),
+          data: JSON.parse(row.data) as T,
           source: row.source,
           updated_at: row.updated_at
         };
@@ -100,7 +276,7 @@ export const cacheService = {
   },
 
   // Save successful fundamentals to SQLite
-  saveFundamentalsBackup: (symbol: string, data: any, source: string): void => {
+  saveFundamentalsBackup: <T = unknown>(symbol: string, data: T, source: string): void => {
     try {
       const stmt = db.prepare(`
         INSERT INTO fundamentals (symbol, data, source, updated_at)
@@ -117,10 +293,10 @@ export const cacheService = {
   },
 
   // Retrieve cached quote from SQLite as fallback backup
-  getQuoteBackup: (symbol: string): any | null => {
+  getQuoteBackup: (symbol: string): QuoteBackup | null => {
     try {
       const stmt = db.prepare('SELECT price, change, change_pct, high_52w, low_52w, updated_at FROM quotes WHERE symbol = ?');
-      const row = stmt.get(symbol.toUpperCase()) as any;
+      const row = stmt.get(symbol.toUpperCase()) as QuoteBackup | undefined;
       if (row) {
         return row;
       }
@@ -131,7 +307,7 @@ export const cacheService = {
   },
 
   // Save successful quote to SQLite
-  saveQuoteBackup: (symbol: string, quote: { price: number, change: number, change_pct: number, high_52w?: number | null, low_52w?: number | null }): void => {
+  saveQuoteBackup: (symbol: string, quote: SaveQuoteBackupInput): void => {
     try {
       const stmt = db.prepare(`
         INSERT INTO quotes (symbol, price, change, change_pct, high_52w, low_52w, updated_at)
@@ -151,13 +327,13 @@ export const cacheService = {
   },
 
   // Retrieve cached shareholding from SQLite as durable fallback backup
-  getShareholdingBackup: (symbol: string): any | null => {
+  getShareholdingBackup: <T = Record<string, unknown>>(symbol: string): ShareholdingBackup<T> | null => {
     try {
       const stmt = db.prepare('SELECT data, updated_at FROM shareholding_cache WHERE symbol = ?');
-      const row = stmt.get(symbol.toUpperCase()) as { data: string, updated_at: number } | undefined;
+      const row = stmt.get(symbol.toUpperCase()) as ShareholdingDbRow | undefined;
       if (row) {
         return {
-          data: JSON.parse(row.data),
+          data: JSON.parse(row.data) as T,
           updated_at: row.updated_at
         };
       }
@@ -168,7 +344,7 @@ export const cacheService = {
   },
 
   // Save successful shareholding to SQLite
-  saveShareholdingBackup: (symbol: string, data: any): void => {
+  saveShareholdingBackup: <T = unknown>(symbol: string, data: T): void => {
     try {
       const stmt = db.prepare(`
         INSERT INTO shareholding_cache (symbol, data, updated_at)
@@ -184,12 +360,12 @@ export const cacheService = {
   },
 
   // Retrieve cached basic financials/ratios (PE, ROE, D/E etc.) from SQLite
-  getRatiosBackup: (symbol: string): any | null => {
+  getRatiosBackup: <T = Record<string, unknown>>(symbol: string): RatiosBackup<T> | null => {
     try {
       const stmt = db.prepare('SELECT data, updated_at FROM ratios_cache WHERE symbol = ?');
-      const row = stmt.get(symbol.toUpperCase()) as { data: string, updated_at: number } | undefined;
+      const row = stmt.get(symbol.toUpperCase()) as RatiosDbRow | undefined;
       if (row) {
-        return { data: JSON.parse(row.data), updated_at: row.updated_at };
+        return { data: JSON.parse(row.data) as T, updated_at: row.updated_at };
       }
     } catch (error) {
       console.error('[DB RATIOS BACKUP GET ERROR]', error);
@@ -198,7 +374,7 @@ export const cacheService = {
   },
 
   // Save successful basic financials/ratios to SQLite (survives server restarts)
-  saveRatiosBackup: (symbol: string, data: any): void => {
+  saveRatiosBackup: <T = unknown>(symbol: string, data: T): void => {
     try {
       const stmt = db.prepare(`
         INSERT INTO ratios_cache (symbol, data, updated_at)

@@ -3,7 +3,7 @@ import { cleanSecContent, decodeHtmlEntities } from '../edgarParsing.js';
 import { computeRatios } from '../report/compute/ratios.js';
 import { generatePdf } from '../report/output/pdfGenerator.js';
 import { generateWord } from '../report/output/wordGenerator.js';
-import { generateReportContent, ReportContent } from '../report/render/templates.js';
+import { ReportContent } from '../report/render/templates.js';
 
 describe('SEC Forensics, Peer Extraction & Layout Alignment', () => {
   describe('HTML Entity Decoding & SEC Content Sanitization', () => {
@@ -152,7 +152,6 @@ describe('SEC Forensics, Peer Extraction & Layout Alignment', () => {
         { symbol: 'AVGO', name: 'Broadcom Inc.', price: 155.0, mcap: 720000000000, pe: '36.50x', evEbitda: '24.80x', grossMargin: '64.2%', revGrowth: '43.0%', exchange: 'NASDAQ' },
         { symbol: 'QCOM', name: 'QUALCOMM Incorporated', price: 168.4, mcap: 188000000000, pe: '18.20x', evEbitda: '14.50x', grossMargin: '56.0%', revGrowth: '12.0%', exchange: 'NASDAQ' }
       ],
-      congressionalTrades: [],
       proxyStatement: {
         url: 'https://www.sec.gov/Archives/edgar/data/0001045810/def14a.htm',
         proposals: [

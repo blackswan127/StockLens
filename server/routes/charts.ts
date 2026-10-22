@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import db from '../services/db.js';
 import { apiLimiter } from '../middleware/rateLimiter.js';
 import { yahooService } from '../services/yahoo.js';
 
@@ -34,11 +33,12 @@ router.get('/:symbol', apiLimiter, async (req, res, next) => {
         from = Math.floor((Date.now() - 180 * 24 * 3600 * 1000) / 1000);
         resolution = 'D'; // 1day
         break;
-      case 'YTD':
+      case 'YTD': {
         const startOfYear = new Date(new Date().getFullYear(), 0, 1);
         from = Math.floor(startOfYear.getTime() / 1000);
         resolution = 'D'; // 1day
         break;
+      }
       case '1Y':
         from = Math.floor((Date.now() - 365 * 24 * 3600 * 1000) / 1000);
         resolution = 'W'; // 1week
@@ -57,52 +57,24 @@ router.get('/:symbol', apiLimiter, async (req, res, next) => {
         break;
     }
 
-    let chartData: any[] = [];
+    interface CandlePoint { date: string; timestamp: number; close: number; open: number; high: number; low: number; volume: number; }
+    let chartData: CandlePoint[] = [];
 
-    try {
-      const rows = db.prepare(`
-        SELECT * FROM historical_prices 
-        WHERE symbol = ? AND date >= ? AND date <= ?
-        ORDER BY date ASC
-      `).all(symbol, from, to) as any[];
-
-      if (rows.length > 0) {
-        chartData = rows.map((r: any) => ({
-          date: new Date(r.date * 1000).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: period === '5Y' || period === 'MAX' ? '2-digit' : undefined
-          }),
-          timestamp: r.date,
-          close: Number(r.close?.toFixed(2) || 0),
-          open: Number(r.open?.toFixed(2) || 0),
-          high: Number(r.high?.toFixed(2) || 0),
-          low: Number(r.low?.toFixed(2) || 0),
-          volume: Number(r.volume || 0)
-        }));
-      }
-    } catch (err: any) {
-      console.warn(`[CHART ROUTE WARNING] DB query fail for ${symbol}:`, err.message);
-    }
-
-    // IF local DB is empty, try Yahoo Finance live fetch
-    if (chartData.length === 0) {
-      const liveChartData = await yahooService.getCandles(symbol, resolution, from, to);
-      if (liveChartData && liveChartData.s === 'ok' && liveChartData.t) {
-        chartData = liveChartData.t.map((ts: number, i: number) => ({
-          date: new Date(ts * 1000).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: period === '5Y' || period === 'MAX' ? '2-digit' : undefined
-          }),
-          timestamp: ts,
-          close: Number(liveChartData.c[i]?.toFixed(2) || 0),
-          open: Number(liveChartData.o[i]?.toFixed(2) || 0),
-          high: Number(liveChartData.h[i]?.toFixed(2) || 0),
-          low: Number(liveChartData.l[i]?.toFixed(2) || 0),
-          volume: Number(liveChartData.v[i] || 0)
-        }));
-      }
+    const liveChartData = await yahooService.getCandles(symbol, resolution, from, to);
+    if (liveChartData && liveChartData.s === 'ok' && liveChartData.t) {
+      chartData = liveChartData.t.map((ts: number, i: number) => ({
+        date: new Date(ts * 1000).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: period === '5Y' || period === 'MAX' ? '2-digit' : undefined
+        }),
+        timestamp: ts,
+        close: Number(liveChartData.c?.[i]?.toFixed(2) || 0),
+        open: Number(liveChartData.o?.[i]?.toFixed(2) || 0),
+        high: Number(liveChartData.h?.[i]?.toFixed(2) || 0),
+        low: Number(liveChartData.l?.[i]?.toFixed(2) || 0),
+        volume: Number(liveChartData.v?.[i] || 0)
+      }));
     }
 
     if (chartData.length === 0) {

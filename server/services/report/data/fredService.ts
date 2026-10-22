@@ -5,24 +5,40 @@ export interface FredData {
   gdpGrowth: number | null;
 }
 
+interface FredObservation {
+  value: string;
+}
+
+interface FredSeriesResponse {
+  observations?: FredObservation[];
+}
+
+function validValues(observations: FredObservation[] | undefined): number[] {
+  if (!observations) return [];
+
+  return observations
+    .filter((obs) => obs.value !== '.')
+    .map((obs) => parseFloat(obs.value))
+    .filter((value) => Number.isFinite(value));
+}
+
 export async function fetchFredData(): Promise<FredData> {
   try {
     // Federal Funds Effective Rate (FEDFUNDS)
-    const fedRes = await baseFredService.getSeries('FEDFUNDS');
-    const fedObservations = fedRes?.observations;
-    let fedFundsRate = null;
-    if (fedObservations && fedObservations.length > 0) {
-      fedFundsRate = parseFloat(fedObservations[fedObservations.length - 1].value);
-    }
+    const fedRes = (await baseFredService.getSeries('FEDFUNDS')) as FredSeriesResponse | undefined;
+    const fedValues = validValues(fedRes?.observations);
+    const fedFundsRate = fedValues.length > 0 ? fedValues[fedValues.length - 1] : null;
 
     // Real Gross Domestic Product (GDPC1)
-    const gdpRes = await baseFredService.getSeries('GDPC1');
-    const gdpObservations = gdpRes?.observations;
+    const gdpRes = (await baseFredService.getSeries('GDPC1')) as FredSeriesResponse | undefined;
+    const gdpValues = validValues(gdpRes?.observations);
     let gdpGrowth = null;
-    if (gdpObservations && gdpObservations.length >= 2) {
-      const gdpCurrent = parseFloat(gdpObservations[gdpObservations.length - 1].value);
-      const gdpPrevious = parseFloat(gdpObservations[gdpObservations.length - 2].value);
-      gdpGrowth = ((gdpCurrent - gdpPrevious) / gdpPrevious) * 100;
+    if (gdpValues.length >= 2) {
+      const gdpCurrent = gdpValues[gdpValues.length - 1];
+      const gdpPrevious = gdpValues[gdpValues.length - 2];
+      if (gdpPrevious !== 0) {
+        gdpGrowth = ((gdpCurrent - gdpPrevious) / gdpPrevious) * 100;
+      }
     }
 
     return {
@@ -30,12 +46,10 @@ export async function fetchFredData(): Promise<FredData> {
       gdpGrowth
     };
   } catch (error) {
-    console.error('Error fetching FRED data for report:', error);
-    // Return placeholders if failing
+    console.warn('Error fetching FRED data for report:', error);
     return {
-      fedFundsRate: 5.25,
-      gdpGrowth: 2.1
+      fedFundsRate: null,
+      gdpGrowth: null
     };
   }
 }
-

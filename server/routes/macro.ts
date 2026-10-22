@@ -12,8 +12,6 @@ router.get('/:seriesId', apiLimiter, async (req, res, next) => {
   } catch (error: any) {
     if (error.message === 'Invalid seriesId') {
       res.status(400).json({ error: 'Invalid seriesId' });
-    } else if (error.message === 'FRED API key not configured on server') {
-      res.status(500).json({ error: error.message });
     } else {
       next(error);
     }

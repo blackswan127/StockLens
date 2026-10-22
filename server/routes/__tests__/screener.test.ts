@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import screenerRouter from '../screener.js';
@@ -50,7 +50,9 @@ describe('Screener Route', () => {
     try {
       db.prepare('DELETE FROM stocks WHERE symbol LIKE \'TEST_SCREENER_%\'').run();
       db.prepare('DELETE FROM quotes WHERE symbol LIKE \'TEST_SCREENER_%\'').run();
-    } catch (e) {}
+    } catch (e) {
+      /* intentionally ignored */
+    }
   });
 
   it('filters by sector and returns only matching tickers', async () => {

@@ -11,6 +11,7 @@ const ScreenerPage = React.lazy(() => import('./pages/ScreenerPage.jsx').then(m 
 const ComparePage = React.lazy(() => import('./pages/ComparePage.jsx').then(m => ({ default: m.ComparePage })));
 const CompanyPage = React.lazy(() => import('./pages/CompanyPage/index.jsx').then(m => ({ default: m.CompanyPage })));
 const MacroIndicatorsPage = React.lazy(() => import('./pages/MacroIndicatorsPage.jsx').then(m => ({ default: m.MacroIndicatorsPage })));
+const NotFound = React.lazy(() => import('./pages/NotFound.jsx').then(m => ({ default: m.NotFound })));
 
 // 1. Initialize TanStack Query engine
 const queryClient = new QueryClient({
@@ -24,8 +25,12 @@ const queryClient = new QueryClient({
 });
 
 const RouteLoader = () => (
-  <div className="p-8 mt-24 flex flex-col items-center justify-center w-full gap-4">
-    <div className="flex items-center gap-2">
+  <div
+    role="status"
+    aria-live="polite"
+    className="p-8 mt-24 flex flex-col items-center justify-center w-full gap-4"
+  >
+    <div aria-hidden="true" className="flex items-center gap-2">
       <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-bounce shadow-sm shadow-emerald-500/50"></div>
       <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-bounce shadow-sm shadow-emerald-500/50" style={{ animationDelay: '0.12s' }}></div>
       <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-bounce shadow-sm shadow-emerald-500/50" style={{ animationDelay: '0.24s' }}></div>
@@ -46,6 +51,14 @@ export default function App() {
           
           <div className="relative z-10 flex flex-col min-h-screen">
           
+          {/* Keyboard skip link to the routed page content */}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-emerald-500 focus:px-4 focus:py-2 focus:font-mono focus:text-xs focus:font-bold focus:text-slate-950 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-white"
+          >
+            Skip to main content
+          </a>
+
           {/* Header block */}
           <ErrorBoundary name="Header">
             <Header />
@@ -57,7 +70,7 @@ export default function App() {
           </ErrorBoundary>
 
           {/* Main workspace routing content */}
-          <main className="flex-1 animate-fade-in">
+          <main id="main-content" tabIndex={-1} className="flex-1 animate-fade-in focus:outline-none">
             <ErrorBoundary name="Page Content">
               <Suspense fallback={<RouteLoader />}>
                 <Routes>
@@ -65,9 +78,9 @@ export default function App() {
                   <Route path="/screener" element={<ScreenerPage />} />
                   <Route path="/hedge-fund" element={<Navigate to="/" replace />} />
                   <Route path="/compare" element={<ComparePage />} />
-                  <Route path="/market" element={<Navigate to="/" replace />} />
                   <Route path="/macro" element={<MacroIndicatorsPage />} />
                   <Route path="/company/:symbol" element={<CompanyPage />} />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
             </ErrorBoundary>

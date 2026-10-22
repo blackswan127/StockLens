@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
-import { Info } from "lucide-react";
 import { MacroSeriesConfig } from "../../constants/macroConfig";
 import { Observation } from "../../utils/macroHelpers";
 import { ExpandedChartModal } from "./ExpandedChartModal";
@@ -17,14 +16,19 @@ export const IndicatorCard: React.FC<IndicatorCardProps> = ({ config, observatio
 
   if (error) {
     return (
-      <div className="border border-slate-800 bg-[#0D111A] rounded-2xl p-5 h-[160px] flex flex-col justify-center items-center shadow-xl">
+      <div
+        role="alert"
+        className="border border-slate-800 bg-[#0D111A] rounded-2xl p-5 h-[160px] flex flex-col justify-center items-center shadow-xl"
+      >
         <div className="text-slate-200 font-sans font-bold mb-2 text-sm">{config.name}</div>
         <div className="text-rose-400 mb-3 text-xs font-mono flex items-center gap-1">
-          <span>⚠</span> Failed to load
+          <span aria-hidden="true">⚠</span> Failed to load
         </div>
         <button
+          type="button"
           onClick={onRetry}
-          className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono font-bold rounded-lg border border-slate-700 transition-colors cursor-pointer"
+          aria-label={`Retry loading ${config.name}`}
+          className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono font-bold rounded-lg border border-slate-700 transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
         >
           Retry
         </button>
@@ -32,7 +36,19 @@ export const IndicatorCard: React.FC<IndicatorCardProps> = ({ config, observatio
     );
   }
 
-  if (!observations || observations.length === 0) return null;
+  if (!observations || observations.length === 0) {
+    return (
+      <div className="border border-slate-800 bg-[#0D111A] rounded-2xl p-5 h-[160px] flex flex-col justify-center items-center shadow-xl text-center">
+        <div className="font-mono text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
+          {config.id}
+        </div>
+        <div className="text-slate-200 font-sans font-bold text-sm">{config.name}</div>
+        <p role="status" className="mt-2 text-slate-500 text-xs font-mono">
+          Data unavailable
+        </p>
+      </div>
+    );
+  }
 
   const latestObs = observations[observations.length - 1];
   const prevObs = observations.length > 1 ? observations[observations.length - 2] : null;
@@ -69,12 +85,19 @@ export const IndicatorCard: React.FC<IndicatorCardProps> = ({ config, observatio
 
   // Sparkline data (last 30 obs)
   const sparkData = observations.slice(-30);
+  const accessibleChange =
+    changeStr === "—"
+      ? "no previous data"
+      : changeStr.replace("▲", "up ").replace("▼", "down ");
 
   return (
     <>
-      <div 
+      <button
+        type="button"
         onClick={() => setIsModalOpen(true)}
-        className="border border-slate-800 bg-[#0D111A] rounded-2xl p-5 cursor-pointer hover:border-slate-700 hover:bg-[#111723] transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between group h-full shadow-xl"
+        aria-label={`Open chart for ${config.name}. Latest value ${currentValueStr}. Change ${accessibleChange}.`}
+        aria-haspopup="dialog"
+        className="w-full text-left border border-slate-800 bg-[#0D111A] rounded-2xl p-5 cursor-pointer hover:border-slate-700 hover:bg-[#111723] transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between group h-full shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
       >
         <div>
           <div className="font-mono text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">{config.id}</div>
@@ -93,7 +116,7 @@ export const IndicatorCard: React.FC<IndicatorCardProps> = ({ config, observatio
             </div>
           </div>
           
-          <div className="h-[48px] w-24 shrink-0">
+          <div aria-hidden="true" className="h-[48px] w-24 shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={sparkData}>
                 <Line
@@ -108,7 +131,7 @@ export const IndicatorCard: React.FC<IndicatorCardProps> = ({ config, observatio
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
+      </button>
 
       <ExpandedChartModal
         isOpen={isModalOpen}

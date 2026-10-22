@@ -5,8 +5,37 @@ import { cacheService, CACHE_TTLS } from '../services/cache.js';
 
 const router = Router();
 
+export interface QuoteData {
+  price?: number | null;
+  change?: number | null;
+  change_pct?: number | null;
+  high?: number | null;
+  low?: number | null;
+  open?: number | null;
+  prev_close?: number | null;
+  high_52w?: number | null;
+  low_52w?: number | null;
+  volume?: number | null;
+  avg_volume?: number | null;
+  updated_at?: number | null;
+}
+
+export interface ClientQuote {
+  symbol: string;
+  price: number | null;
+  change: number | null;
+  changePercent: number | null;
+  high: number | null;
+  low: number | null;
+  open: number | null;
+  prev_close: number | null;
+  high_52w: number | null;
+  low_52w: number | null;
+  updated_at: number;
+}
+
 // Helper to format/scrub the response object for the client
-function formatClientQuote(symbol: string, data: any) {
+function formatClientQuote(symbol: string, data: QuoteData | null | undefined): ClientQuote {
   return {
     symbol: symbol.toUpperCase(),
     price: data?.price !== undefined && data?.price !== null ? Number(data.price) : null,
@@ -29,34 +58,35 @@ router.get('/:symbol', apiLimiter, async (req, res, next) => {
 
   try {
     // 1. Layer 1 (Memory Lookup)
-    const cached = await cacheService.get<any>(cacheKey);
+    const cached = await cacheService.get<QuoteData>(cacheKey);
     if (cached) {
       cacheService.logHit('quote', symbol, 'MEMORY');
       return res.json(formatClientQuote(symbol, cached));
     }
 
     // 2. Layer 2 (Live Fetch)
-    let liveData: any = null;
+    let liveData: QuoteData | null = null;
     try {
-      liveData = await yahooService.getQuote(symbol);
+      liveData = (await yahooService.getQuote(symbol)) as QuoteData | null;
       if (liveData && liveData.price !== null) {
         // 5. Cache Hydration Safeguard
         await cacheService.set(cacheKey, liveData, CACHE_TTLS.QUOTE);
         cacheService.saveQuoteBackup(symbol, {
-          price: liveData.price,
-          change: liveData.change,
-          change_pct: liveData.change_pct,
-          high_52w: liveData.high_52w,
-          low_52w: liveData.low_52w
+          price: Number(liveData.price),
+          change: Number(liveData.change),
+          change_pct: Number(liveData.change_pct),
+          high_52w: liveData.high_52w !== null && liveData.high_52w !== undefined ? Number(liveData.high_52w) : null,
+          low_52w: liveData.low_52w !== null && liveData.low_52w !== undefined ? Number(liveData.low_52w) : null
         });
       }
-    } catch (err: any) {
-      console.warn(`[QUOTE ROUTE] Yahoo live fetch failed for ${symbol}:`, err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[QUOTE ROUTE] Yahoo live fetch failed for ${symbol}:`, msg);
     }
 
     // 3. Layer 3 (Database Fallback)
     if (!liveData || liveData.price === null) {
-      const backup = cacheService.getQuoteBackup(symbol);
+      const backup = cacheService.getQuoteBackup(symbol) as QuoteData | null;
       if (backup) {
         cacheService.logHit('quote', symbol, 'SQLITE_FALLBACK');
         liveData = backup;

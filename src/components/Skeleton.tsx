@@ -7,14 +7,21 @@ interface SkeletonProps {
 
 export const Skeleton: React.FC<SkeletonProps> = ({ className = 'h-4 w-full', style }) => {
   return (
-    <div className={`animate-pulse rounded-lg bg-slate-800/70 ${className}`} style={style} />
+    <div
+      aria-hidden="true"
+      className={`animate-pulse rounded-lg bg-slate-800/70 ${className}`}
+      style={style}
+    />
   );
 };
 
 // Layout Specific Shimmer Grids for Stock Card
 export const CardSkeleton: React.FC = () => {
   return (
-    <div className="border border-slate-800 rounded-2xl p-5 bg-[#0D111A] space-y-4 shadow-xl">
+    <div
+      aria-hidden="true"
+      className="border border-slate-800 rounded-2xl p-5 bg-[#0D111A] space-y-4 shadow-xl"
+    >
       <div className="flex justify-between items-start">
         <div className="space-y-2">
           <Skeleton className="h-5 w-20" />
@@ -46,7 +53,10 @@ export const TableRowSkeleton: React.FC<{ columns?: number }> = ({ columns = 5 }
 // Shimmer layouts for charts
 export const ChartSkeleton: React.FC = () => {
   return (
-    <div className="border border-slate-800 rounded-2xl p-5 bg-[#0D111A] space-y-4 shadow-xl">
+    <div
+      aria-hidden="true"
+      className="border border-slate-800 rounded-2xl p-5 bg-[#0D111A] space-y-4 shadow-xl"
+    >
       <div className="flex justify-between items-center">
         <Skeleton className="h-6 w-36" />
         <div className="flex gap-1">
@@ -71,7 +81,12 @@ export const ChartSkeleton: React.FC = () => {
 // Full Page Skeleton for CompanyPage load and searches
 export const CompanyPageSkeleton: React.FC = () => {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-8 animate-pulse">
+    <div
+      role="status"
+      aria-busy="true"
+      className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-8 animate-pulse"
+    >
+      <span className="sr-only">Loading company profile</span>
       {/* 1. Breadcrumbs Skeleton */}
       <div className="flex gap-2">
         <Skeleton className="h-4 w-12" />
@@ -102,7 +117,7 @@ export const CompanyPageSkeleton: React.FC = () => {
       </div>
 
       {/* 3. Tab Navigation Skeleton */}
-      <div className="bg-white border border-gray-150 rounded-xl p-1.5 flex gap-2 overflow-x-auto scrollbar-none">
+      <div className="bg-[#0D111A] border border-slate-800 rounded-xl p-1.5 flex gap-2 overflow-x-auto no-scrollbar">
         {[1, 2, 3, 4].map((i) => (
           <Skeleton key={i} className="h-8 w-24 rounded-lg shrink-0" />
         ))}
@@ -111,11 +126,11 @@ export const CompanyPageSkeleton: React.FC = () => {
       {/* 4. Two-Column Grid (Price Summary + Company Essentials) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Price Summary Skeleton */}
-        <div className="lg:col-span-4 border border-gray-150 bg-white rounded-2xl p-5 space-y-4">
+        <div className="lg:col-span-4 border border-slate-800 bg-[#0D111A] rounded-2xl p-5 space-y-4">
           <Skeleton className="h-5 w-32" />
           <div className="grid grid-cols-2 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="p-3 bg-gray-50 border border-gray-150 rounded-xl space-y-1.5">
+              <div key={i} className="p-3 bg-[#080B11] border border-slate-800/80 rounded-xl space-y-1.5">
                 <Skeleton className="h-3.5 w-16" />
                 <Skeleton className="h-5 w-20" />
               </div>
@@ -124,14 +139,14 @@ export const CompanyPageSkeleton: React.FC = () => {
         </div>
 
         {/* Company Essentials Skeleton */}
-        <div className="lg:col-span-8 border border-gray-150 bg-white rounded-2xl p-5 space-y-4">
-          <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+        <div className="lg:col-span-8 border border-slate-800 bg-[#0D111A] rounded-2xl p-5 space-y-4">
+          <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
             <Skeleton className="h-5 w-44" />
             <Skeleton className="h-4 w-28" />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {Array.from({ length: 16 }).map((_, i) => (
-              <div key={i} className="space-y-1.5 pb-2 border-b border-gray-100">
+              <div key={i} className="space-y-1.5 pb-2 border-b border-slate-800/60">
                 <Skeleton className="h-3 w-20" />
                 <Skeleton className="h-4 w-16" />
               </div>
@@ -141,8 +156,8 @@ export const CompanyPageSkeleton: React.FC = () => {
       </div>
 
       {/* 5. FinStar Ratings Panel Skeleton */}
-      <div className="border border-gray-150 bg-white rounded-2xl p-6 space-y-6">
-        <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+      <div className="border border-slate-800 bg-[#0D111A] rounded-2xl p-6 space-y-6">
+        <div className="flex justify-between items-center border-b border-slate-800/60 pb-4">
           <div className="space-y-1.5">
             <Skeleton className="h-6 w-36" />
             <Skeleton className="h-4.5 w-64" />
@@ -151,7 +166,7 @@ export const CompanyPageSkeleton: React.FC = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-4 border border-gray-150 bg-gray-50/50 rounded-xl space-y-3">
+            <div key={i} className="p-4 border border-slate-800/80 bg-[#080B11] rounded-xl space-y-3">
               <div className="flex justify-between">
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-5 w-16" />
@@ -167,7 +182,7 @@ export const CompanyPageSkeleton: React.FC = () => {
       <ChartSkeleton />
 
       {/* 7. Peer Comparison Section Skeleton */}
-      <div className="border border-gray-150 bg-white rounded-2xl p-6 space-y-4">
+      <div className="border border-slate-800 bg-[#0D111A] rounded-2xl p-6 space-y-4">
         <Skeleton className="h-5 w-36" />
         <div className="space-y-2">
           <Skeleton className="h-8 w-full" />
@@ -178,11 +193,11 @@ export const CompanyPageSkeleton: React.FC = () => {
       </div>
 
       {/* 8. Detailed Ratios Table Skeleton */}
-      <div className="border border-gray-150 bg-white rounded-2xl p-6 space-y-5">
+      <div className="border border-slate-800 bg-[#0D111A] rounded-2xl p-6 space-y-5">
         <Skeleton className="h-5 w-44" />
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-4 bg-gray-50 border border-gray-150 rounded-xl space-y-3">
+            <div key={i} className="p-4 bg-[#080B11] border border-slate-800/80 rounded-xl space-y-3">
               <Skeleton className="h-4 w-24" />
               <div className="grid grid-cols-3 gap-2">
                 <Skeleton className="h-8 w-full" />
@@ -195,7 +210,7 @@ export const CompanyPageSkeleton: React.FC = () => {
       </div>
 
       {/* 9. Shareholding Pattern Skeleton */}
-      <div className="border border-gray-150 bg-white rounded-2xl p-6 space-y-4">
+      <div className="border border-slate-800 bg-[#0D111A] rounded-2xl p-6 space-y-4">
         <Skeleton className="h-5 w-44" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div className="flex items-center gap-6">
@@ -213,8 +228,8 @@ export const CompanyPageSkeleton: React.FC = () => {
       </div>
 
       {/* 10. Financial Statements Tab Skeleton */}
-      <div className="border border-gray-150 bg-white rounded-2xl p-6 space-y-4">
-        <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+      <div className="border border-slate-800 bg-[#0D111A] rounded-2xl p-6 space-y-4">
+        <div className="flex justify-between items-center border-b border-slate-800/60 pb-4">
           <Skeleton className="h-5 w-48" />
           <Skeleton className="h-8 w-64 rounded-lg" />
         </div>

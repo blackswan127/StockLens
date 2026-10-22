@@ -7,13 +7,17 @@ describe('cacheService', () => {
     // Clean up quotes table before tests
     try {
       db.prepare('DELETE FROM quotes WHERE symbol = ?').run('TEST_CACHE');
-    } catch (e) {}
+    } catch {
+      // quotes table may not exist in a partial test database
+    }
   });
 
   afterEach(() => {
     try {
       db.prepare('DELETE FROM quotes WHERE symbol = ?').run('TEST_CACHE');
-    } catch (e) {}
+    } catch {
+      // quotes table may not exist in a partial test database
+    }
   });
 
   describe('getQuoteBackup', () => {
@@ -39,8 +43,8 @@ describe('cacheService', () => {
       
       const retrieved1 = cacheService.getQuoteBackup(symbol);
       expect(retrieved1).not.toBeNull();
-      expect(retrieved1.price).toBe(150.5);
-      expect(retrieved1.change_pct).toBe(1.6);
+      expect(retrieved1!.price).toBe(150.5);
+      expect(retrieved1!.change_pct).toBe(1.6);
 
       // Update quote
       const quote2 = {
@@ -55,8 +59,8 @@ describe('cacheService', () => {
 
       const retrieved2 = cacheService.getQuoteBackup(symbol);
       expect(retrieved2).not.toBeNull();
-      expect(retrieved2.price).toBe(155.0);
-      expect(retrieved2.change_pct).toBe(3.0);
+      expect(retrieved2!.price).toBe(155.0);
+      expect(retrieved2!.change_pct).toBe(3.0);
     });
   });
 

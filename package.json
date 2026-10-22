@@ -8,9 +8,13 @@
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=esm --packages=external --sourcemap --outfile=dist/server.js && node -e \"require('fs').copyFileSync('server/services/seeds.json', 'dist/seeds.json')\"",
     "start": "node dist/server.js",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit",
+    "lint": "tsc --noEmit && eslint .",
+    "lint:types": "tsc --noEmit",
+    "lint:eslint": "eslint .",
+    "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",
@@ -29,7 +33,6 @@
     "helmet": "^8.2.0",
     "ioredis": "^5.11.1",
     "lucide-react": "^0.546.0",
-    "motion": "^12.23.24",
     "node-cache": "^5.1.2",
     "node-cron": "^4.2.1",
     "opossum": "^9.0.0",
@@ -48,6 +51,10 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
     "@types/better-sqlite3": "^7.6.13",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
@@ -59,12 +66,21 @@
     "@types/supertest": "^7.2.0",
     "@vitest/coverage-v8": "^4.1.9",
     "autoprefixer": "^10.4.21",
+    "axe-core": "^4.14.0",
     "esbuild": "^0.25.0",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "jsdom": "^30.1.3",
+    "prettier": "^3.9.10",
     "rollup-plugin-visualizer": "^7.0.1",
     "supertest": "^7.2.2",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
+    "typescript-eslint": "^8.72.0",
     "vite": "^6.2.3",
     "vitest": "^4.1.9"
   }

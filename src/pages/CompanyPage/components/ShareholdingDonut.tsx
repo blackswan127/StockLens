@@ -28,8 +28,15 @@ export const ShareholdingDonut: React.FC<ShareholdingDonutProps> = ({
   const pubOffset = pLen + dLen + fLen;
 
   return (
-    <svg width="128" height="128" viewBox="0 0 100 100" className="transform -rotate-90">
-      {/* Promoters -> #059669 */}
+    <svg
+      width="128"
+      height="128"
+      viewBox="0 0 100 100"
+      className="transform -rotate-90"
+      role="img"
+      aria-label={`Shareholding split: promoters ${promoters}%, DII ${dii}%, FII ${fii}%, public ${publicPct}%`}
+    >
+      <title>Shareholding pattern donut chart</title>
       <circle
         cx="50"
         cy="50"
@@ -40,7 +47,6 @@ export const ShareholdingDonut: React.FC<ShareholdingDonutProps> = ({
         strokeDasharray={`${pLen} ${circ - pLen}`}
         strokeDashoffset={-pOffset}
       />
-      {/* DII -> #0EA5E9 */}
       <circle
         cx="50"
         cy="50"
@@ -51,7 +57,6 @@ export const ShareholdingDonut: React.FC<ShareholdingDonutProps> = ({
         strokeDasharray={`${dLen} ${circ - dLen}`}
         strokeDashoffset={-dOffset}
       />
-      {/* FII -> #6366F1 */}
       <circle
         cx="50"
         cy="50"
@@ -62,7 +67,6 @@ export const ShareholdingDonut: React.FC<ShareholdingDonutProps> = ({
         strokeDasharray={`${fLen} ${circ - fLen}`}
         strokeDashoffset={-fOffset}
       />
-      {/* Public -> #CBD5E1 */}
       <circle
         cx="50"
         cy="50"
@@ -73,13 +77,7 @@ export const ShareholdingDonut: React.FC<ShareholdingDonutProps> = ({
         strokeDasharray={`${pubLen} ${circ - pubLen}`}
         strokeDashoffset={-pubOffset}
       />
-      {/* Center circle */}
-      <circle
-        cx="50"
-        cy="50"
-        r={r - strokeWidth / 2}
-        fill="#FFFFFF"
-      />
+      <circle cx="50" cy="50" r={r - strokeWidth / 2} fill="#FFFFFF" />
     </svg>
   );
 };

@@ -1,8 +1,9 @@
 import React from 'react';
+import type { DCFResult } from '../../../../utils/dcfCalculator.js';
 import { formatMarketCap, formatShares, formatPrice } from '../../../../utils/formatters.js';
 
 interface DCFValuationBridgeProps {
-  dcfResult: any;
+  dcfResult: DCFResult | null;
   cashAndEquivalents: number;
   totalDebt: number;
   sharesOutstanding: number;

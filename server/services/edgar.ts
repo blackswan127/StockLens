@@ -4,14 +4,16 @@ import fs from 'fs';
 import path from 'path';
 import pLimit from 'p-limit';
 import * as cheerio from 'cheerio';
+import type { Element, AnyNode } from 'domhandler';
 import CircuitBreaker from 'opossum';
 import { cleanText, parseMoney, isFootnote } from './edgarParsing.js';
 
 // ESM/CJS interop compatibility resolver for bundlers (e.g. esbuild/webpack)
-let pLimitFn: any = pLimit;
-if (pLimitFn && typeof pLimitFn.default === 'function') {
-  pLimitFn = pLimitFn.default;
-}
+type PLimitModule = typeof pLimit & { default?: typeof pLimit };
+const rawLimit = pLimit as unknown as PLimitModule;
+const pLimitFn: typeof pLimit = (typeof rawLimit === 'function' && typeof rawLimit.default === 'function')
+  ? rawLimit.default
+  : pLimit;
 
 // ─── LAYER 1: In-memory hot cache (fast, lost on restart) ────────────────────
 const memCache = new NodeCache({ stdTTL: 3600 });
@@ -28,13 +30,23 @@ const SQLITE_TTL = {
 };
 
 // Track in-flight fetches to avoid duplicate parallel requests
-const inFlight = new Map<string, Promise<any>>();
+const inFlight = new Map<string, Promise<unknown>>();
+
+export interface EdgarStatementRow {
+  label: string;
+  values: Record<string, number | null>;
+}
 
 export interface EdgarFinancials {
   symbol: string;
-  incomeStatement: any[];
-  balanceSheet: any[];
-  cashFlow: any[];
+  incomeStatement: EdgarStatementRow[];
+  balanceSheet: EdgarStatementRow[];
+  cashFlow: EdgarStatementRow[];
+}
+
+export interface EdgarInsidersResponse {
+  symbol: string;
+  transactions: EdgarInsider[];
 }
 
 export interface EdgarInsider {
@@ -81,6 +93,42 @@ export interface EdgarRiskDiffResponse {
   paragraphs: EdgarRiskDiffParagraph[];
 }
 
+export interface EdgarProxyExecutive {
+  name: string;
+  title: string;
+  salary: number | null;
+  bonus: number | null;
+  stockAwards: number | null;
+  optionAwards: number | null;
+  nonEquityIncentive: number | null;
+  otherCompensation: number | null;
+  total: number | null;
+}
+
+export interface EdgarProxyDirector {
+  name: string;
+  independent: boolean | null;
+  committees: string[];
+  feesEarned: number | null;
+  stockAwards: number | null;
+  total: number | null;
+}
+
+export interface EdgarProxyAuditFeeYear {
+  year: string;
+  auditFee: number | null;
+  auditRelatedFee: number | null;
+  taxFee: number | null;
+  allOtherFee: number | null;
+  total: number | null;
+}
+
+export interface EdgarProxyShareholderProposal {
+  item: string;
+  description: string;
+  boardRecommendation: string | null;
+}
+
 export interface EdgarProxyStatement {
   symbol: string;
   filedDate: string;
@@ -94,41 +142,13 @@ export interface EdgarProxyStatement {
   };
   executiveCompensation: {
     year: string;
-    executives: {
-      name: string;
-      title: string;
-      salary: number | null;
-      bonus: number | null;
-      stockAwards: number | null;
-      optionAwards: number | null;
-      nonEquityIncentive: number | null;
-      otherCompensation: number | null;
-      total: number | null;
-    }[];
+    executives: EdgarProxyExecutive[];
   }[];
   boardOfDirectors: {
-    directors: {
-      name: string;
-      independent: boolean | null;
-      committees: string[];
-      feesEarned: number | null;
-      stockAwards: number | null;
-      total: number | null;
-    }[];
+    directors: EdgarProxyDirector[];
   };
-  auditFees: {
-    year: string;
-    auditFee: number | null;
-    auditRelatedFee: number | null;
-    taxFee: number | null;
-    allOtherFee: number | null;
-    total: number | null;
-  }[];
-  shareholderProposals: {
-    item: string;
-    description: string;
-    boardRecommendation: string | null;
-  }[];
+  auditFees: EdgarProxyAuditFeeYear[];
+  shareholderProposals: EdgarProxyShareholderProposal[];
 }
 
 // ─── Pay versus Performance (Item 402(v) / ECD taxonomy) ────────────────────
@@ -158,9 +178,141 @@ export interface EdgarPayVsPerformance {
   sourceUrl: string;       // link to the raw SEC companyfacts JSON
 }
 
+
+// ─── SEC EDGAR Internal Data Interfaces ───────────────────────────────────────
+export interface SecSubmissionsRecent {
+  accessionNumber: string[];
+  filingDate: string[];
+  reportDate: string[];
+  acceptanceDateTime: string[];
+  act: string[];
+  form: string[];
+  fileNumber: string[];
+  filmNumber: string[];
+  items: string[];
+  size: number[];
+  isXBRL: number[];
+  isInlineXBRL: number[];
+  primaryDocument: string[];
+  primaryDocDescription: string[];
+}
+
+export interface SecCompanySubmissions {
+  cik: string;
+  entityType: string;
+  sic: string;
+  sicDescription: string;
+  name: string;
+  tickers: string[];
+  exchanges: string[];
+  ein: string;
+  description: string;
+  website: string;
+  investorWebsite: string;
+  category: string;
+  fiscalYearEnd: string;
+  stateOfIncorporation: string;
+  stateOfIncorporationDescription: string;
+  filings: {
+    recent: SecSubmissionsRecent;
+    files: { name: string; filingCount: number; filingFrom: string; filingTo: string }[];
+  };
+}
+
+export interface SecFactUnitPoint {
+  end?: string;
+  val: number;
+  fy?: number;
+  fp?: string;
+  form?: string;
+  frame?: string;
+  filed?: string;
+  accn?: string;
+}
+
+export interface SecConceptFacts {
+  label?: string;
+  description?: string;
+  units?: Record<string, SecFactUnitPoint[]>;
+}
+
+export interface SecCompanyFacts {
+  cik?: number | string;
+  entityName?: string;
+  facts?: {
+    'us-gaap'?: Record<string, SecConceptFacts>;
+    dei?: Record<string, SecConceptFacts>;
+    ecd?: Record<string, SecConceptFacts>;
+    [taxonomy: string]: Record<string, SecConceptFacts> | undefined;
+  };
+}
+
+export interface ParsedSecStatementRow {
+  concept: string;
+  label: string;
+  standard_concept: string | null;
+  values: (number | null)[];
+}
+
+export interface ParsedSecStatement {
+  periods: string[];
+  rows: ParsedSecStatementRow[];
+}
+
+export interface ParsedForm4Transaction {
+  owner: string;
+  relationship: string;
+  security_title: string;
+  date: string;
+  code: string;
+  shares: number;
+  price: number;
+  value: number;
+  remaining: number;
+  filing_url: string;
+}
+
+export interface SecDirectoryItem {
+  name: string;
+  type?: string;
+  size?: string;
+}
+
+export interface SecDirectoryResponse {
+  directory: {
+    item: SecDirectoryItem[];
+    name?: string;
+  };
+}
+
+export interface Parsed13FHolding {
+  issuer: string;
+  classVal: string;
+  cusip: string;
+  value: number;
+  shares: number;
+  option: string;
+}
+
+export interface SecPvPFactPoint {
+  fy?: number | string | null;
+  fp?: string | null;
+  end?: string | null;
+  start?: string | null;
+  val: number | string;
+  accn?: string;
+  form?: string;
+}
+
+export interface SecPvPConceptFacts {
+  label?: string;
+  description?: string;
+  units?: Record<string, SecPvPFactPoint[]>;
+}
+
 // ─── SQLite helpers ───────────────────────────────────────────────────────────
 
-function sqliteGet(key: string, ttlSeconds: number): any | null {
+function sqliteGet<T = unknown>(key: string, ttlSeconds: number): T | null {
   try {
     const row = db.prepare('SELECT data, fetched_at FROM edgar_cache WHERE cache_key = ?').get(key) as
       | { data: string; fetched_at: number }
@@ -168,21 +320,22 @@ function sqliteGet(key: string, ttlSeconds: number): any | null {
     if (!row) return null;
     const age = Math.floor(Date.now() / 1000) - row.fetched_at;
     if (age > ttlSeconds) return null; // expired
-    return JSON.parse(row.data);
+    return JSON.parse(row.data) as T;
   } catch {
     return null;
   }
 }
 
-function sqliteSet(key: string, value: any): void {
+function sqliteSet(key: string, value: unknown): void {
   try {
     const data = JSON.stringify(value);
     const now = Math.floor(Date.now() / 1000);
     db.prepare(
       'INSERT INTO edgar_cache (cache_key, data, fetched_at) VALUES (?, ?, ?) ON CONFLICT(cache_key) DO UPDATE SET data=excluded.data, fetched_at=excluded.fetched_at'
     ).run(key, data, now);
-  } catch (e: any) {
-    console.warn('[EDGAR CACHE] SQLite write failed:', e.message);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.warn('[EDGAR CACHE] SQLite write failed:', msg);
   }
 }
 
@@ -199,10 +352,10 @@ async function cachedFetch<T>(
   if (mem !== undefined) return mem;
 
   // Tier 2: SQLite persistent
-  const stored = sqliteGet(sqlKey, sqlTtl);
+  const stored = sqliteGet<T>(sqlKey, sqlTtl);
   if (stored !== null) {
     memCache.set(memKey, stored); // promote to memory
-    return stored as T;
+    return stored;
   }
 
   // Tier 3: fetch from EDGAR (deduplicated)
@@ -353,9 +506,12 @@ async function getCik(symbol: string): Promise<string> {
     try {
       const tickerPath = path.join(process.cwd(), 'server', 'services', 'ticker_to_cik.json');
       fs.writeFileSync(tickerPath, JSON.stringify(tickerToCikMap), 'utf8');
-    } catch {}
-  } catch (err: any) {
-    console.warn('[EDGAR] CIK lookup fallback failed, using defaults:', err.message);
+    } catch {
+      /* intentionally ignored */
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('[EDGAR] CIK lookup fallback failed, using defaults:', msg);
     for (const variant of normalizedVariants) {
       if (fallbacks[variant]) return fallbacks[variant];
     }
@@ -365,7 +521,9 @@ async function getCik(symbol: string): Promise<string> {
     try {
       const tickerPath = path.join(process.cwd(), 'server', 'services', 'ticker_to_cik.json');
       fs.writeFileSync(tickerPath, JSON.stringify(tickerToCikMap), 'utf8');
-    } catch {}
+    } catch {
+      /* intentionally ignored */
+    }
     throw new Error(`Could not resolve CIK for ticker ${sym}`);
   }
 
@@ -380,7 +538,9 @@ async function getCik(symbol: string): Promise<string> {
   try {
     const tickerPath = path.join(process.cwd(), 'server', 'services', 'ticker_to_cik.json');
     fs.writeFileSync(tickerPath, JSON.stringify(tickerToCikMap), 'utf8');
-  } catch {}
+  } catch {
+    /* intentionally ignored */
+  }
   throw new Error(`Could not resolve CIK for ticker ${sym}`);
 }
 
@@ -451,10 +611,10 @@ const CASHFLOW_CONCEPTS: [string, string, string | null][] = [
   ['CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect', 'Net change in cash', 'NetChangeInCash']
 ];
 
-function parseSecStatement(facts: any, conceptsList: [string, string, string | null][]) {
+function parseSecStatement(facts: SecCompanyFacts | null | undefined, conceptsList: [string, string, string | null][]): ParsedSecStatement {
   const usGaap = facts?.facts?.['us-gaap'] || {};
   
-  let netIncomeData = usGaap['NetIncomeLoss']?.units?.USD || [];
+  let netIncomeData: SecFactUnitPoint[] = usGaap['NetIncomeLoss']?.units?.USD || [];
   if (netIncomeData.length === 0) {
     netIncomeData = usGaap['Revenues']?.units?.USD || [];
   }
@@ -466,7 +626,7 @@ function parseSecStatement(facts: any, conceptsList: [string, string, string | n
     }
   }
 
-  const annualPoints = netIncomeData.filter((p: any) => p.form === '10-K' && p.fp === 'FY');
+  const annualPoints = netIncomeData.filter((p: SecFactUnitPoint) => p.form === '10-K' && p.fp === 'FY');
 
   const yearToPeriod: Record<number, string> = {};
   for (const p of annualPoints) {
@@ -484,7 +644,7 @@ function parseSecStatement(facts: any, conceptsList: [string, string, string | n
 
   const periods = sortedYears.map(y => yearToPeriod[y]);
 
-  const rows = [];
+  const rows: ParsedSecStatementRow[] = [];
   for (const [conceptName, customLabel, stdConcept] of conceptsList) {
     const conceptData = usGaap[conceptName];
     if (!conceptData) continue;
@@ -503,7 +663,7 @@ function parseSecStatement(facts: any, conceptsList: [string, string, string | n
       }
     }
 
-    const values = [];
+    const values: (number | null)[] = [];
     let hasAnyVal = false;
     for (const y of sortedYears) {
       const val = pointsByYear[y];
@@ -533,7 +693,7 @@ function parseSecStatement(facts: any, conceptsList: [string, string, string | n
 
 // ─── Statement mapper ─────────────────────────────────────────────────────────
 
-function mapStatement(stmt: any) {
+function mapStatement(stmt: ParsedSecStatement | null | undefined): EdgarStatementRow[] {
   if (!stmt || !stmt.rows || !stmt.periods) return [];
 
   const years = stmt.periods.map((p: string) => {
@@ -541,8 +701,8 @@ function mapStatement(stmt: any) {
     return match ? match[1] : p;
   });
 
-  return stmt.rows.map((row: any) => {
-    const valuesObj: { [year: string]: number | null } = {};
+  return stmt.rows.map((row: ParsedSecStatementRow): EdgarStatementRow => {
+    const valuesObj: Record<string, number | null> = {};
     years.forEach((year: string, idx: number) => {
       const rawVal = row.values[idx];
       if (rawVal === null || rawVal === undefined) {
@@ -590,7 +750,7 @@ function getRelationship(relBlock: string): string {
   return 'Insider';
 }
 
-function parseFilingXml(xmlContent: string, cik: string, accNum: string, primaryDoc: string, filingDate: string): any[] {
+function parseFilingXml(xmlContent: string, cik: string, accNum: string, _primaryDoc: string, filingDate: string): ParsedForm4Transaction[] {
   const accNumNoDashes = accNum.replace(/-/g, '');
   const indexUrl = `https://www.sec.gov/Archives/edgar/data/${cik}/${accNumNoDashes}/${accNum}-index.html`;
 
@@ -604,7 +764,7 @@ function parseFilingXml(xmlContent: string, cik: string, accNum: string, primary
 
   const txRegex = /<nonDerivativeTransaction>([\s\S]*?)<\/nonDerivativeTransaction>/gi;
   let match;
-  const txs = [];
+  const txs: ParsedForm4Transaction[] = [];
   while ((match = txRegex.exec(xmlContent)) !== null) {
     const txBlock = match[1];
     const title = extractTagContent(txBlock, 'securityTitle');
@@ -632,14 +792,14 @@ function parseFilingXml(xmlContent: string, cik: string, accNum: string, primary
 
 // ─── 13F Holdings Helper ───────────────────────────────────────────────────────
 
-async function parse13F(cik: string, accNum: string): Promise<any[]> {
+async function parse13F(cik: string, accNum: string): Promise<Parsed13FHolding[]> {
   const accNumNoDashes = accNum.replace(/-/g, '');
   const dirUrl = `https://www.sec.gov/Archives/edgar/data/${cik}/${accNumNoDashes}/index.json`;
   
   const dirRes = await safeFetch(dirUrl, { headers: { 'User-Agent': USER_AGENT } });
   if (!dirRes.ok) return [];
-  const dirData = await dirRes.json();
-  const files = dirData.directory.item.map((i: any) => i.name);
+  const dirData = (await dirRes.json()) as SecDirectoryResponse;
+  const files = (dirData.directory?.item || []).map((i: SecDirectoryItem) => i.name);
   
   const xmlFile = files.find((f: string) => f.endsWith('.xml') && f !== 'primary_doc.xml');
   if (!xmlFile) return [];
@@ -650,7 +810,7 @@ async function parse13F(cik: string, accNum: string): Promise<any[]> {
   const xmlText = await xmlRes.text();
   
   const infoTableRegex = /<infoTable[\s\S]*?>([\s\S]*?)<\/infoTable>/gi;
-  const holdings = [];
+  const holdings: Parsed13FHolding[] = [];
   let match;
   while ((match = infoTableRegex.exec(xmlText)) !== null) {
     const content = match[1];
@@ -672,7 +832,7 @@ const MAX_SECTION_LENGTH = 50000;
 
 function extractViaAnchors($: cheerio.CheerioAPI, itemName: string): string[] {
   const itemRegex = new RegExp(`^Item\\s*(?:&#160;|&nbsp;|\\s)*${itemName}\\b`, 'i');
-  let tocLink: any;
+  let tocLink: Element | null = null;
   
   $('a').each((_, el) => {
     const text = $(el).text().replace(/[\n\r\t]/g, ' ').trim();
@@ -687,7 +847,7 @@ function extractViaAnchors($: cheerio.CheerioAPI, itemName: string): string[] {
   const targetId = $(tocLink).attr('href')?.substring(1);
   if (!targetId) return [];
 
-  let targetAnchor = $(`a[name="${targetId}"], a[id="${targetId}"], [id="${targetId}"]`).first();
+  const targetAnchor = $(`a[name="${targetId}"], a[id="${targetId}"], [id="${targetId}"]`).first();
   if (!targetAnchor.length) return [];
 
   let nextItemName = '1B';
@@ -696,7 +856,7 @@ function extractViaAnchors($: cheerio.CheerioAPI, itemName: string): string[] {
   else if (itemName === '7') nextItemName = '7A';
 
   const nextItemRegex = new RegExp(`^Item\\s*(?:&#160;|&nbsp;|\\s)*(?:${nextItemName}|8|2)\\b`, 'i');
-  let nextTocLink: any;
+  let nextTocLink: Element | null = null;
   $('a').each((_, el) => {
     const text = $(el).text().replace(/[\n\r\t]/g, ' ').trim();
     if (nextItemRegex.test(text) && $(el).attr('href') && $(el).attr('href')?.startsWith('#')) {
@@ -705,7 +865,7 @@ function extractViaAnchors($: cheerio.CheerioAPI, itemName: string): string[] {
     }
   });
 
-  let endAnchor: cheerio.Cheerio<any> | null = null;
+  let endAnchor: cheerio.Cheerio<Element> | null = null;
   if (nextTocLink) {
     const endTargetId = $(nextTocLink).attr('href')?.substring(1);
     if (endTargetId) {
@@ -753,7 +913,7 @@ function extractViaHeuristics($: cheerio.CheerioAPI, itemName: string): string[]
   else if (itemName === '7') nextItemName = '7A';
   const nextItemRegex = new RegExp(`^Item\\s*(?:&#160;|&nbsp;|\\s)*(?:${nextItemName}|8|2)\\b`, 'i');
 
-  const candidates: { el: cheerio.Cheerio<any>, text: string }[] = [];
+  const candidates: { el: cheerio.Cheerio<Element>; text: string }[] = [];
   
   $('p, div, h1, h2, h3, h4, b, strong').each((_, el) => {
     const text = $(el).text().replace(/[\n\r\t]/g, ' ').trim();
@@ -764,7 +924,7 @@ function extractViaHeuristics($: cheerio.CheerioAPI, itemName: string): string[]
 
   if (candidates.length === 0) return [];
 
-  let startEl = candidates[candidates.length - 1].el;
+  const startEl = candidates[candidates.length - 1].el;
   
   const result: string[] = [];
   let current = startEl.parent().length && !['body', 'html'].includes(startEl.parent()[0].name) ? startEl.parent() : startEl;
@@ -788,7 +948,7 @@ function extractViaHeuristics($: cheerio.CheerioAPI, itemName: string): string[]
   return result;
 }
 
-function extractCleanText($: cheerio.CheerioAPI, el: cheerio.Cheerio<any>): string[] {
+function extractCleanText(_$: cheerio.CheerioAPI, el: cheerio.Cheerio<AnyNode>): string[] {
   const text = el.text().replace(/[\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
   if (!text) return [];
   return [text];
@@ -878,7 +1038,7 @@ async function searchCikByName(name: string): Promise<string> {
   
   const $ = cheerio.load(html);
   const results: { cik: string, name: string }[] = [];
-  $('table[summary="Results"] tr').each((i, el) => {
+  $('table[summary="Results"] tr').each((_i, el) => {
     const tds = $(el).find('td');
     if (tds.length >= 2) {
       const cik = $(tds[0]).text().trim();
@@ -918,7 +1078,7 @@ export const edgarService = {
         const url = `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`;
         const res = await safeFetch(url, { headers: { 'User-Agent': USER_AGENT } });
         if (!res.ok) throw new Error(`SEC API returned status ${res.status}`);
-        const facts = await res.json();
+        const facts = (await res.json()) as SecCompanyFacts;
         
         return {
           symbol: sym,
@@ -930,9 +1090,9 @@ export const edgarService = {
     );
   },
 
-  getInsiders: async (symbol: string): Promise<any> => {
+  getInsiders: async (symbol: string): Promise<EdgarInsidersResponse> => {
     const sym = symbol.toUpperCase();
-    return cachedFetch(
+    return cachedFetch<EdgarInsidersResponse>(
       `ins:${sym}`,
       `insiders:${sym}`,
       SQLITE_TTL.insiders,
@@ -941,7 +1101,7 @@ export const edgarService = {
         const url = `https://data.sec.gov/submissions/CIK${cik}.json`;
         const res = await safeFetch(url, { headers: { 'User-Agent': USER_AGENT } });
         if (!res.ok) throw new Error(`SEC API returned status ${res.status}`);
-        const sub = await res.json();
+        const sub = (await res.json()) as SecCompanySubmissions;
         
         const recent = sub.filings.recent;
         const forms = recent.form;
@@ -957,7 +1117,7 @@ export const edgarService = {
           }
         }
         
-        const rawTransactions: any[] = [];
+        const rawTransactions: ParsedForm4Transaction[] = [];
         const limit = pLimitFn(4);
         await Promise.all(
           form4Indices.map((idx) => limit(async () => {
@@ -983,7 +1143,7 @@ export const edgarService = {
         // Sort rawTransactions by date descending
         rawTransactions.sort((a, b) => b.date.localeCompare(a.date));
 
-        const transactions = rawTransactions.map((tx: any): EdgarInsider => {
+        const transactions = rawTransactions.map((tx: ParsedForm4Transaction): EdgarInsider => {
           let action = 'Option Exercise';
           const code = (tx.code || '').toUpperCase();
           if (code === 'S' || code === 'F') action = 'Sell';
@@ -1026,7 +1186,7 @@ export const edgarService = {
         const url = `https://data.sec.gov/submissions/CIK${cik}.json`;
         const res = await safeFetch(url, { headers: { 'User-Agent': USER_AGENT } });
         if (!res.ok) throw new Error(`SEC API returned status ${res.status}`);
-        const sub = await res.json();
+        const sub = (await res.json()) as SecCompanySubmissions;
         
         const recent = sub.filings.recent;
         const forms = recent.form;
@@ -1054,7 +1214,7 @@ export const edgarService = {
         const latestHoldings = await parse13F(cik, accNums[indices[0]]);
         const prevHoldings = indices.length > 1 ? await parse13F(cik, accNums[indices[1]]) : [];
 
-        const prevMap = new Map<string, any>();
+        const prevMap = new Map<string, Parsed13FHolding>();
         for (const h of prevHoldings) {
           const k = `${h.cusip.toUpperCase()}:${h.option.toUpperCase()}`;
           prevMap.set(k, h);
@@ -1115,7 +1275,7 @@ export const edgarService = {
         const url = `https://data.sec.gov/submissions/CIK${cik}.json`;
         const res = await safeFetch(url, { headers: { 'User-Agent': USER_AGENT } });
         if (!res.ok) throw new Error(`SEC API returned status ${res.status}`);
-        const sub = await res.json();
+        const sub = (await res.json()) as SecCompanySubmissions;
         
         const recent = sub.filings.recent;
         const forms = recent.form;
@@ -1170,7 +1330,7 @@ export const edgarService = {
         const url = `https://data.sec.gov/submissions/CIK${cik}.json`;
         const res = await safeFetch(url, { headers: { 'User-Agent': USER_AGENT } });
         if (!res.ok) throw new Error(`SEC API returned status ${res.status}`);
-        const sub = await res.json();
+        const sub = (await res.json()) as SecCompanySubmissions;
         
         const recent = sub.filings.recent;
         const forms = recent.form;
@@ -1226,7 +1386,7 @@ export const edgarService = {
         const url = `https://data.sec.gov/submissions/CIK${cik}.json`;
         const res = await safeFetch(url, { headers: { 'User-Agent': USER_AGENT } });
         if (!res.ok) throw new Error(`SEC API returned status ${res.status} for CIK ${cik}`);
-        const sub = await res.json();
+        const sub = (await res.json()) as SecCompanySubmissions;
         
         const recent = sub.filings.recent;
         const forms = recent.form;
@@ -1255,7 +1415,7 @@ export const edgarService = {
         let meetingDate: string | null = null;
         let recordDate: string | null = null;
         let meetingType: 'virtual' | 'in-person' | 'hybrid' = 'virtual';
-        let location: string | null = null;
+        const location: string | null = null;
 
         const bodyText = $('body').text().slice(0, 30000);
         const dateRegex = /(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}/gi;
@@ -1285,8 +1445,8 @@ export const edgarService = {
         }
 
         // 2. Executive Compensation
-        const execCompMap = new Map<string, any>();
-        let sctTable: any = null;
+        const execCompMap = new Map<string, EdgarProxyExecutive[]>();
+        let sctTable: Element | null = null;
         
         $('table').each((_, table) => {
           const tableText = cleanText($(table).text()).toLowerCase();
@@ -1403,7 +1563,7 @@ export const edgarService = {
                   const otherCompensation = otherCol !== -1 ? parseMoney(cells[otherCol]) : null;
                   const total = totalCol !== -1 ? parseMoney(cells[totalCol]) : null;
 
-                  const execObj = {
+                  const execObj: EdgarProxyExecutive = {
                     name: currentExecutiveName,
                     title: currentExecutiveTitle,
                     salary,
@@ -1433,8 +1593,8 @@ export const edgarService = {
         })).sort((a, b) => b.year.localeCompare(a.year));
 
         // 3. Board of Directors
-        const directors: any[] = [];
-        let directorTable: any = null;
+        const directors: EdgarProxyDirector[] = [];
+        let directorTable: Element | null = null;
 
         $('table').each((_, table) => {
           const text = cleanText($(table).text()).toLowerCase();
@@ -1478,8 +1638,8 @@ export const edgarService = {
         }
 
         // 4. Audit Fees
-        const auditFees: any[] = [];
-        let auditTable: any = null;
+        const auditFees: EdgarProxyAuditFeeYear[] = [];
+        let auditTable: Element | null = null;
 
         $('table').each((_, table) => {
           const text = cleanText($(table).text()).toLowerCase();
@@ -1510,7 +1670,7 @@ export const edgarService = {
             yearCols.push(1, 2);
           }
 
-          let auditFeeRows: Record<string, number[]> = {
+          const auditFeeRows: Record<string, number[]> = {
             auditFee: [],
             auditRelatedFee: [],
             taxFee: [],
@@ -1555,16 +1715,16 @@ export const edgarService = {
         }
 
         // 5. Shareholder Proposals
-        const shareholderProposals: any[] = [];
+        const shareholderProposals: EdgarProxyShareholderProposal[] = [];
         
         // Scan for proposal lists in headers / headings or clean text paragraphs
         $('h1, h2, h3, h4, h5, h6, p, td, b, strong').each((_, el) => {
           const text = cleanText($(el).text());
-          const match = /^(?:proposal|item|proposal\s+no\.?)\s*(\d+)[\.\s:—\-]+(.*)$/i.exec(text) ||
+          const match = /^(?:proposal|item|proposal\s+no\.?)\s*(\d+)[.\s:—-]+(.*)$/i.exec(text) ||
                         /^(?:proposal|item|proposal\s+no\.?)\s*(\d+)\b(.*)$/i.exec(text);
           if (match && text.length > 5 && text.length < 200) {
             const num = match[1];
-            let desc = cleanText(match[2].replace(/^[\-:\s—\.]+\s*/, ''));
+            let desc = cleanText(match[2].replace(/^[-:\s—.]+\s*/, ''));
             if (!desc && $(el).next().length > 0) {
               desc = cleanText($(el).next().text()).slice(0, 150);
             }
@@ -1649,13 +1809,13 @@ export const edgarService = {
 
         const concepts: EdgarPvPConcept[] = [];
         for (const [tag, conceptData] of Object.entries(ecdFacts)) {
-          const data = conceptData as any;
+          const data = conceptData as SecPvPConceptFacts;
           const label = data.label || tag;
           const units = data.units || {};
           for (const [unit, valuesArray] of Object.entries(units)) {
             if (!Array.isArray(valuesArray)) continue;
             
-            const values: EdgarPvPFactValue[] = valuesArray.map((v: any) => ({
+            const values: EdgarPvPFactValue[] = valuesArray.map((v: SecPvPFactPoint) => ({
               fy: typeof v.fy === 'number' ? v.fy : null,
               fp: v.fp || null,
               end: v.end || null,

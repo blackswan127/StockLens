@@ -73,6 +73,74 @@ export interface SectorArchetype {
   secRiskFocus: string;
 }
 
+export type SectorRiskThemeKey =
+  | 'regulatory'
+  | 'geopolitical'
+  | 'supplyChain'
+  | 'cybersecurity'
+  | 'customerDemand'
+  | 'foreignExchange';
+
+export interface SectorRiskThemeConfig {
+  regex: RegExp;
+  label: string;
+}
+
+export type SectorRiskMap = Record<SectorRiskThemeKey, SectorRiskThemeConfig>;
+
+export interface SecRiskInsights {
+  keyDisclosures: string[];
+  themes: string[];
+  narrative: string;
+}
+
+export interface CatalystSignalsSynthesis {
+  bullishCount: number;
+  bearishCount: number;
+  neutralCount: number;
+  bullishReasons: string[];
+  bearishReasons: string[];
+  consensusNarrative: string;
+}
+
+export interface AnalystNotePromptInput {
+  ticker: string;
+  companyName: string;
+  sector: string;
+  industry: string;
+  metrics: ComputedMetrics;
+  riskFactors: string;
+  catalystSignals?: string[];
+}
+
+export interface GeminiContentPart {
+  text?: string;
+  [key: string]: unknown;
+}
+
+export interface GeminiContentCandidate {
+  content?: {
+    parts?: GeminiContentPart[];
+    role?: string;
+  };
+  finishReason?: string;
+  index?: number;
+  [key: string]: unknown;
+}
+
+export interface GeminiGenerateContentResponse {
+  text?: string | null;
+  candidates?: GeminiContentCandidate[];
+  [key: string]: unknown;
+}
+
+export interface GeminiApiError {
+  message?: string;
+  status?: number | string;
+  code?: number | string;
+  [key: string]: unknown;
+}
+
 export function getSectorArchetype(sector: string, industry: string): SectorArchetype {
   const s = (sector || '').toLowerCase();
   const ind = (industry || '').toLowerCase();
@@ -187,11 +255,12 @@ export function getSectorArchetype(sector: string, industry: string): SectorArch
   };
 }
 
-export function extractSecRiskInsights(riskFactors: string, companyName: string, ticker: string, industry: string): {
-  keyDisclosures: string[];
-  themes: string[];
-  narrative: string;
-} {
+export function extractSecRiskInsights(
+  riskFactors: string,
+  companyName: string,
+  ticker: string,
+  industry: string
+): SecRiskInsights {
   if (!riskFactors || riskFactors.length < 50 || riskFactors.toLowerCase().includes('not available')) {
     return {
       keyDisclosures: [
@@ -220,7 +289,7 @@ export function extractSecRiskInsights(riskFactors: string, companyName: string,
   const identifiedThemes: string[] = [];
   const keyDisclosures: string[] = [];
 
-  const themeKeywords: Record<string, { regex: RegExp; label: string }> = {
+  const themeKeywords: SectorRiskMap = {
     regulatory: { regex: /regulat|compliance|investigation|FTC|DOJ|European Commission|lawsuit|antitrust|litigation/i, label: 'Antitrust & Regulatory Scrutiny' },
     geopolitical: { regex: /tariff|China|Taiwan|export control|sanction|trade war|geopolitical|foreign government/i, label: 'Geopolitical & Cross-Border Trade Barriers' },
     supplyChain: { regex: /supplier|single-source|foundry|manufacturing partner|component shortage|supply chain|logistics|inventory/i, label: 'Supply Chain & Manufacturing Dependencies' },
@@ -229,7 +298,7 @@ export function extractSecRiskInsights(riskFactors: string, companyName: string,
     foreignExchange: { regex: /foreign exchange|currency fluctuation|dollar strength|hedging|fluctuation in exchange/i, label: 'Foreign Exchange & Global Currency Volatility' }
   };
 
-  for (const [key, { regex, label }] of Object.entries(themeKeywords)) {
+  for (const { regex, label } of Object.values(themeKeywords)) {
     const matchingSentence = rawSentences.find(s => regex.test(s));
     if (matchingSentence && !identifiedThemes.includes(label)) {
       identifiedThemes.push(label);
@@ -263,14 +332,7 @@ export function extractSecRiskInsights(riskFactors: string, companyName: string,
   };
 }
 
-export function synthesizeCatalystSignals(signals: string[], ticker: string): {
-  bullishCount: number;
-  bearishCount: number;
-  neutralCount: number;
-  bullishReasons: string[];
-  bearishReasons: string[];
-  consensusNarrative: string;
-} {
+export function synthesizeCatalystSignals(signals: string[], _ticker: string): CatalystSignalsSynthesis {
   let bullishCount = 0;
   let bearishCount = 0;
   let neutralCount = 0;
@@ -412,21 +474,14 @@ A forensic examination of ${companyName}'s SEC EDGAR Item 1A risk disclosures id
   return `${section1}\n\n${section2}\n\n${section3}\n\n${section4}`;
 }
 
-export async function generateAnalystNote(
-  ticker: string,
-  companyName: string,
-  sector: string,
-  industry: string,
-  metrics: ComputedMetrics,
-  riskFactors: string,
-  catalystSignals: string[] = []
-): Promise<string> {
+export function buildAnalystPrompt(input: AnalystNotePromptInput): string {
+  const { ticker, companyName, sector, industry, metrics, riskFactors, catalystSignals = [] } = input;
   const marginTier = classifyMargin(metrics.grossMargin, metrics.operatingMargin, metrics.netMargin);
   const growthRegime = classifyGrowth(metrics.revenueGrowth);
   const leverageCondition = classifyLeverage(metrics.debtToEquity);
   const roeQuality = classifyRoe(metrics.returnOnEquity);
 
-  const prompt = `
+  return `
 You are a Managing Director and Lead Equity Research Analyst at a top-tier institutional investment bank.
 Write an exhaustive, high-conviction Institutional Research Thesis for ${companyName} (${ticker}).
 Tone: Objective, institutional, rigorous, highly analytical. No fluff, conversational filler, or boilerplate disclaimers.
@@ -472,6 +527,26 @@ Formatting Rules:
 - Provide dense, institutional-grade analytical prose under each section. Do not use bullet points or numbered lists within sections.
 - Make the analysis deeply unique, customized, and tailored to ${companyName} (${ticker}). Do not use generic boilerplate sentences.
 `;
+}
+
+export async function generateAnalystNote(
+  ticker: string,
+  companyName: string,
+  sector: string,
+  industry: string,
+  metrics: ComputedMetrics,
+  riskFactors: string,
+  catalystSignals: string[] = []
+): Promise<string> {
+  const prompt = buildAnalystPrompt({
+    ticker,
+    companyName,
+    sector,
+    industry,
+    metrics,
+    riskFactors,
+    catalystSignals
+  });
 
   // Gemini model selection with fallback
   const modelsToTry = [
@@ -497,20 +572,21 @@ Formatting Rules:
       
       for (const model of modelsToTry) {
         try {
-          const response = await ai.models.generateContent({
+          const response = (await ai.models.generateContent({
             model: model,
             contents: prompt,
             config: {
               temperature: 0.25,
             }
-          });
+          })) as unknown as GeminiGenerateContentResponse;
           
           const text = response.text?.trim();
           if (text && text.length > 200 && text.includes('1. STRATEGIC MOAT') && text.includes('2. CAPITAL ALLOCATION')) {
             return text;
           }
-        } catch (error: any) {
-          const errMsg = error?.message || String(error);
+        } catch (error: unknown) {
+          const geminiErr = error as GeminiApiError;
+          const errMsg = geminiErr?.message || (error instanceof Error ? error.message : String(error));
           console.error(`[Analyst Note] Error with model ${model} and key ${currentKey.substring(0, 6)}...: ${errMsg}`);
           if (errMsg.includes('not found') || errMsg.includes('Invalid model') || errMsg.includes('unsupported')) {
             continue; // Try next model in list

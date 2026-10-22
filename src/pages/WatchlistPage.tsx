@@ -5,7 +5,7 @@ import apiClient from '../utils/apiClient.js';
 import { StockCard } from '../components/StockCard.jsx';
 import { CardSkeleton } from '../components/Skeleton.jsx';
 import { SearchBar } from '../components/SearchBar.jsx';
-import { Star, Newspaper, Plus, Sparkles, Building, Briefcase, ExternalLink, Activity, RefreshCw, AlertCircle } from 'lucide-react';
+import { Star, Newspaper, Plus, ExternalLink, Activity, RefreshCw, AlertCircle } from 'lucide-react';
 import { formatDate } from '../utils/formatters.js';
 
 interface WatchItem {
@@ -46,6 +46,11 @@ const SUGGESTED_STOCKS = [
   { symbol: 'RELIANCE.NS', name: 'Reliance Industries', exchange: 'NSE' }
 ];
 
+export function getWatchlistAuthHeaders(): Record<string, string> {
+  const token = import.meta.env.VITE_WATCHLIST_TOKEN;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export const WatchlistPage: React.FC = () => {
   const queryClient = useQueryClient();
 
@@ -59,7 +64,7 @@ export const WatchlistPage: React.FC = () => {
   });
 
   // 1.5. Fetch global market indices
-  const { data: indices, isPending: isIndicesPending, refetch: refetchIndices } = useQuery<IndexQuote[]>({
+  const { data: indices, isPending: isIndicesPending, isFetching: isIndicesFetching, refetch: refetchIndices } = useQuery<IndexQuote[]>({
     queryKey: ['marketIndicesMain'],
     queryFn: async () => {
       const resp = await apiClient.get('/market/indices');
@@ -81,7 +86,27 @@ export const WatchlistPage: React.FC = () => {
   // 3. Mutator to add stock instantly
   const addStockMutation = useMutation({
     mutationFn: async (symbol: string) => {
-      await apiClient.post('/watchlist/add', { symbol });
+      const headers = getWatchlistAuthHeaders();
+      if (Object.keys(headers).length > 0) {
+        await apiClient.post('/watchlist/add', { symbol }, { headers });
+      } else {
+        await apiClient.post('/watchlist/add', { symbol });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watchlist'] });
+    }
+  });
+
+  // 3.5. Mutator to remove stock from watchlist
+  const removeStockMutation = useMutation({
+    mutationFn: async (symbol: string) => {
+      const headers = getWatchlistAuthHeaders();
+      if (Object.keys(headers).length > 0) {
+        await apiClient.delete(`/watchlist/${encodeURIComponent(symbol)}`, { headers });
+      } else {
+        await apiClient.delete(`/watchlist/${encodeURIComponent(symbol)}`);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['watchlist'] });
@@ -91,14 +116,14 @@ export const WatchlistPage: React.FC = () => {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8 animate-fade-in">
       {/* 1. Centered Hero Search Section */}
-      <div className="relative z-50 rounded-3xl border border-slate-800 bg-[#0D111A]/95 backdrop-blur-2xl shadow-3d-lg py-12 px-6 sm:px-12 text-center">
+      <section aria-labelledby="watchlist-hero-heading" className="relative z-50 rounded-3xl border border-slate-800 bg-[#0D111A]/95 backdrop-blur-2xl shadow-3d-lg py-12 px-6 sm:px-12 text-center">
         <div className="relative z-10 max-w-3xl mx-auto space-y-6">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold uppercase tracking-wider shadow-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
             <span>INSTITUTIONAL EQUITY INTELLIGENCE</span>
           </div>
           
-          <h1 className="font-sans text-3xl sm:text-5xl font-black tracking-tight text-slate-100 leading-tight">
+          <h1 id="watchlist-hero-heading" className="font-sans text-3xl sm:text-5xl font-black tracking-tight text-slate-100 leading-tight">
             Financial Terminal & <br className="hidden sm:inline" />
             <span className="text-emerald-400">Intrinsic Value Screener</span>.
           </h1>
@@ -114,33 +139,42 @@ export const WatchlistPage: React.FC = () => {
             />
           </div>
         </div>
-      </div>
+      </section>
 
       {/* 1.5 Global Market Indices Benchmarks Row */}
-      <div className="space-y-3">
+      <section aria-labelledby="market-benchmarks-heading" className="space-y-3">
         <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
           <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-emerald-400" />
-            <h2 className="font-sans text-sm font-bold text-slate-200 tracking-tight">Global Market Benchmarks</h2>
+            <Activity aria-hidden="true" className="h-4 w-4 text-emerald-400" />
+            <h2 id="market-benchmarks-heading" className="font-sans text-sm font-bold text-slate-200 tracking-tight">Global Market Benchmarks</h2>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-mono text-[10px] text-slate-500 uppercase tracking-wider hidden sm:inline-block">
               Multi-Exchange Telemetry
             </span>
             <button
+              type="button"
               onClick={() => refetchIndices()}
-              className="p-1 rounded text-slate-400 hover:text-emerald-400 hover:bg-slate-800/60 transition-colors cursor-pointer"
+              className="p-1 rounded text-slate-400 hover:text-emerald-400 hover:bg-slate-800/60 transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
               title="Sync Live Indices"
+              aria-label="Refresh market indices"
+              aria-busy={isIndicesFetching}
             >
-              <RefreshCw className="h-3 w-3" />
+              <RefreshCw aria-hidden="true" className={`h-3 w-3 ${isIndicesFetching ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div
+          role={isIndicesPending ? 'status' : undefined}
+          aria-busy={isIndicesPending || undefined}
+          aria-live={isIndicesPending ? 'polite' : 'off'}
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"
+        >
+          {isIndicesPending && <span className="sr-only">Loading market indices</span>}
           {isIndicesPending ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-20 bg-slate-800/60 rounded-xl animate-pulse border border-slate-800 shadow-3d" />
+              <div key={i} aria-hidden="true" className="h-20 bg-slate-800/60 rounded-xl animate-pulse border border-slate-800 shadow-3d" />
             ))
           ) : (
             indices?.map((idx) => {
@@ -159,7 +193,7 @@ export const WatchlistPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="mt-1.5 flex items-center gap-1 text-slate-500 font-mono text-[9px]">
-                      <AlertCircle className="h-2.5 w-2.5" />
+                      <AlertCircle aria-hidden="true" className="h-2.5 w-2.5" />
                       <span>Unavailable</span>
                     </div>
                   </div>
@@ -185,7 +219,7 @@ export const WatchlistPage: React.FC = () => {
                     <span className="font-mono font-bold text-xs sm:text-sm text-slate-100 tabular-nums truncate">
                       {idx.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
-                    <span className={`font-mono text-[10px] font-bold px-1.5 py-0.2 rounded border tabular-nums shrink-0 ${
+                    <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded border tabular-nums shrink-0 ${
                       isUp ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
                     }`}>
                       {isUp ? '+' : ''}{idx.change_pct.toFixed(2)}%
@@ -196,17 +230,17 @@ export const WatchlistPage: React.FC = () => {
             })
           )}
         </div>
-      </div>
+      </section>
 
       {/* 2. Main Two-Column Hub Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left 2 Columns: Watchlist Grid */}
-        <div className="lg:col-span-2 space-y-6">
+        <section aria-labelledby="active-watchlist-heading" className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
             <div className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-amber-400 fill-current" />
-              <h2 className="font-sans text-lg font-bold text-slate-100 tracking-tight">Active Portfolio Watchlist</h2>
+              <Star aria-hidden="true" className="h-5 w-5 text-amber-400 fill-current" />
+              <h2 id="active-watchlist-heading" className="font-sans text-lg font-bold text-slate-100 tracking-tight">Active Portfolio Watchlist</h2>
             </div>
             
             <Link 
@@ -218,7 +252,8 @@ export const WatchlistPage: React.FC = () => {
           </div>
 
           {isWatchPending ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div role="status" aria-busy="true" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <span className="sr-only">Loading watchlist</span>
               {[1, 2, 4, 3].map((idx) => (
                 <CardSkeleton key={idx} />
               ))}
@@ -235,6 +270,7 @@ export const WatchlistPage: React.FC = () => {
                   change={stock.change}
                   change_pct={stock.change_pct}
                   isStarred={true}
+                  onRemove={(sym) => removeStockMutation.mutateAsync(sym)}
                 />
               ))}
             </div>
@@ -242,7 +278,7 @@ export const WatchlistPage: React.FC = () => {
             /* Watchlist Empty Active State */
             <div className="border border-dashed border-slate-800 rounded-3xl p-8 sm:p-12 text-center bg-[#0D111A]/90 backdrop-blur-xl shadow-xl">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-                <Star className="h-6 w-6" />
+                <Star aria-hidden="true" className="h-6 w-6" />
               </div>
               <h3 className="mt-4 font-sans text-base font-bold text-slate-200">Watchlist is currently empty</h3>
               <p className="mt-1 font-sans text-xs text-slate-400 max-w-sm mx-auto">
@@ -254,35 +290,41 @@ export const WatchlistPage: React.FC = () => {
                 {SUGGESTED_STOCKS.map((s) => (
                   <button
                     key={s.symbol}
+                    type="button"
                     onClick={() => addStockMutation.mutate(s.symbol)}
                     disabled={addStockMutation.isPending}
+                    aria-busy={addStockMutation.isPending}
+                    aria-label={`Add ${s.symbol} to watchlist`}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-emerald-500/15 hover:border-emerald-500/40 text-xs font-mono font-bold text-slate-300 hover:text-emerald-400 transition-all cursor-pointer"
                   >
-                    <Plus className="h-3 w-3 text-emerald-400" />
+                    <Plus aria-hidden="true" className="h-3 w-3 text-emerald-400" />
                     <span>{s.symbol}</span>
                   </button>
                 ))}
               </div>
             </div>
           )}
-        </div>
+        </section>
 
         {/* Right 1 Column: Immersive Financial Hub News */}
-        <div className="space-y-6 rounded-3xl border border-slate-800 bg-[#0D111A]/95 backdrop-blur-2xl shadow-2xl p-6">
+        <section aria-labelledby="market-news-heading" className="space-y-6 rounded-3xl border border-slate-800 bg-[#0D111A]/95 backdrop-blur-2xl shadow-2xl p-6">
           <div className="flex items-center gap-2 border-b border-slate-800/80 pb-4">
-            <Newspaper className="h-5 w-5 text-emerald-400" />
-            <h2 className="font-sans text-lg font-bold text-slate-100 tracking-tight">Market Telemetry & Wire</h2>
+            <Newspaper aria-hidden="true" className="h-5 w-5 text-emerald-400" />
+            <h2 id="market-news-heading" className="font-sans text-lg font-bold text-slate-100 tracking-tight">Market Telemetry & Wire</h2>
           </div>
 
           <div className="space-y-4">
             {isNewsPending ? (
-              Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="border-b border-slate-800 pb-4 last:border-0 space-y-2 animate-pulse">
-                  <div className="h-3 w-28 bg-slate-800 rounded" />
-                  <div className="h-4 w-full bg-slate-800 rounded" />
-                  <div className="h-3.5 w-5/6 bg-slate-800 rounded" />
-                </div>
-              ))
+              <div role="status" aria-busy="true" className="space-y-4">
+                <span className="sr-only">Loading market news</span>
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <div key={idx} aria-hidden="true" className="border-b border-slate-800 pb-4 last:border-0 space-y-2 animate-pulse">
+                    <div className="h-3 w-28 bg-slate-800 rounded" />
+                    <div className="h-4 w-full bg-slate-800 rounded" />
+                    <div className="h-3.5 w-5/6 bg-slate-800 rounded" />
+                  </div>
+                ))}
+              </div>
             ) : news && news.length > 0 ? (
               news.map((item) => (
                 <article key={item.id} className="border-b border-slate-800/80 pb-4 last:border-0 last:pb-0 group transition-all duration-200 hover:-translate-y-0.5">
@@ -299,11 +341,11 @@ export const WatchlistPage: React.FC = () => {
                     href={item.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="block group-hover:text-emerald-400 outline-none transition-colors"
+                    className="block group-hover:text-emerald-400 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 transition-colors"
                   >
                     <h3 className="font-sans font-bold text-xs sm:text-[13px] leading-snug text-slate-200 group-hover:text-emerald-400 flex items-start gap-1">
                       <span>{item.headline}</span>
-                      <ExternalLink className="h-3 w-3 shrink-0 text-slate-500 group-hover:text-emerald-400 inline-block mt-0.5" />
+                      <ExternalLink aria-hidden="true" className="h-3 w-3 shrink-0 text-slate-500 group-hover:text-emerald-400 inline-block mt-0.5" />
                     </h3>
                   </a>
                   
@@ -315,13 +357,13 @@ export const WatchlistPage: React.FC = () => {
                 </article>
               ))
             ) : (
-              <div className="text-center py-8 text-slate-500 border border-dashed border-slate-800 rounded-xl bg-[#080B11]">
+              <div role="status" className="text-center py-8 text-slate-500 border border-dashed border-slate-800 rounded-xl bg-[#080B11]">
                 <p className="font-mono text-xs">Bulletins feed temporarily offline</p>
                 <p className="font-mono text-[10px] text-slate-600 mt-1">Live background polling active</p>
               </div>
             )}
           </div>
-        </div>
+        </section>
 
       </div>
     </div>

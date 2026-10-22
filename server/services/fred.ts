@@ -10,60 +10,79 @@ export const ALLOWED_SERIES = new Set([
 // 24-hour cache TTL
 const SQLITE_TTL = 24 * 60 * 60 * 1000;
 
-// Benchmark baseline values for reliable offline/fallback macro indicators
-const SERIES_BASELINES: Record<string, { base: number; volatility: number; trend: number }> = {
-  FEDFUNDS: { base: 5.33, volatility: 0.15, trend: -0.02 },
-  DGS10: { base: 4.28, volatility: 0.20, trend: 0.01 },
-  DGS2: { base: 4.55, volatility: 0.25, trend: -0.02 },
-  T10Y2Y: { base: -0.27, volatility: 0.08, trend: 0.01 },
-  BAMLH0A0HYM2: { base: 3.45, volatility: 0.30, trend: 0.02 },
-  CPIAUCSL: { base: 314.5, volatility: 0.8, trend: 0.6 },
-  PCEPI: { base: 122.8, volatility: 0.4, trend: 0.3 },
-  UNRATE: { base: 4.1, volatility: 0.1, trend: 0.01 },
-  PAYEMS: { base: 158500, volatility: 180, trend: 150 },
-  GDPC1: { base: 22850, volatility: 120, trend: 100 },
-  ICSA: { base: 225000, volatility: 8000, trend: -500 },
-  M2SL: { base: 21100, volatility: 80, trend: 45 },
-  RSAFS: { base: 708000, volatility: 4500, trend: 1200 },
-  HOUST: { base: 1380, volatility: 60, trend: -5 },
-  UMCSENT: { base: 68.2, volatility: 2.5, trend: 0.4 },
-  INDIRLTLT01STM: { base: 7.15, volatility: 0.12, trend: -0.01 }
-};
+const CACHE_VERSION = 2;
+const CACHE_SOURCE = 'FRED';
 
-function generateFallbackObservations(seriesId: string) {
-  const meta = SERIES_BASELINES[seriesId] || { base: 100, volatility: 5, trend: 0.5 };
-  const observations = [];
-  const now = new Date();
-  
-  // Generate 36 monthly data points (3 years)
-  for (let i = 36; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const dateStr = d.toISOString().split('T')[0];
-    const wave = Math.sin(i * 0.4) * meta.volatility;
-    const val = (meta.base + (36 - i) * meta.trend * 0.1 + wave).toFixed(2);
-    observations.push({
-      realtime_start: dateStr,
-      realtime_end: dateStr,
-      date: dateStr,
-      value: val
-    });
-  }
+interface FredObservation {
+  realtime_start: string;
+  realtime_end: string;
+  date: string;
+  value: string;
+}
 
+interface FredSeriesPayload {
+  realtime_start: string;
+  realtime_end: string;
+  observation_start: string;
+  observation_end: string;
+  units: string;
+  output_type: number;
+  file_type: string;
+  order_by: string;
+  sort_order: string;
+  count: number;
+  offset: number;
+  limit: number;
+  observations: FredObservation[];
+  available: boolean;
+  reason?: string;
+}
+
+interface CacheEnvelope {
+  version: number;
+  source: string;
+  data: FredSeriesPayload;
+}
+
+function unavailableSeries(reason: string): FredSeriesPayload {
   return {
-    realtime_start: observations[0].date,
-    realtime_end: observations[observations.length - 1].date,
-    observation_start: observations[0].date,
-    observation_end: observations[observations.length - 1].date,
-    units: "Lin",
+    realtime_start: '',
+    realtime_end: '',
+    observation_start: '',
+    observation_end: '',
+    units: 'Lin',
     output_type: 1,
-    file_type: "json",
-    order_by: "observation_date",
-    sort_order: "asc",
-    count: observations.length,
+    file_type: 'json',
+    order_by: 'observation_date',
+    sort_order: 'asc',
+    count: 0,
     offset: 0,
     limit: 100000,
-    observations
+    observations: [],
+    available: false,
+    reason
   };
+}
+
+function readTrustedCache(raw: string): FredSeriesPayload | null {
+  try {
+    const parsed = JSON.parse(raw) as CacheEnvelope;
+    if (
+      parsed?.version === CACHE_VERSION &&
+      parsed?.source === CACHE_SOURCE &&
+      parsed?.data &&
+      Array.isArray(parsed.data.observations)
+    ) {
+      return parsed.data;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function withAvailability(json: FredSeriesPayload): FredSeriesPayload {
+  return { ...json, available: true };
 }
 
 export const fredService = {
@@ -74,27 +93,25 @@ export const fredService = {
     }
 
     const now = Date.now();
-    
-    // Check SQLite cache
+
     const row = db.prepare('SELECT data, fetched_at FROM fred_cache WHERE series_id = ?').get(upperId) as { data: string, fetched_at: number } | undefined;
-    
-    if (row) {
-      if (now - row.fetched_at < SQLITE_TTL) {
-        return JSON.parse(row.data);
+    const cached = row ? readTrustedCache(row.data) : null;
+
+    if (row && !cached) {
+      try {
+        db.prepare('DELETE FROM fred_cache WHERE series_id = ?').run(upperId);
+      } catch (e) {
+        console.warn('[FRED CACHE] Failed to purge unverified cache entry:', e instanceof Error ? e.message : e);
       }
     }
 
-    // Cache miss or expired, fetch from API if key configured
     const apiKey = process.env.FRED_API_KEY;
     if (!apiKey) {
-      // Use high-fidelity synthesized historical series if API key not set
-      const fallback = generateFallbackObservations(upperId);
-      try {
-        db.prepare(
-          'INSERT INTO fred_cache (series_id, data, fetched_at) VALUES (?, ?, ?) ON CONFLICT(series_id) DO UPDATE SET data=excluded.data, fetched_at=excluded.fetched_at'
-        ).run(upperId, JSON.stringify(fallback), now);
-      } catch (_) {}
-      return fallback;
+      return unavailableSeries('FRED API key not configured on server');
+    }
+
+    if (cached && row && now - row.fetched_at < SQLITE_TTL) {
+      return cached;
     }
 
     // Limit to the last 5 years
@@ -103,28 +120,34 @@ export const fredService = {
     const observationStart = fiveYearsAgo.toISOString().split('T')[0]; // YYYY-MM-DD
 
     const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${upperId}&api_key=${apiKey}&file_type=json&sort_order=asc&observation_start=${observationStart}`;
-    
-    let json;
+
+    let json: FredSeriesPayload;
     try {
       json = await fredBreaker.fire(url);
-    } catch (err) {
-      if (row) {
-        console.warn(`[FRED] API failed, serving stale data for ${upperId}`);
-        return JSON.parse(row.data);
+    } catch (err: any) {
+      console.warn(`[FRED] API failed for ${upperId}:`, err?.message ?? err);
+      if (cached) {
+        return cached;
       }
-      return generateFallbackObservations(upperId);
+      return unavailableSeries('FRED API is currently unavailable');
     }
 
-    // Persist to SQLite
+    const payload = withAvailability(json);
+
     try {
+      const envelope: CacheEnvelope = {
+        version: CACHE_VERSION,
+        source: CACHE_SOURCE,
+        data: payload
+      };
       db.prepare(
         'INSERT INTO fred_cache (series_id, data, fetched_at) VALUES (?, ?, ?) ON CONFLICT(series_id) DO UPDATE SET data=excluded.data, fetched_at=excluded.fetched_at'
-      ).run(upperId, JSON.stringify(json), now);
+      ).run(upperId, JSON.stringify(envelope), now);
     } catch (e: any) {
       console.warn('[FRED CACHE] SQLite write failed:', e.message);
     }
 
-    return json;
+    return payload;
   }
 };
 

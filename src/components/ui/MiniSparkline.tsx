@@ -8,6 +8,8 @@ interface MiniSparklineProps {
   strokeWidth?: number;
   showGradient?: boolean;
   className?: string;
+  /** Accessible label. When omitted the sparkline is treated as decorative. */
+  label?: string;
 }
 
 export const MiniSparkline: React.FC<MiniSparklineProps> = ({
@@ -18,6 +20,7 @@ export const MiniSparkline: React.FC<MiniSparklineProps> = ({
   strokeWidth = 1.5,
   showGradient = true,
   className = '',
+  label,
 }) => {
   const gradientId = useId();
 
@@ -57,6 +60,10 @@ export const MiniSparkline: React.FC<MiniSparklineProps> = ({
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
+      role={label ? 'img' : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : 'true'}
+      focusable="false"
       className={`overflow-visible shrink-0 ${className}`}
     >
       <defs>

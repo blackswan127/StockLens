@@ -8,9 +8,6 @@ if (pLimitFn && typeof pLimitFn.default === 'function') {
   pLimitFn = pLimitFn.default;
 }
 
-const CONCURRENCY = 3;
-const DELAY_MS = 400;
-
 // If this many calls in a row fail, assume the Yahoo cookie/crumb session
 // has died mid-run (a known yahoo-finance2 failure mode - see
 // github.com/gadicc/yahoo-finance2 issues #741 and #764) and force a fresh

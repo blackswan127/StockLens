@@ -15,6 +15,7 @@ interface StockCardProps {
   change?: number;
   change_pct?: number;
   isStarred?: boolean;
+  onRemove?: (symbol: string) => Promise<unknown> | void;
 }
 
 export const StockCard: React.FC<StockCardProps> = ({
@@ -24,7 +25,8 @@ export const StockCard: React.FC<StockCardProps> = ({
   price,
   change,
   change_pct,
-  isStarred = false
+  isStarred = false,
+  onRemove
 }) => {
   const queryClient = useQueryClient();
   const prefetch = usePrefetchCompany();
@@ -32,10 +34,19 @@ export const StockCard: React.FC<StockCardProps> = ({
   // Watchlist Star mutations
   const toggleStar = useMutation({
     mutationFn: async () => {
+      if (isStarred && onRemove) {
+        return await onRemove(symbol);
+      }
+      const token = import.meta.env.VITE_WATCHLIST_TOKEN;
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
       if (isStarred) {
-        return await apiClient.delete(`/watchlist/${encodeURIComponent(symbol)}`);
+        return headers
+          ? await apiClient.delete(`/watchlist/${encodeURIComponent(symbol)}`, { headers })
+          : await apiClient.delete(`/watchlist/${encodeURIComponent(symbol)}`);
       } else {
-        return await apiClient.post('/watchlist/add', { symbol });
+        return headers
+          ? await apiClient.post('/watchlist/add', { symbol }, { headers })
+          : await apiClient.post('/watchlist/add', { symbol });
       }
     },
     onSuccess: () => {
@@ -81,6 +92,7 @@ export const StockCard: React.FC<StockCardProps> = ({
                 : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-700/80'
             }`}
             title={isStarred ? 'Remove from Watchlist' : 'Add to Watchlist'}
+            aria-label={isStarred ? `Remove ${symbol} from watchlist` : `Add ${symbol} to watchlist`}
           >
             <Star className={`h-3.5 w-3.5 ${isStarred ? 'fill-current' : ''}`} />
           </button>

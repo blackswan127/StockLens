@@ -3,7 +3,7 @@ const require = createRequire(import.meta.url);
 const PDFDocument = require('pdfkit');
 
 import axios from 'axios';
-import { ReportContent, TableData } from '../render/templates.js';
+import { ReportContent, TableData, ReportProposal } from '../render/templates.js';
 
 // ============================================================
 // COLORS & DESIGN TOKENS
@@ -31,10 +31,35 @@ const MARGIN = 50;
 const PAGE_W = 595.28;
 const CONTENT_W = PAGE_W - MARGIN * 2;  // 495.28
 
+export interface PDFDoc {
+  y: number;
+  page: { height: number; width: number };
+  rect(x: number, y: number, w: number, h: number): PDFDoc;
+  fill(color?: string): PDFDoc;
+  stroke(color?: string): PDFDoc;
+  lineWidth(width: number): PDFDoc;
+  moveTo(x: number, y: number): PDFDoc;
+  lineTo(x: number, y: number): PDFDoc;
+  font(name: string): PDFDoc;
+  fontSize(size: number): PDFDoc;
+  fillColor(color: string): PDFDoc;
+  text(text: string, options?: { width?: number; align?: 'left' | 'right' | 'center' | 'justify'; lineGap?: number }): PDFDoc;
+  text(text: string, x: number, options?: { width?: number; align?: 'left' | 'right' | 'center' | 'justify'; lineGap?: number }): PDFDoc;
+  text(text: string, x: number, y: number, options?: { width?: number; align?: 'left' | 'right' | 'center' | 'justify'; lineGap?: number }): PDFDoc;
+  image(src: Buffer | string, x?: number, y?: number, options?: { width?: number; height?: number }): PDFDoc;
+  addPage(options?: Record<string, unknown>): PDFDoc;
+  moveDown(lines?: number): PDFDoc;
+  on(event: 'data', handler: (chunk: Buffer) => void): PDFDoc;
+  on(event: 'end', handler: () => void): PDFDoc;
+  on(event: 'error', handler: (err: Error) => void): PDFDoc;
+  on(event: string, handler: (...args: unknown[]) => void): PDFDoc;
+  end(): void;
+}
+
 // ============================================================
 // TABLE RENDERER
 // ============================================================
-function drawTable(doc: any, table: TableData, x: number, y: number, colWidths?: number[]) {
+function drawTable(doc: PDFDoc, table: TableData, x: number, y: number, colWidths?: number[]) {
   const cols = table.headers.length;
   const tableW = CONTENT_W;
   const defaultW = tableW / cols;
@@ -89,7 +114,7 @@ function drawTable(doc: any, table: TableData, x: number, y: number, colWidths?:
 // ============================================================
 // SECTION HEADER WITH EMERALD ACCENT BAR
 // ============================================================
-function sectionHead(doc: any, title: string, subtitle?: string) {
+function sectionHead(doc: PDFDoc, title: string, subtitle?: string) {
   if (doc.y > doc.page.height - 120) doc.addPage();
   doc.moveDown(0.8);
 
@@ -109,7 +134,7 @@ function sectionHead(doc: any, title: string, subtitle?: string) {
 // ============================================================
 // LIGHT DIVIDER LINE
 // ============================================================
-function divider(doc: any) {
+function divider(doc: PDFDoc) {
   doc.moveDown(0.25);
   doc.moveTo(MARGIN, doc.y).lineTo(MARGIN + CONTENT_W, doc.y).lineWidth(0.4).stroke(C.divider);
   doc.moveDown(0.35);
@@ -118,7 +143,7 @@ function divider(doc: any) {
 // ============================================================
 // PARAGRAPH HELPER
 // ============================================================
-function bodyText(doc: any, text: string, opts?: { indent?: number }) {
+function bodyText(doc: PDFDoc, text: string, opts?: { indent?: number }) {
   if (doc.y > doc.page.height - 80) doc.addPage();
   const left = MARGIN + (opts?.indent || 0);
   doc.fillColor(C.body).font('Helvetica').fontSize(8.5)
@@ -145,11 +170,11 @@ export async function generatePdf(content: ReportContent): Promise<Buffer> {
 
   return new Promise((resolve, reject) => {
     try {
-      const doc = new PDFDocument({ margin: MARGIN, size: 'A4' });
+      const doc: PDFDoc = new PDFDocument({ margin: MARGIN, size: 'A4' });
       const chunks: Buffer[] = [];
       doc.on('data', (c: Buffer) => chunks.push(c));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', (e: any) => reject(e));
+      doc.on('error', (e: Error) => reject(e));
 
       // ════════════════════════════════════════════
       //  PAGE 1 — COVER & INSTITUTIONAL THESIS
@@ -207,7 +232,7 @@ export async function generatePdf(content: ReportContent): Promise<Buffer> {
         if (doc.y > doc.page.height - 90) doc.addPage();
 
         // Check for numbered section header pattern
-        const m = trimmed.match(/^(\d+\.\s+[A-Z\s&/]+)(?:\n|:|  )(.*)$/s)
+        const m = trimmed.match(/^(\d+\.\s+[A-Z\s&/]+)(?:\n|:| {2})(.*)$/s)
                || trimmed.match(/^([A-Z\s&/]{4,}):?\s*(.*)$/s);
         if (m) {
           doc.moveDown(0.35);
@@ -368,7 +393,7 @@ export async function generatePdf(content: ReportContent): Promise<Buffer> {
       sectionHead(doc, 'Governance — DEF 14A Proxy');
       if (content.proxyStatement?.proposals?.length) {
         const prH = ['Ballot Item', 'Proposal Description', 'Board Rec'];
-        const prR = content.proxyStatement.proposals.slice(0, 5).map((p: any) => [
+        const prR = content.proxyStatement.proposals.slice(0, 5).map((p: ReportProposal) => [
           p.item || 'Proposal',
           truncSentence(p.description || 'Shareholder ballot item', 80),
           p.boardRecommendation || 'FOR'

@@ -18,6 +18,41 @@ interface ChartPoint {
   volume: number;
 }
 
+interface ChartTooltipEntry {
+  payload: ChartPoint;
+}
+
+interface ChartTooltipProps {
+  active?: boolean;
+  payload?: ChartTooltipEntry[];
+  exchange: string;
+  currencyCode: string;
+}
+
+interface ChartMouseEvent {
+  activePayload?: ChartTooltipEntry[];
+  activeTooltipIndex?: number | string | null;
+  activeIndex?: number | string | null;
+  isTooltipActive?: boolean;
+}
+
+const CustomTooltip = ({ active, payload, exchange, currencyCode }: ChartTooltipProps) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 shadow-md font-sans text-xs flex flex-col gap-0.5 pointer-events-none select-none min-w-[130px]">
+        <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Price</span>
+        <span className="font-mono font-black text-neutral-950 text-sm">
+          {formatPrice(data.close, exchange)} {currencyCode}
+        </span>
+        <div className="h-px bg-neutral-250 my-1.5" />
+        <span className="text-[10px] text-neutral-700 font-semibold">{data.date}</span>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface ChartProps {
   symbol: string;
   exchange?: string;
@@ -134,23 +169,6 @@ export const Chart: React.FC<ChartProps> = ({ symbol, exchange = 'US' }) => {
     return <span className="text-[11px] font-semibold text-neutral-600">Market closed • Feeds active</span>;
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 shadow-md font-sans text-xs flex flex-col gap-0.5 pointer-events-none select-none min-w-[130px]">
-          <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Price</span>
-          <span className="font-mono font-black text-neutral-950 text-sm">
-            {formatPrice(data.close, exchange)} {currencyCode}
-          </span>
-          <div className="h-px bg-neutral-250 my-1.5" />
-          <span className="text-[10px] text-neutral-700 font-semibold">{data.date}</span>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div className="border border-neutral-200/60 bg-white rounded-3xl p-6 sm:p-7 shadow-xs hover:shadow-sm transition-shadow duration-300 flex flex-col gap-6 font-sans relative overflow-hidden">
       
@@ -259,9 +277,11 @@ export const Chart: React.FC<ChartProps> = ({ symbol, exchange = 'US' }) => {
               <AreaChart 
                 data={chartData} 
                 margin={{ top: 12, right: 8, left: -24, bottom: 0 }}
-                onMouseMove={(e: any) => {
+                onMouseMove={(e: ChartMouseEvent) => {
                   if (e && e.activePayload && e.activePayload.length > 0) {
-                    setHoveredPoint(e.activePayload[0].payload as ChartPoint);
+                    setHoveredPoint(e.activePayload[0].payload);
+                  } else if (e && typeof e.activeTooltipIndex === 'number' && chartData && chartData[e.activeTooltipIndex]) {
+                    setHoveredPoint(chartData[e.activeTooltipIndex]);
                   }
                 }}
                 onMouseLeave={() => {
@@ -304,13 +324,13 @@ export const Chart: React.FC<ChartProps> = ({ symbol, exchange = 'US' }) => {
                   fontWeight={700}
                   tickLine={false} 
                   axisLine={false}
-                  tickFormatter={(val) => `${Number(val).toFixed(0)}`}
+                  tickFormatter={(val: number | string) => `${Number(val).toFixed(0)}`}
                   domain={[yMin, yMax]}
                   dx={-6}
                 />
                 
                 <Tooltip 
-                  content={<CustomTooltip />} 
+                  content={<CustomTooltip exchange={exchange} currencyCode={currencyCode} />} 
                   cursor={{ stroke: '#dadce0', strokeWidth: 1.5, strokeDasharray: '3 3' }} 
                 />
                 

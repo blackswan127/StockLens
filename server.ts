@@ -61,11 +61,10 @@ async function startServer() {
   
   app.use(compression({ threshold: 1024 }));
   app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
   app.use(pinoHttp({ logger }));
 
   // Health endpoint
-  app.get('/health', (req, res) => {
+  app.get('/health', (_req, res) => {
     const dbOk = (() => { try { db.prepare('SELECT 1').get(); return true; } catch { return false; } })();
     res.setHeader('Cache-Control', 'no-store');
     res.status(dbOk ? 200 : 503).json({
@@ -142,7 +141,7 @@ async function startServer() {
         }
       },
     }));
-    app.get('*', (req, res) => {
+    app.get('*', (_req, res) => {
       res.setHeader('Cache-Control', 'no-cache');
       res.sendFile(path.join(distPath, 'index.html'));
     });

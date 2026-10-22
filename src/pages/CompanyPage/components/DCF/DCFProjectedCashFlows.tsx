@@ -1,8 +1,18 @@
 import React from 'react';
+import type { DCFResult } from '../../../../utils/dcfCalculator.js';
 import { formatMarketCap, formatPercentChange } from '../../../../utils/formatters.js';
 
+export interface ProjectedCashFlowItem {
+  year: number;
+  revenue: number;
+  growthRate: number;
+  fcfMargin: number;
+  fcf: number;
+  discountedFcf: number;
+}
+
 interface DCFProjectedCashFlowsProps {
-  dcfResult: any;
+  dcfResult: DCFResult | null;
   exchange: string;
   symbol: string;
 }
@@ -28,7 +38,7 @@ export const DCFProjectedCashFlows: React.FC<DCFProjectedCashFlowsProps> = ({ dc
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
-            {dcfResult.projectedYears.map((item: any, idx: number) => (
+            {dcfResult.projectedYears.map((item: ProjectedCashFlowItem, idx: number) => (
               <tr key={idx} className="hover:bg-[#141A26] transition-colors">
                 <td className="py-2.5 px-4 font-mono font-bold text-slate-200">Year {idx + 1} ({item.year})</td>
                 <td className="text-right py-2.5 px-4 font-mono text-slate-300">{formatMarketCap(item.revenue, exchange, symbol)}</td>

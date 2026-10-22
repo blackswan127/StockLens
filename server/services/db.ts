@@ -27,18 +27,6 @@ db.exec(`
     country TEXT NOT NULL
   );
 
-  CREATE TABLE IF NOT EXISTS historical_prices (
-    symbol TEXT NOT NULL,
-    date INTEGER NOT NULL,
-    open REAL,
-    high REAL,
-    low REAL,
-    close REAL,
-    volume INTEGER,
-    PRIMARY KEY (symbol, date)
-  ) WITHOUT ROWID;
-
-
   CREATE TABLE IF NOT EXISTS quotes (
     symbol TEXT PRIMARY KEY,
     price REAL NOT NULL,
@@ -104,6 +92,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_stocks_exchange ON stocks(exchange);
   CREATE INDEX IF NOT EXISTS idx_ratios_updated ON ratios_cache(updated_at);
   CREATE INDEX IF NOT EXISTS idx_quotes_symbol ON quotes(symbol);
+  CREATE INDEX IF NOT EXISTS idx_cache_log_hit_at ON cache_log(hit_at);
 `);
 
 // Run Migrations

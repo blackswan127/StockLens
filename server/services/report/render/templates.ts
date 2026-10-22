@@ -1,12 +1,56 @@
 import { YFData } from '../data/yahooFinanceService.js';
 import { SecData } from '../data/secEdgarService.js';
 import { FredData } from '../data/fredService.js';
-import { ComputedMetrics } from '../compute/ratios.js';
+import { ComputedMetrics, DuPontAnalysis } from '../compute/ratios.js';
 import { PeerMetric } from '../data/peerService.js';
 
 export interface TableData {
   headers: string[];
   rows: (string | number)[][];
+}
+
+export interface ReportProposal {
+  item: string;
+  description: string;
+  boardRecommendation?: string | null;
+}
+
+export interface ReportProxyStatement {
+  url?: string;
+  proposals?: ReportProposal[];
+}
+
+export interface ReportRiskDiffParagraph {
+  status: 'added' | 'removed' | 'unchanged';
+  text: string;
+}
+
+export interface ReportRiskDiff {
+  symbol?: string;
+  filingDate?: string;
+  paragraphs?: ReportRiskDiffParagraph[];
+  [key: string]: unknown;
+}
+
+export interface FundamentalHistoryItem {
+  date: string;
+  totalRevenue?: number | null;
+  grossProfit?: number | null;
+  grossMargin?: number | null;
+  operatingExpenses?: number | null;
+  operatingIncome?: number | null;
+  netIncome?: number | null;
+  netMargin?: number | null;
+  revenueGrowth?: number | null;
+  totalAssets?: number | null;
+  totalLiabilitiesNetMinorityInterest?: number | null;
+  totalDebt?: number | null;
+  stockholdersEquity?: number | null;
+  operatingCashFlow?: number | null;
+  investingCashFlow?: number | null;
+  financingCashFlow?: number | null;
+  freeCashFlow?: number | null;
+  [key: string]: unknown;
 }
 
 export interface ReportContent {
@@ -52,18 +96,75 @@ export interface ReportContent {
 
   scenarios: TableData;
 
-  dupont: any;
-  growth: any;
+  dupont: DuPontAnalysis | null;
+  growth: Record<string, unknown> | unknown[] | null;
   peers: PeerMetric[];
-  congressionalTrades: any[];
-  proxyStatement: any;
+  proxyStatement: ReportProxyStatement | null;
 
   riskFactors: string;
-  riskDiff: any;
+  riskDiff: ReportRiskDiff | null;
 
   macroContext: string;
   bullBearSummary: string;
   dataFreshness: Record<string, string>;
+}
+
+interface QuoteData {
+  exchangeName?: string;
+  regularMarketPrice?: number | null;
+  currentPrice?: number | null;
+  price?: number | null;
+  regularMarketChange?: number | null;
+  regularMarketChangePercent?: number | null;
+  regularMarketTime?: Date | number;
+  fiftyTwoWeekLow?: number | null;
+  fiftyTwoWeekHigh?: number | null;
+  marketCap?: number | null;
+  shortName?: string;
+  trailingPE?: number | null;
+  forwardPE?: number | null;
+  dividendYield?: number | null;
+  beta?: number | null;
+  [key: string]: unknown;
+}
+
+interface ProfileData {
+  sector?: string;
+  industry?: string;
+  finnhubIndustry?: string;
+  longName?: string;
+  financialData?: { revenueGrowth?: number; targetMeanPrice?: number };
+  earningsTrend?: Record<string, unknown> | unknown[] | null;
+  [key: string]: unknown;
+}
+
+interface StatsData {
+  marketCap?: number | null;
+  beta?: number | null;
+  targetMeanPrice?: number | null;
+  priceToBook?: number | null;
+  enterpriseToEbitda?: number | null;
+  pegRatio?: number | null;
+  trailingAnnualDividendYield?: number | null;
+  priceToSalesTrailing12Months?: number | null;
+  [key: string]: unknown;
+}
+
+interface QuoteTypeData {
+  longName?: string;
+  shortName?: string;
+  exchange?: string;
+  quoteType?: string;
+  [key: string]: unknown;
+}
+
+interface SummaryDetailData {
+  fiftyTwoWeekLow?: number | null;
+  fiftyTwoWeekHigh?: number | null;
+  trailingPE?: number | null;
+  forwardPE?: number | null;
+  priceToSalesTrailing12Months?: number | null;
+  [key: string]: unknown;
 }
 
 function formatCurrency(num: number | null | undefined): string {
@@ -91,7 +192,7 @@ function calculateCAGR(oldVal: number, newVal: number, years: number): string {
   return `${cagr.toFixed(1)}%`;
 }
 
-function formatTableDataWithCAGR(fundamentals: any[], metricKeys: {key: string, label: string, type?: string}[]): TableData | undefined {
+function formatTableDataWithCAGR(fundamentals: FundamentalHistoryItem[], metricKeys: {key: string, label: string, type?: string}[]): TableData | undefined {
   if (!fundamentals || fundamentals.length === 0) return undefined;
   const sorted = [...fundamentals].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const last3 = sorted.slice(-3);
@@ -99,17 +200,19 @@ function formatTableDataWithCAGR(fundamentals: any[], metricKeys: {key: string, 
   const headers = ['Metric', ...last3.map(f => new Date(f.date).getFullYear().toString()), '2Y CAGR'];
 
   const rows = metricKeys.map(mk => {
-    const row = [mk.label];
+    const row: (string | number)[] = [mk.label];
     last3.forEach(f => {
       const val = f[mk.key];
       if (val === undefined || val === null) {
         row.push('N/A');
-      } else {
+      } else if (typeof val === 'number') {
         if (mk.type === 'percent') {
           row.push(val !== 0 ? `${(val * 100).toFixed(1)}%` : '-');
         } else {
           row.push(formatCurrency(val));
         }
+      } else {
+        row.push(String(val));
       }
     });
     
@@ -118,7 +221,9 @@ function formatTableDataWithCAGR(fundamentals: any[], metricKeys: {key: string, 
     if (last3.length >= 3 && mk.type !== 'percent') {
       const oldVal = last3[0][mk.key];
       const newVal = last3[last3.length - 1][mk.key];
-      cagr = calculateCAGR(oldVal, newVal, 2); // 3 points = 2 intervals
+      if (typeof oldVal === 'number' && typeof newVal === 'number') {
+        cagr = calculateCAGR(oldVal, newVal, 2); // 3 points = 2 intervals
+      }
     }
     row.push(cagr);
     return row;
@@ -237,44 +342,47 @@ export function generateReportContent(
   metrics: ComputedMetrics,
   chartUrl: string,
   peers: PeerMetric[],
-  hfResult?: any,
+  _hfResult?: unknown,
   analystNote?: string
 ): ReportContent {
   const fmt = (num: number | null | undefined, suffix: string = '') => (num !== null && num !== undefined && !isNaN(num)) ? `${num.toFixed(2)}${suffix}` : 'N/A';
 
-  const profile = yfData.profile?.assetProfile || {};
-  const quote = yfData.profile?.price || yfData.quoteSummary?.financialData || {};
-  const stats = yfData.profile?.defaultKeyStatistics || {};
-  const quoteType = yfData.quoteSummary?.quoteType || {};
+  const profile = (yfData.profile?.assetProfile || {}) as ProfileData;
+  const quote = (yfData.profile?.price || yfData.quoteSummary?.financialData || {}) as QuoteData;
+  const stats = (yfData.profile?.defaultKeyStatistics || {}) as StatsData;
+  const quoteType = (yfData.quoteSummary?.quoteType || {}) as QuoteTypeData;
   
-  const companyName = quoteType.longName || quoteType.shortName || quote.shortName || profile.longName || ticker;
-  const sector = profile.sector || profile.finnhubIndustry || 'Unknown';
-  const industry = profile.industry || profile.finnhubIndustry || 'Unknown';
-  const exchange = quote.exchangeName || quoteType.exchange || 'US Market';
+  const companyName = String(quoteType.longName || quoteType.shortName || quote.shortName || profile.longName || ticker);
+  const sector = String(profile.sector || profile.finnhubIndustry || 'Unknown');
+  const industry = String(profile.industry || profile.finnhubIndustry || 'Unknown');
+  const exchange = String(quote.exchangeName || quoteType.exchange || 'US Market');
 
-  const currentPrice = fmt(quote.regularMarketPrice || quote.currentPrice);
-  const changeRaw = quote.regularMarketChange || 0;
-  const changePct = quote.regularMarketChangePercent || 0;
+  const currentPrice = fmt(typeof quote.regularMarketPrice === 'number' ? quote.regularMarketPrice : typeof quote.currentPrice === 'number' ? quote.currentPrice : null);
+  const changeRaw = typeof quote.regularMarketChange === 'number' ? quote.regularMarketChange : 0;
+  const changePct = typeof quote.regularMarketChangePercent === 'number' ? quote.regularMarketChangePercent : 0;
   const priceChange = `${changeRaw > 0 ? '+' : ''}${fmt(changeRaw)} (${changePct > 0 ? '+' : ''}${fmt(changePct * 100, '%')})`;
-  const summaryDetail = yfData.quoteSummary?.summaryDetail || {};
-  const fiftyTwoWeekRange = `${fmt(summaryDetail.fiftyTwoWeekLow || quote.fiftyTwoWeekLow)} - ${fmt(summaryDetail.fiftyTwoWeekHigh || quote.fiftyTwoWeekHigh)}`;
-  const marketCap = formatCurrency(quote.marketCap || stats.marketCap);
+  const summaryDetail = (yfData.quoteSummary?.summaryDetail || {}) as SummaryDetailData;
+  const fiftyTwoWeekRange = `${fmt(typeof summaryDetail.fiftyTwoWeekLow === 'number' ? summaryDetail.fiftyTwoWeekLow : typeof quote.fiftyTwoWeekLow === 'number' ? quote.fiftyTwoWeekLow : null)} - ${fmt(typeof summaryDetail.fiftyTwoWeekHigh === 'number' ? summaryDetail.fiftyTwoWeekHigh : typeof quote.fiftyTwoWeekHigh === 'number' ? quote.fiftyTwoWeekHigh : null)}`;
+  const marketCap = formatCurrency(typeof quote.marketCap === 'number' ? quote.marketCap : typeof stats.marketCap === 'number' ? stats.marketCap : null);
 
   // Fundamentals and historical progression
-  const fundamentals = yfData.fundamentals || [];
+  const fundamentals = (yfData.fundamentals as FundamentalHistoryItem[]) || [];
   const sortedFund = [...fundamentals].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   sortedFund.forEach((f, i) => {
-    f.grossMargin = f.totalRevenue && f.grossProfit ? (f.grossProfit / f.totalRevenue) : 0;
-    f.netMargin = f.totalRevenue && f.netIncome ? (f.netIncome / f.totalRevenue) : 0;
+    const totRev = typeof f.totalRevenue === 'number' ? f.totalRevenue : 0;
+    const gp = typeof f.grossProfit === 'number' ? f.grossProfit : 0;
+    const ni = typeof f.netIncome === 'number' ? f.netIncome : 0;
+    f.grossMargin = totRev && gp ? (gp / totRev) : 0;
+    f.netMargin = totRev && ni ? (ni / totRev) : 0;
     if (i > 0) {
-      const prevRev = sortedFund[i - 1].totalRevenue;
-      f.revenueGrowth = prevRev ? (f.totalRevenue / prevRev) - 1 : 0;
+      const prevRev = typeof sortedFund[i - 1].totalRevenue === 'number' ? (sortedFund[i - 1].totalRevenue as number) : 0;
+      f.revenueGrowth = prevRev ? (totRev / prevRev) - 1 : 0;
     } else {
       f.revenueGrowth = 0;
     }
     // Fallback compute for operating expenses if missing
     if (f.operatingExpenses === undefined || f.operatingExpenses === null) {
-      if (f.grossProfit !== undefined && f.operatingIncome !== undefined) {
+      if (typeof f.grossProfit === 'number' && typeof f.operatingIncome === 'number') {
         f.operatingExpenses = f.grossProfit - f.operatingIncome;
       }
     }
@@ -315,18 +423,19 @@ export function generateReportContent(
   const bullBearSummary = balancedPoints.join('\n');
 
   // Quantitative Scenario Calculations
-  const rawBeta = stats.beta ?? quote.beta ?? yfData.quoteSummary?.defaultKeyStatistics?.beta;
+  const rawBeta = stats.beta ?? quote.beta ?? (yfData.quoteSummary?.defaultKeyStatistics as StatsData | undefined)?.beta;
   const betaNum = (typeof rawBeta === 'number' && !isNaN(rawBeta) && rawBeta > 0) 
     ? rawBeta 
     : (typeof rawBeta === 'string' && !isNaN(parseFloat(rawBeta)) && parseFloat(rawBeta) > 0 ? parseFloat(rawBeta) : 1.0);
   const beta = fmt(betaNum);
 
-  const yfRevGrowth = yfData.quoteSummary?.financialData?.revenueGrowth ?? yfData.profile?.financialData?.revenueGrowth;
+  const yfRevGrowth = (yfData.quoteSummary?.financialData as { revenueGrowth?: number } | undefined)?.revenueGrowth ??
+                      (yfData.profile?.financialData as { revenueGrowth?: number } | undefined)?.revenueGrowth;
   let revGrowthNum = 0.08;
   if (typeof yfRevGrowth === 'number' && !isNaN(yfRevGrowth)) {
     revGrowthNum = yfRevGrowth;
   } else if (sortedFund.length >= 2 && typeof sortedFund[sortedFund.length - 1].revenueGrowth === 'number') {
-    revGrowthNum = sortedFund[sortedFund.length - 1].revenueGrowth;
+    revGrowthNum = sortedFund[sortedFund.length - 1].revenueGrowth as number;
   } else if (metrics.revenueGrowth !== null && !isNaN(metrics.revenueGrowth)) {
     revGrowthNum = metrics.revenueGrowth / 100;
   }
@@ -342,10 +451,10 @@ export function generateReportContent(
   const bullImpliedReturn = `+${(bullUpsideRate * 100).toFixed(1)}%`;
 
   // Base Case Consensus Calculation: Wall Street target or steady progression (+6% to +18%)
-  const targetMeanPrice = yfData.quoteSummary?.financialData?.targetMeanPrice ??
-                          yfData.profile?.financialData?.targetMeanPrice ??
+  const targetMeanPrice = (yfData.quoteSummary?.financialData as { targetMeanPrice?: number } | undefined)?.targetMeanPrice ??
+                          (yfData.profile?.financialData as { targetMeanPrice?: number } | undefined)?.targetMeanPrice ??
                           stats.targetMeanPrice ??
-                          yfData.quoteSummary?.defaultKeyStatistics?.targetMeanPrice;
+                          (yfData.quoteSummary?.defaultKeyStatistics as StatsData | undefined)?.targetMeanPrice;
 
   let baseTargetPrice: number;
   let baseRate: number;
@@ -394,12 +503,21 @@ export function generateReportContent(
       `Forensic examination of SEC EDGAR disclosures identifies key sensitivities surrounding supply chain concentration, foreign currency headwinds, and sector rotation dynamics.`;
 
   const valuation = {
-    pe: fmt(summaryDetail.trailingPE || summaryDetail.forwardPE || quote.trailingPE || quote.forwardPE),
-    pb: fmt(stats.priceToBook),
-    ps: fmt(summaryDetail.priceToSalesTrailing12Months || stats.priceToSalesTrailing12Months),
-    evEbitda: fmt(stats.enterpriseToEbitda),
-    peg: fmt(stats.pegRatio),
-    dividendYield: fmt(quote.dividendYield ? quote.dividendYield * 100 : stats.trailingAnnualDividendYield ? stats.trailingAnnualDividendYield * 100 : null, '%')
+    pe: fmt(
+      typeof summaryDetail.trailingPE === 'number' ? summaryDetail.trailingPE :
+      typeof summaryDetail.forwardPE === 'number' ? summaryDetail.forwardPE :
+      typeof quote.trailingPE === 'number' ? quote.trailingPE :
+      typeof quote.forwardPE === 'number' ? quote.forwardPE : null
+    ),
+    pb: fmt(typeof stats.priceToBook === 'number' ? stats.priceToBook : null),
+    ps: fmt(typeof summaryDetail.priceToSalesTrailing12Months === 'number' ? summaryDetail.priceToSalesTrailing12Months : typeof stats.priceToSalesTrailing12Months === 'number' ? stats.priceToSalesTrailing12Months : null),
+    evEbitda: fmt(typeof stats.enterpriseToEbitda === 'number' ? stats.enterpriseToEbitda : null),
+    peg: fmt(typeof stats.pegRatio === 'number' ? stats.pegRatio : null),
+    dividendYield: fmt(
+      typeof quote.dividendYield === 'number' ? quote.dividendYield * 100 :
+      typeof stats.trailingAnnualDividendYield === 'number' ? stats.trailingAnnualDividendYield * 100 : null,
+      '%'
+    )
   };
 
   const incomeStatement = formatTableDataWithCAGR(sortedFund, [
@@ -429,11 +547,11 @@ export function generateReportContent(
     `and recent GDP growth was ${fmt(fredData.gdpGrowth, '%')}.`;
 
   const now = new Date().toISOString();
+  const rawMarketTime = quote.regularMarketTime;
   const dataFreshness = {
-    'Quotes & Pricing': quote.regularMarketTime ? new Date(quote.regularMarketTime instanceof Date ? quote.regularMarketTime : quote.regularMarketTime * 1000).toISOString() : now,
+    'Quotes & Pricing': rawMarketTime ? new Date(rawMarketTime instanceof Date ? rawMarketTime : typeof rawMarketTime === 'number' ? rawMarketTime * 1000 : String(rawMarketTime)).toISOString() : now,
     'Valuation & Financials': sortedFund.length > 0 ? new Date(sortedFund[sortedFund.length - 1].date).toISOString() : now,
-    'SEC Filings & Risks': secData.riskDiff?.filingDate || secData.proxyStatement?.filedDate || now,
-    'Congressional Trades': secData.congressionalTrades && secData.congressionalTrades.length > 0 ? new Date(secData.congressionalTrades[0].disclosureDate || secData.congressionalTrades[0].transactionDate).toISOString() : now
+    'SEC Filings & Risks': (secData.riskDiff as ReportRiskDiff | null)?.filingDate || (secData.proxyStatement as { filedDate?: string } | null)?.filedDate || now
   };
 
   let businessDescription = secData.businessDescription;
@@ -483,16 +601,15 @@ export function generateReportContent(
     scenarios,
 
     dupont: metrics.dupont || null,
-    growth: yfData.profile?.earningsTrend || null,
+    growth: (yfData.profile?.earningsTrend as Record<string, unknown> | unknown[] | null) || null,
     peers: peers,
-    congressionalTrades: secData.congressionalTrades || [],
     proxyStatement: secData.proxyStatement ? {
       url: secData.proxyStatement.secUrl,
-      proposals: secData.proxyStatement.shareholderProposals || []
+      proposals: (secData.proxyStatement.shareholderProposals as ReportProposal[]) || []
     } : null,
 
     riskFactors,
-    riskDiff: secData.riskDiff || null,
+    riskDiff: (secData.riskDiff as ReportRiskDiff | null) || null,
 
     macroContext,
     bullBearSummary,

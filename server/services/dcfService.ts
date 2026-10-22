@@ -1,9 +1,152 @@
 import { yahooService } from './yahoo.js';
 import { fredService } from './fred.js';
 import { edgarService } from './edgar.js';
-import { fetchPeersForReport } from './report/data/peerService.js';
+import { fetchPeersForReport, type PeerMetric } from './report/data/peerService.js';
 
-function getSyntheticCreditRating(icr: number): { rating: string, spread: number } {
+export type SyntheticRating =
+  | 'AAA'
+  | 'AA'
+  | 'A+'
+  | 'A'
+  | 'A-'
+  | 'BBB'
+  | 'BB+'
+  | 'BB'
+  | 'B+'
+  | 'B'
+  | 'B-'
+  | 'CCC'
+  | 'CC'
+  | 'C'
+  | 'D';
+
+export interface SyntheticCreditRatingResult {
+  rating: SyntheticRating;
+  spread: number;
+}
+
+export interface DCFHistoricalDataPoint {
+  year: number;
+  value: number;
+  source: string;
+}
+
+export interface DCFProvenanceEntry {
+  source: string;
+  fallbackApplied: boolean;
+  timestamp?: string | Date;
+}
+
+export type DataConfidence = 'low' | 'medium' | 'high';
+
+export interface DCFCalculationInputs {
+  revenueGrowthRate: number;
+  fcfMargin: number;
+  targetFcfMargin?: number;
+  projectionYears: number;
+  terminalGrowthRate: number;
+  midYearConvention?: boolean;
+  riskFreeRate: number;
+  equityRiskPremium: number;
+  beta: number;
+  costOfDebt: number;
+  taxRate: number;
+  marketCap: number;
+  totalDebt: number;
+  latestRevenue: number;
+  cashAndEquivalents: number;
+  sharesOutstanding: number;
+}
+
+export interface WACCParameters {
+  riskFreeRate: number;
+  equityRiskPremium: number;
+  beta: number;
+  costOfDebt: number;
+  taxRate: number;
+  marketCap: number;
+  totalDebt: number;
+}
+
+export interface BetaUnleveringParams {
+  leveredBeta: number;
+  taxRate: number;
+  totalDebt: number;
+  marketCap: number;
+}
+
+export interface BetaReleveringParams {
+  unleveredBeta: number;
+  taxRate: number;
+  totalDebt: number;
+  marketCap: number;
+}
+
+export interface BetaAdjustmentResult {
+  unleveredBeta: number;
+  releveredBeta: number;
+  debtToEquity: number;
+}
+
+export interface MonteCarloHistogramBin {
+  min: number;
+  max: number;
+  count: number;
+}
+
+export interface MonteCarloPercentiles {
+  p10: number;
+  p25: number;
+  p50: number;
+  p75: number;
+  p90: number;
+}
+
+export interface MonteCarloSimulationOutput {
+  iterations: number;
+  percentiles: MonteCarloPercentiles;
+  histogram: MonteCarloHistogramBin[];
+}
+
+export interface FinancialStatementItem {
+  date: string | Date;
+  [key: string]: unknown;
+}
+
+export interface HttpError extends Error {
+  status?: number;
+}
+
+export interface DCFDataPayload {
+  symbol: string;
+  companyName: string;
+  currentPrice: number;
+  sharesOutstanding: number | null;
+  historicalFCF: DCFHistoricalDataPoint[];
+  historicalFCFF: DCFHistoricalDataPoint[];
+  historicalRevenue: DCFHistoricalDataPoint[];
+  totalDebt: number | null;
+  cashAndEquivalents: number | null;
+  beta: number | null;
+  riskFreeRate: number | null;
+  marketCap?: number | null;
+  interestExpense: number | null;
+  taxRate: number | null;
+  analystGrowthEstimate5yr: number | null;
+  currency: 'USD' | 'INR';
+  lastFiscalYear: number;
+  dataFreshness: string;
+  high_52w: number | null;
+  low_52w: number | null;
+  dataConfidence: DataConfidence;
+  peerMedianPE: number | null;
+  companyEPS: number | null;
+  syntheticRating: SyntheticRating | null;
+  syntheticCostOfDebt: number | null;
+  provenance: Record<string, DCFProvenanceEntry>;
+}
+
+export function getSyntheticCreditRating(icr: number): SyntheticCreditRatingResult {
   if (icr > 8.5) return { rating: 'AAA', spread: 0.0069 };
   if (icr > 6.5) return { rating: 'AA', spread: 0.0085 };
   if (icr > 5.5) return { rating: 'A+', spread: 0.0107 };
@@ -21,9 +164,22 @@ function getSyntheticCreditRating(icr: number): { rating: string, spread: number
   return { rating: 'D', spread: 0.1834 };
 }
 
+export function unleverBeta(params: BetaUnleveringParams): number {
+  const { leveredBeta, taxRate, totalDebt, marketCap } = params;
+  if (marketCap <= 0) return leveredBeta;
+  const debtToEquity = totalDebt / marketCap;
+  return leveredBeta / (1 + (1 - taxRate) * debtToEquity);
+}
+
+export function releverBeta(params: BetaReleveringParams): number {
+  const { unleveredBeta, taxRate, totalDebt, marketCap } = params;
+  if (marketCap <= 0) return unleveredBeta;
+  const debtToEquity = totalDebt / marketCap;
+  return unleveredBeta * (1 + (1 - taxRate) * debtToEquity);
+}
 
 export const dcfService = {
-  async getDCFData(symbol: string): Promise<any> {
+  async getDCFData(symbol: string): Promise<DCFDataPayload> {
     // Dates for the last 5 years
     const now = new Date();
     const fiveYearsAgo = new Date();
@@ -45,40 +201,49 @@ export const dcfService = {
     ]);
 
     if (!quote) {
-      const error = new Error(`Could not fetch real-time quote for symbol ${symbol}`);
-      (error as any).status = 404;
+      const error: HttpError = new Error(`Could not fetch real-time quote for symbol ${symbol}`);
+      error.status = 404;
       throw error;
     }
 
-    const getField = (obj: any, name: string) => {
+    const getField = (obj: Record<string, unknown> | null | undefined, name: string): number | null => {
       if (!obj) return null;
       const key = Object.keys(obj).find(k => k.toLowerCase() === name.toLowerCase());
-      return key !== undefined && obj[key] !== undefined ? obj[key] : null;
+      if (key !== undefined && obj[key] !== undefined && obj[key] !== null) {
+        const val = obj[key];
+        if (typeof val === 'number') return val;
+        if (typeof val === 'string') {
+          const parsed = parseFloat(val);
+          return isNaN(parsed) ? null : parsed;
+        }
+      }
+      return null;
     };
 
-    const sortedStatements = (Array.isArray(timeSeries) ? timeSeries : []).sort((a: any, b: any) => {
+    const statementList = (Array.isArray(timeSeries) ? timeSeries : []) as FinancialStatementItem[];
+    const sortedStatements = [...statementList].sort((a, b) => {
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
 
     const sortedNewestFirst = [...sortedStatements].reverse();
 
     // Map historical Free Cash Flow (oldest -> newest)
-    const historicalFCF = sortedStatements
-      .map((item: any) => {
+    const historicalFCF: DCFHistoricalDataPoint[] = sortedStatements
+      .map((item: FinancialStatementItem) => {
         const year = new Date(item.date).getFullYear();
         const value = getField(item, 'freeCashFlow') ?? null;
         return { year, value, source: 'Yahoo Annual' };
       })
-      .filter(item => item.value !== null);
+      .filter((item): item is DCFHistoricalDataPoint => item.value !== null);
 
     // Map historical Revenue (oldest -> newest)
-    const historicalRevenue = sortedStatements
-      .map((item: any) => {
+    const historicalRevenue: DCFHistoricalDataPoint[] = sortedStatements
+      .map((item: FinancialStatementItem) => {
         const year = new Date(item.date).getFullYear();
         const value = getField(item, 'totalRevenue') ?? null;
         return { year, value, source: 'Yahoo Annual' };
       })
-      .filter(item => item.value !== null);
+      .filter((item): item is DCFHistoricalDataPoint => item.value !== null);
 
     // Convert reported (levered) FCF to UNLEVERED free cash flow (FCFF) by
     // adding back after-tax interest expense. Yahoo's `freeCashFlow` is
@@ -87,7 +252,7 @@ export const dcfService = {
     // enterprise value to equity via net debt, which is only consistent with an
     // UNLEVERED numerator — hence this conversion. The reported levered series
     // is still returned separately (historicalFCF) for display.
-    const afterTaxInterest = (item: any): number => {
+    const afterTaxInterest = (item: FinancialStatementItem): number => {
       const rawInterest = getField(item, 'interestExpense') ?? getField(item, 'interestExpenseNonOperating');
       if (rawInterest === null) return 0;
       const t = getField(item, 'taxRateForCalcs');
@@ -95,17 +260,17 @@ export const dcfService = {
       return Math.abs(rawInterest) * (1 - effTax);
     };
 
-    const historicalFCFF = sortedStatements
-      .map((item: any) => {
+    const historicalFCFF: DCFHistoricalDataPoint[] = sortedStatements
+      .map((item: FinancialStatementItem) => {
         const year = new Date(item.date).getFullYear();
         const fcf = getField(item, 'freeCashFlow');
         if (fcf === null) return null;
         return { year, value: fcf + afterTaxInterest(item), source: 'Yahoo Annual (Unlevered FCFF)' };
       })
-      .filter((item): item is { year: number; value: number; source: string } => item !== null);
+      .filter((item): item is DCFHistoricalDataPoint => item !== null);
 
-    let ttmFCF = null;
-    let ttmRevenue = null;
+    let ttmFCF: number | null = null;
+    let ttmRevenue: number | null = null;
     const latestYear = historicalFCF.length > 0 ? historicalFCF[historicalFCF.length - 1].year : null;
     // Capture the latest ANNUAL FCF/Revenue *before* any TTM row is appended, so
     // the SEC cross-validation below compares annual-vs-annual (see fix for the
@@ -114,11 +279,12 @@ export const dcfService = {
     const latestAnnualRev = historicalRevenue.length > 0 ? historicalRevenue[historicalRevenue.length - 1].value : null;
 
     if (Array.isArray(timeSeriesQuarterly) && timeSeriesQuarterly.length > 0) {
-      const sortedQNewestFirst = [...timeSeriesQuarterly].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const quarterlyList = timeSeriesQuarterly as FinancialStatementItem[];
+      const sortedQNewestFirst = [...quarterlyList].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       const last4 = sortedQNewestFirst.slice(0, 4);
       if (last4.length === 4) {
-        const revs = last4.map(q => getField(q, 'totalRevenue')).filter(v => v !== null);
-        const fcfs = last4.map(q => getField(q, 'freeCashFlow')).filter(v => v !== null);
+        const revs = last4.map(q => getField(q, 'totalRevenue')).filter((v): v is number => v !== null);
+        const fcfs = last4.map(q => getField(q, 'freeCashFlow')).filter((v): v is number => v !== null);
 
         if (revs.length === 4) ttmRevenue = revs.reduce((sum, val) => sum + val, 0);
         if (fcfs.length === 4) ttmFCF = fcfs.reduce((sum, val) => sum + val, 0);
@@ -137,7 +303,7 @@ export const dcfService = {
       }
     }
 
-    let dataConfidence = 'low';
+    let dataConfidence: DataConfidence = 'low';
     // Use the latest ANNUAL figures (captured before the TTM append) so the SEC
     // filing (which is annual) is compared against the same period.
     const latestYahooFCF = latestAnnualFCF;
@@ -172,14 +338,17 @@ export const dcfService = {
              }
           }
         }
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
 
-    let peerMedianPE = null;
+    let peerMedianPE: number | null = null;
     if (peers && peers.length > 0) {
-      const validPEs = peers.map((p: any) => parseFloat(p.pe)).filter((val: number) => !isNaN(val));
+      const peerList = peers as Array<PeerMetric | { pe?: string | number | null }>;
+      const validPEs = peerList
+        .map(p => (p && p.pe != null ? parseFloat(String(p.pe)) : NaN))
+        .filter((val: number) => !isNaN(val));
       if (validPEs.length > 0) {
         validPEs.sort((a: number, b: number) => a - b);
         const mid = Math.floor(validPEs.length / 2);
@@ -187,10 +356,10 @@ export const dcfService = {
       }
     }
 
-    const provenance: Record<string, any> = {};
+    const provenance: Record<string, DCFProvenanceEntry> = {};
 
     // WACC Cost of Debt components fallback mapping
-    let interestExpense = null;
+    let interestExpense: number | null = null;
     const latestInterestObj = sortedNewestFirst.find(s => getField(s, 'interestExpense') !== null || getField(s, 'interestExpenseNonOperating') !== null);
     if (latestInterestObj) {
       const rawInterest = getField(latestInterestObj, 'interestExpense') ?? getField(latestInterestObj, 'interestExpenseNonOperating');
@@ -198,7 +367,7 @@ export const dcfService = {
       provenance.interestExpense = { source: 'Yahoo Time Series', fallbackApplied: false, timestamp: latestInterestObj.date };
     }
 
-    let taxRate = null;
+    let taxRate: number | null = null;
     const latestTaxObj = sortedNewestFirst.find(s => getField(s, 'taxRateForCalcs') !== null);
     if (latestTaxObj) {
       taxRate = getField(latestTaxObj, 'taxRateForCalcs');
@@ -207,18 +376,18 @@ export const dcfService = {
 
     // Leverage cash and debt from basic stats, fallback to latest balance sheet statement
     const debtObj = sortedNewestFirst.find(s => getField(s, 'totalDebt') !== null);
-    let totalDebt = null;
+    let totalDebt: number | null = null;
     if (basicFinancials?.metric?.totalDebt !== undefined && basicFinancials?.metric?.totalDebt !== null) {
       totalDebt = Math.abs(basicFinancials.metric.totalDebt);
       provenance.totalDebt = { source: 'Yahoo Basic Financials', fallbackApplied: false, timestamp: new Date().toISOString() };
     } else if (debtObj && getField(debtObj, 'totalDebt') !== null) {
-      totalDebt = Math.abs(getField(debtObj, 'totalDebt'));
+      totalDebt = Math.abs(getField(debtObj, 'totalDebt') as number);
       provenance.totalDebt = { source: 'Yahoo Time Series', fallbackApplied: true, timestamp: debtObj.date };
     }
 
     const cashObj1 = sortedNewestFirst.find(s => getField(s, 'cashCashEquivalentsAndShortTermInvestments') !== null);
     const cashObj2 = sortedNewestFirst.find(s => getField(s, 'cashAndCashEquivalents') !== null);
-    let cashAndEquivalents = null;
+    let cashAndEquivalents: number | null = null;
     if (basicFinancials?.metric?.totalCash !== undefined && basicFinancials?.metric?.totalCash !== null) {
       cashAndEquivalents = basicFinancials.metric.totalCash;
       provenance.cashAndEquivalents = { source: 'Yahoo Basic Financials', fallbackApplied: false, timestamp: new Date().toISOString() };
@@ -231,7 +400,7 @@ export const dcfService = {
     }
 
     const sharesObj = sortedNewestFirst.find(s => getField(s, 'ordinarySharesNumber') !== null);
-    let sharesOutstanding = null;
+    let sharesOutstanding: number | null = null;
     if (basicFinancials?.metric?.sharesOutstanding !== undefined && basicFinancials?.metric?.sharesOutstanding !== null) {
       sharesOutstanding = basicFinancials.metric.sharesOutstanding;
       provenance.sharesOutstanding = { source: 'Yahoo Basic Financials', fallbackApplied: false, timestamp: new Date().toISOString() };
@@ -256,7 +425,7 @@ export const dcfService = {
 
     // Resolve Risk-Free Rate based on region (US vs India)
     const isIndian = symbol.endsWith('.NS') || symbol.endsWith('.BO') || profile?.country === 'IN' || profile?.country === 'India';
-    let riskFreeRate = null;
+    let riskFreeRate: number | null = null;
 
     if (isIndian) {
       riskFreeRate = 0.071; // default fallback
@@ -271,10 +440,13 @@ export const dcfService = {
             provenance.riskFreeRate = { source: 'FRED INDIRLTLT01STM', fallbackApplied: false, timestamp: lastValid.date || new Date().toISOString() };
           }
         }
-      } catch (err: any) {
-        console.warn(`[DCF ROUTE] FRED INDIRLTLT01STM fetch failed for ${symbol}, using default India risk-free rate:`, err.message);
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.warn(`[DCF ROUTE] FRED INDIRLTLT01STM fetch failed for ${symbol}, using default India risk-free rate:`, errMsg);
       }
     } else {
+      riskFreeRate = 0.0425; // default fallback
+      provenance.riskFreeRate = { source: 'US 10y Treasury Hardcoded Fallback', fallbackApplied: true, timestamp: new Date().toISOString() };
       try {
         const fredData = await fredService.getSeries('DGS10');
         const observations = fredData?.observations || [];
@@ -285,19 +457,18 @@ export const dcfService = {
             provenance.riskFreeRate = { source: 'FRED DGS10', fallbackApplied: false, timestamp: lastValid.date || new Date().toISOString() };
           }
         }
-      } catch (err: any) {
-        console.warn(`[DCF ROUTE] FRED DGS10 fetch failed for ${symbol}, using default US risk-free rate:`, err.message);
-        riskFreeRate = 0.0425; // Default 10y Treasury fallback
-        provenance.riskFreeRate = { source: 'US 10y Treasury Hardcoded Fallback', fallbackApplied: true, timestamp: new Date().toISOString() };
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.warn(`[DCF ROUTE] FRED DGS10 fetch failed for ${symbol}, using default US risk-free rate:`, errMsg);
       }
     }
 
     // Synthetic Credit Rating Logic
-    let syntheticCostOfDebt = null;
-    let syntheticRating = null;
+    let syntheticCostOfDebt: number | null = null;
+    let syntheticRating: SyntheticRating | null = null;
 
     const latestEbitObj = sortedNewestFirst.find(s => getField(s, 'operatingIncome') !== null || getField(s, 'ebit') !== null || getField(s, 'pretaxIncome') !== null);
-    let ebit = null;
+    let ebit: number | null = null;
     if (latestEbitObj) {
       ebit = getField(latestEbitObj, 'operatingIncome') ?? getField(latestEbitObj, 'ebit') ?? getField(latestEbitObj, 'pretaxIncome');
     }
@@ -310,10 +481,10 @@ export const dcfService = {
       syntheticCostOfDebt = riskFreeRate + creditProfile.spread;
     }
 
-    const payload = {
+    const payload: DCFDataPayload = {
       symbol,
       companyName: profile?.name || symbol,
-      currentPrice: quote.price,
+      currentPrice: quote.price ?? 0,
       sharesOutstanding,
       historicalFCF,
       historicalFCFF,
@@ -322,7 +493,7 @@ export const dcfService = {
       cashAndEquivalents,
       beta,
       riskFreeRate,
-      marketCap,
+      marketCap: marketCap ?? undefined,
       interestExpense,
       taxRate,
       analystGrowthEstimate5yr: growthEstimates?.growthEstimate5yr || null,
@@ -338,7 +509,6 @@ export const dcfService = {
       syntheticCostOfDebt,
       provenance
     };
-
 
     return payload;
   }
