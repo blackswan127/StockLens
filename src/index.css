@@ -151,3 +151,26 @@ html {
   box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.2) inset, 0 25px 55px -12px rgba(0, 0, 0, 0.92), 0 0 30px -5px rgba(16, 185, 129, 0.18);
 }
 
+/* Responsive visibility guarantees for Tailwind v4 cascade layer priority */
+@media (min-width: 640px) {
+  .sm\:flex { display: flex !important; }
+  .sm\:inline-block { display: inline-block !important; }
+  .sm\:inline { display: inline !important; }
+  .sm\:block { display: block !important; }
+}
+
+@media (min-width: 768px) {
+  .md\:flex { display: flex !important; }
+  .md\:inline-block { display: inline-block !important; }
+  .md\:inline { display: inline !important; }
+  .md\:block { display: block !important; }
+  .md\:hidden { display: none !important; }
+}
+
+@media (min-width: 1024px) {
+  .lg\:flex { display: flex !important; }
+  .lg\:inline-block { display: inline-block !important; }
+  .lg\:inline { display: inline !important; }
+  .lg\:block { display: block !important; }
+  .lg\:hidden { display: none !important; }
+}

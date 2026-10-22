@@ -36,7 +36,7 @@ export const Header: React.FC = () => {
                 <span className="font-sans font-extrabold text-lg tracking-tight text-slate-100">
                   Stock<span className="text-emerald-400">Lens</span>
                 </span>
-                <span className="hidden sm:inline-block">
+                <span className="max-sm:hidden inline-block">
                   <TelemetryBadge variant="emerald" label="PRO" size="xs" />
                 </span>
               </div>
@@ -47,7 +47,7 @@ export const Header: React.FC = () => {
           </Link>
 
           {/* Navigation links for desktops */}
-          <nav aria-label="Primary" className="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800/60">
+          <nav aria-label="Primary" className="max-md:hidden flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800/60">
             {navItems.map((item) => {
               const active = isLinkActive(item.path);
               return (
@@ -80,7 +80,7 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Sub-header Mobile Nav bar */}
-      <nav aria-label="Primary mobile" className="flex md:hidden border-t border-slate-800/80 bg-[#090D15]/95 backdrop-blur-2xl items-center justify-around py-2 px-2">
+      <nav aria-label="Primary mobile" className="md:hidden flex border-t border-slate-800/80 bg-[#090D15]/95 backdrop-blur-2xl items-center justify-around py-2 px-2">
         {navItems.map((item) => {
           const active = isLinkActive(item.path);
           return (

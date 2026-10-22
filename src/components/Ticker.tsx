@@ -36,7 +36,7 @@ export const Ticker: React.FC = () => {
         <div className="flex items-center gap-2 flex-shrink-0 text-emerald-400 font-mono tracking-wider font-bold text-[11px]">
           <Activity aria-hidden="true" className="h-3.5 w-3.5 animate-pulse text-emerald-400" />
           <span>GLOBAL TAPE</span>
-          <span aria-hidden="true" className="h-3 w-px bg-slate-800 mx-1 hidden sm:inline" />
+          <span aria-hidden="true" className="h-3 w-px bg-slate-800 mx-1 max-sm:hidden inline" />
         </div>
 
         {/* Indices list */}
@@ -114,7 +114,7 @@ export const Ticker: React.FC = () => {
           title="Manual Indices Refresh"
           aria-label="Refresh market indices"
           aria-busy={isFetching}
-          className="p-1 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-slate-200 shrink-0 hidden md:block"
+          className="p-1 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-slate-200 shrink-0 max-md:hidden block"
         >
           <RefreshCcw aria-hidden="true" className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin text-emerald-400' : ''}`} />
         </button>

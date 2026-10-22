@@ -124,7 +124,7 @@ export const WatchlistPage: React.FC = () => {
           </div>
           
           <h1 id="watchlist-hero-heading" className="font-sans text-3xl sm:text-5xl font-black tracking-tight text-slate-100 leading-tight">
-            Financial Terminal & <br className="hidden sm:inline" />
+            Financial Terminal & <br className="max-sm:hidden inline" />
             <span className="text-emerald-400">Intrinsic Value Screener</span>.
           </h1>
           
@@ -149,7 +149,7 @@ export const WatchlistPage: React.FC = () => {
             <h2 id="market-benchmarks-heading" className="font-sans text-sm font-bold text-slate-200 tracking-tight">Global Market Benchmarks</h2>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] text-slate-500 uppercase tracking-wider hidden sm:inline-block">
+            <span className="font-mono text-[10px] text-slate-500 uppercase tracking-wider max-sm:hidden inline-block">
               Multi-Exchange Telemetry
             </span>
             <button

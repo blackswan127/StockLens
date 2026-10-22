@@ -98,7 +98,7 @@ export const DCFCalculator: FC<DCFCalculatorProps> = ({ symbol, exchange, profil
         <div className="flex items-center gap-3">
           {data.dataConfidence && (
             <div
-              className="hidden sm:flex items-center"
+              className="max-sm:hidden flex items-center"
               title="Cross-validation confidence vs SEC EDGAR filings"
             >
               <span
@@ -119,7 +119,7 @@ export const DCFCalculator: FC<DCFCalculatorProps> = ({ symbol, exchange, profil
             </div>
           )}
           {dcfResult && !dcfError && (
-            <div className="hidden sm:flex items-center gap-2 text-xs font-mono">
+            <div className="max-sm:hidden flex items-center gap-2 text-xs font-mono">
               <span className="text-slate-400">Fair Value:</span>
               <span
                 className={`font-black text-sm tabular-nums ${dcfResult.upsidePercent > 0 ? 'text-emerald-400' : 'text-rose-400'}`}

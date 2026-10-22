@@ -85,7 +85,7 @@ export const CompanyHeaderBar: React.FC<CompanyHeaderBarProps> = ({
                 {profile.industry && (
                   <>
                     <span className="text-slate-700">•</span>
-                    <span className="hidden sm:inline">
+                    <span className="max-sm:hidden inline">
                       Industry:{' '}
                       <span className="font-semibold text-slate-300">{profile.industry}</span>
                     </span>

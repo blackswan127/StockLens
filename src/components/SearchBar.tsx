@@ -196,7 +196,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           {isSearching ? (
             <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin text-emerald-400" />
           ) : !isHero && (
-            <div aria-hidden="true" className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-800 bg-slate-900 text-[10px] text-slate-500 font-mono">
+            <div aria-hidden="true" className="max-sm:hidden flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-800 bg-slate-900 text-[10px] text-slate-500 font-mono">
               <Command className="h-2.5 w-2.5" />
               <span>K</span>
             </div>

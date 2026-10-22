@@ -56,8 +56,8 @@ export const CompanyTabNav: React.FC<CompanyTabNavProps> = ({
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
           INTELLIGENCE HUB
         </div>
-        <div className="h-4 w-px bg-slate-800 hidden sm:block" />
-        <span className="font-mono text-xs text-slate-500 uppercase tracking-widest hidden md:inline">
+        <div className="h-4 w-px bg-slate-800 max-sm:hidden block" />
+        <span className="font-mono text-xs text-slate-500 uppercase tracking-widest max-md:hidden inline">
           SECTIONS:
         </span>
       </div>
@@ -68,7 +68,7 @@ export const CompanyTabNav: React.FC<CompanyTabNavProps> = ({
       <div
         role="tablist"
         aria-label="Company sections"
-        className="hidden sm:flex items-center gap-1 bg-[#080B11] p-1 rounded-xl border border-slate-800"
+        className="max-sm:hidden flex items-center gap-1 bg-[#080B11] p-1 rounded-xl border border-slate-800"
       >
         {tabs.map((tab, index) => {
           const Icon = tab.icon;
